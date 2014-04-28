@@ -1,0 +1,8 @@
+#!/bin/sh
+clang -ObjC -O3 FGInt.m ECGFp.m FGIntCryptography.m -c
+clang -framework Foundation -framework Security -ObjC FGInt.o ECGFp.o FGIntCryptography.o main.m -o test
+#clang -framework Foundation -fobjc-arc FGInt.o FGIntCryptography.o main.m -o test
+rm *.o
+./test
+rm test 
+
