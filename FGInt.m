@@ -1844,6 +1844,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 --j;
             }
         }
+
     
         while (([resFGInt length] > 1) && ([[[resFGInt number] lastObject] digit] == 0)) {
             [resFGInt setLength: [resFGInt length] - 1];
@@ -1906,6 +1907,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         k = [[kValues objectAtIndex: i] digit];
         zSquare = [FGInt square: z];
         zSquareRadix = zRadix * 2;
+
 
         while (tRadix < 2*k + 3) {
             if (vLength > vIndex) {
@@ -2006,6 +2008,15 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         if (i > 0) 
             [resFGInt shiftRightBy: i];
         
+        if (mnCorrect) {
+            [fGInt setNumber: [fGIntCopy number]];
+            [fGInt setLength: [fGIntCopy length]];
+            [divisorFGInt setNumber: [divisorCopy number]];
+            [divisorFGInt setLength: [divisorCopy length]];
+        }
+        [fGInt setSign: fGIntSign];
+        [divisorFGInt setSign: divisorSign];
+
         tmpFGInt = [FGInt multiply: divisorFGInt and: resFGInt];
         modFGInt = [FGInt subtract: fGInt and: tmpFGInt];
         [tmpFGInt release];
@@ -2028,15 +2039,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         }
         [resFGInt setSign: fGIntSign == divisorSign];
 
-        if (mnCorrect) {
-            [fGInt setNumber: [fGIntCopy number]];
-            [fGInt setLength: [fGIntCopy length]];
-            [divisorFGInt setNumber: [divisorCopy number]];
-            [divisorFGInt setLength: [divisorCopy length]];
-        }
-        
-        [fGInt setSign: fGIntSign];
-        [divisorFGInt setSign: divisorSign];
 
         [invertedDivisor release];
         [one release];
@@ -2125,6 +2127,15 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         if (i > 0) 
             [resFGInt shiftRightBy: i];
         
+        if (mnCorrect) {
+            [fGInt setNumber: [fGIntCopy number]];
+            [fGInt setLength: [fGIntCopy length]];
+            [divisorFGInt setNumber: [divisorCopy number]];
+            [divisorFGInt setLength: [divisorCopy length]];
+        }
+        
+        [fGInt setSign: fGIntSign];
+        [divisorFGInt setSign: divisorSign];
         tmpFGInt = [FGInt multiply: divisorFGInt and: resFGInt];
         modFGInt = [FGInt subtract: fGInt and: tmpFGInt];
         [tmpFGInt release];
@@ -2145,16 +2156,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             modFGInt = tmpFGInt;
         }
 
-        if (mnCorrect) {
-            [fGInt setNumber: [fGIntCopy number]];
-            [fGInt setLength: [fGIntCopy length]];
-            [divisorFGInt setNumber: [divisorCopy number]];
-            [divisorFGInt setLength: [divisorCopy length]];
-        }
-        
-        [fGInt setSign: fGIntSign];
-        [divisorFGInt setSign: divisorSign];
-        
         [invertedDivisor release];
         
         return modFGInt;
