@@ -27,3 +27,7 @@ and ECGFp.m files and the method names are fairly straightforward. I haven't add
 FGIntCryptography.m file, but that will change soon, again, the method names pretty much explain what they do.
 
 Enjoy.
+
+ToDo
+====
+* find a way to iterate fast over 2 NSArrays simultaneously, addition seems to be the bottleneck and that would seem to be the solution.
