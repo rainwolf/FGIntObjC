@@ -2427,7 +2427,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         modFGInt = [FGInt subtract: fGInt and: tmpFGInt];
         [tmpFGInt release];
 
-        i = 0;
         while (!([modFGInt sign] && ([FGInt compareAbsoluteValueOf: modFGInt with: divisorFGInt] == smaller))) {
             if (![modFGInt sign]) {
                 tmpFGInt = [FGInt add: modFGInt and: divisorFGInt];
