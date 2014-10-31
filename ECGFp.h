@@ -13,7 +13,7 @@
 
 
 
-@interface EllipticCurve : NSObject <NSCopying> {
+@interface EllipticCurve : NSObject <NSMutableCopying> {
     FGInt *a, *b, *p, *curveOrder;
 }
 @property (assign, readwrite) FGInt *a, *b, *p, *curveOrder;
@@ -23,7 +23,7 @@
 @end
 
 
-@interface ECPoint : NSObject <NSCopying> {
+@interface ECPoint : NSObject <NSMutableCopying> {
     FGInt *x, *y, *pointOrder;
     BOOL infinity;
     EllipticCurve *ellipticCurve;

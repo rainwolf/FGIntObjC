@@ -29,7 +29,7 @@ This header may not be removed.
 
 
 
-@interface FGIntRSA : NSObject <NSCopying> {
+@interface FGIntRSA : NSObject <NSMutableCopying> {
     FGInt *modulus, *publicExponent, *privateKey, *pFGInt, *qFGInt, *pInvertedModQ;
 }
 @property (assign, readwrite) FGInt *modulus;
@@ -75,7 +75,7 @@ This header may not be removed.
 -(void) setSecretKeyAndComputeY: (FGInt *) newSecretKey;
 -(void) dealloc;
 -(id) initWithBitLength: (FGIntOverflow) bitLength;
--(id) initWithNSData: (NSData *) secretKeyData;
+// -(id) initWithNSData: (NSData *) secretKeyData;
 -(void) setPublicKeyWithNSData: (NSData *) publicKeyNSData;
 -(void) setPublicKeyWithBase64NSString: (NSString *) publicKeyBase64NSString;
 -(NSData *) publicKeyToNSData;

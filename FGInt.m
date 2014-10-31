@@ -21,7 +21,7 @@ This header may not be removed.
 #import "FGInt.h"
 /* ToDo
    - divide and conquer division too?
- */
+*/
 
 
 static const FGIntBase primes[1228] =
@@ -95,158 +95,59 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 
-@implementation FGIntNumberBase
-@synthesize digit;
--(id) copyWithZone: (NSZone *) zone {
-	FGIntNumberBase *newFGIntNumberBase = [[FGIntNumberBase allocWithZone: zone] init];
-	return [newFGIntNumberBase initWithFGIntBase: digit];
-}
--(id) initWithBase10String: (NSString *) base10String {
-	self = [self init];
-	digit = (FGIntBase) [base10String longLongValue];
-	return self;
-}
--(id) initWithFGIntBase: (FGIntBase) initDigit {
-	self = [self init];
-	digit = initDigit;
-	return self;
-}
--(void) dealloc {
-    [super dealloc];
-}
-@end
-
 
 
 @implementation FGInt
 @synthesize sign;
-@synthesize length;
-
-/*
-   -(NSMutableArray *) number {
-        return number;
-   }
-
-   - (id) init {
-   self = [super init];
-   number = [[NSMutableArray alloc] init];
-   return self;
-   }
- */
 
 -(id) init {
     if (self = [super init]) {
-        number = [[NSMutableArray alloc] init];
+        number = [[NSMutableData alloc] init];
+        sign = YES;
     }
     return self;
 }
 
 -(id) initWithCapacity: (FGIntOverflow) capacity {
     if (self = [super init]) {
-        number = [[NSMutableArray alloc] initWithCapacity: capacity];
+        number = [[NSMutableData alloc] initWithLength: capacity * 4];
     }
     return self;
 }
 
--(id) initWithNumber: (NSMutableArray *) initNumber {
+-(id) initWithNumber: (NSMutableData *) initNumber {
     if (self = [super init]) {
-        number = [[NSMutableArray alloc] initWithArray: initNumber copyItems: YES];
+        number = [[NSMutableData alloc] initWithData: initNumber];
+        sign = YES;
     }
     return self;
 }
 
 -(id) initWithoutNumber {
     if (self = [super init]) {
+        sign = YES;
     }
     return self;
 }
 
-
-//-(FGInt *) initWithNZeroes: (FGIntOverflow) n {
-//    FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: 0];
-//    self = [self init];
-//
-//    [self setLength: n];
-//    [self setSign: YES];
-//
-//    SEL copySel = @selector(copy);
-//    SEL addObjectSel = @selector(addObject:);
-//    id (*objc_call)( id, SEL, ...);
-//    objc_call = objc_msgSend;
-//
-//    (*objc_call)(number, addObjectSel, fGIntBase);
-//    for ( FGIntOverflow i = 1; i < n; ++i ) 
-//        (*objc_call)(number, addObjectSel, (*objc_call)(fGIntBase,copySel));
-//
-//    return self;
-//}
 
 -(FGInt *) initWithNZeroes: (FGIntOverflow) n {
-    FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: 0], *fGIntBaseCopy;
-//    self = [self initWithCapacity: n];
-    self = [self init];
-
-    [self setLength: n];
-    [self setSign: YES];
-
-//    number = [[NSMutableArray alloc] initWithCapacity: n];
-    for ( FGIntOverflow i = 1; i < n; ++i ) {
-        fGIntBaseCopy = [fGIntBase copy];
-        [number addObject: fGIntBaseCopy];
-        [fGIntBaseCopy release];
+    if (self = [super init]) {
+        number = [[NSMutableData alloc] initWithLength: n * 4];
+        sign = YES;
     }
-    [number addObject: fGIntBase];
-    [fGIntBase release];
-
     return self;
 }
 
 
 
--(NSMutableArray *) number {
+-(NSMutableData *) number {
     return number;
 }
 
--(void) setNumber: (NSMutableArray *) inputNumber {
+-(void) setNumber: (NSMutableData *) inputNumber {
     number = inputNumber;
 }
-
-
-//-(void) release {
-//    for ( id fGIntBase in number )
-//        [fGIntBase release];
-//    [number release];
-//    [super release];
-//}
-//
-
-//-(id) copyWithZone: (NSZone *) zone {
-//    FGInt *newFGInt = [[FGInt allocWithZone: zone] init];
-//    NSMutableArray *newFGIntNumber = [newFGInt number];
-//    [newFGInt setSign: sign];
-//    [newFGInt setLength: length];    
-//
-//    SEL copySel = @selector(copy);
-//    SEL addObjectSel = @selector(addObject:);
-//    id (*objc_call)( id, SEL, ...);
-//    objc_call = objc_msgSend;
-//
-//    for(id fGIntBase in number) {
-//        (*objc_call)(newFGIntNumber, addObjectSel, (*objc_call)(fGIntBase,copySel));
-//    }
-//    return newFGInt;
-//}
-//
-//-(void) dealloc {
-//    SEL releaseSel = @selector(release);
-//    id (*objc_call)( id, SEL, ...);
-//    objc_call = objc_msgSend;
-//
-//    for ( id fGIntBase in number )
-//        (*objc_call)(fGIntBase,releaseSel);
-//    (*objc_call)(number,releaseSel);
-//    [super dealloc];
-//}
 
 
 
@@ -257,23 +158,24 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 
--(id) copyWithZone: (NSZone *) zone {
+-(id) mutableCopyWithZone: (NSZone *) zone {
     FGInt *newFGInt = [[FGInt allocWithZone: zone] initWithoutNumber];
-    [newFGInt setSign: sign];
-    [newFGInt setLength: length];    
+    // FGInt *newFGInt = [[FGInt alloc] initWithoutNumber];
 
-    [newFGInt setNumber: [[NSMutableArray alloc] initWithArray: number copyItems: YES]];
+    [newFGInt setSign: sign];
+    [newFGInt setNumber: [number mutableCopy]];
+
     return newFGInt;
 }
 
--(id) shallowCopy {
-    FGInt *newFGInt = [[FGInt alloc] initWithoutNumber];
-    [newFGInt setSign: sign];
-    [newFGInt setLength: length];    
+// -(id) shallowCopy {
+//     FGInt *newFGInt = [[FGInt alloc] initWithoutNumber];
+//     [newFGInt setSign: sign];
+//     [newFGInt setLength: length];    
 
-    [newFGInt setNumber: [[NSMutableArray alloc] initWithArray: number copyItems: NO]];
-    return newFGInt;
-}
+//     [newFGInt setNumber: [[NSMutableArray alloc] initWithArray: number copyItems: NO]];
+//     return newFGInt;
+// }
 
 
 
@@ -287,22 +189,45 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 //}
 
 
+-(void) verifyAdjust {
+    if (([number length] % 4) != 0) {
+        [number setLength: 4*([number length]/4) + 4];
+    }
+}
+
++(void) verifyAdjustNumber: (NSMutableData *) numberData {
+    if (([numberData length] % 4) != 0) {
+        [numberData setLength: 4*([numberData length]/4) + 4];
+        // NSMutableData *tail = [[NSMutableData alloc] initWithLength: 4 - ([numberData length] % 4)];
+        // [tail appendData: [numberData subdataWithRange: NSMakeRange(4*([numberData length]/4) , ([numberData length] % 4))]];
+        // [numberData setLength: 4*([numberData length]/4)];
+        // [numberData appendData: tail];
+        // [tail release];
+    }
+}
+
 /* divides the number by a 32 bit unsigned int (divInt) and returns the remainder, it alters fGIntNumber */
 
-+(FGIntBase) divideFGIntNumberByIntBis: (NSMutableArray *) fGIntNumber divideBy: (FGIntBase) divInt {
++(FGIntBase) divideFGIntNumberByIntBis: (NSMutableData *) fGIntNumber divideBy: (FGIntBase) divInt {
     FGIntBase mod = 0;
     FGIntOverflow tempMod = 0;
     
-    @autoreleasepool{
-        for( id fGIntBase in [fGIntNumber reverseObjectEnumerator] ) {
-            tempMod =  (((FGIntOverflow) mod << 32) | (FGIntOverflow) [fGIntBase digit]);
-            [fGIntBase setDigit: (FGIntOverflow) (tempMod / divInt)];
-            mod = (FGIntOverflow) tempMod % divInt;
-        }
+    [FGInt verifyAdjustNumber: fGIntNumber];
+
+    FGIntBase* fGIntNumberArray = [fGIntNumber mutableBytes];
+    FGIntOverflow length = [fGIntNumber length] / 4;
+
+    for( FGIntIndex i = length - 1; i >= 0; i-- ) {
+        tempMod =  (((FGIntOverflow) mod << 32) | (FGIntOverflow) fGIntNumberArray[i]);
+        fGIntNumberArray[i] = (FGIntOverflow) (tempMod / divInt);
+        mod = (FGIntOverflow) tempMod % divInt;
     }
 
-    while (([fGIntNumber count] > 1) && ([[fGIntNumber lastObject] digit] == 0)) {
-        [fGIntNumber removeLastObject];
+    while ((length > 1) && (fGIntNumberArray[length - 1] == 0)) {
+        length--;
+    }
+    if (length*4 < [fGIntNumber length]) {
+        [fGIntNumber setLength: length*4];
     }
     return mod;
 }
@@ -310,8 +235,8 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 /* returns a deep copy of the number */
 
--(NSMutableArray *) duplicateNumber {
-    return [[NSMutableArray alloc] initWithArray: number copyItems: YES];
+-(NSMutableData *) duplicateNumber {
+    return [[NSMutableData alloc] initWithData: number];
 }
 
 
@@ -320,11 +245,11 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(NSString *) toBase10String {
     @autoreleasepool{
-        NSMutableArray *tempNumber = [self duplicateNumber];
+        NSMutableData *tempNumber = [self duplicateNumber], *zeroNumber = [[NSMutableData alloc] initWithLength: 4];
         NSMutableString *tempString = [[NSMutableString alloc] init], *tmpStr;
         NSString *zeroStr = @"0";
-        
-        while (([tempNumber count] > 1) || ([[tempNumber objectAtIndex: 0] digit] != 0)) {
+
+        while (![tempNumber isEqualToData: zeroNumber]) {
             tmpStr = (NSMutableString *) [NSString stringWithFormat:@"%u", [FGInt divideFGIntNumberByIntBis: tempNumber divideBy: 1000000000]];
             [tempString insertString: tmpStr atIndex:0];
             while (([tempString length] % 9) != 0) {
@@ -343,42 +268,46 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 
--(FGIntBase) divideByFGIntBaseMaxBis: (NSMutableArray *) base10Number {
+-(FGIntBase) divideByFGIntBaseMaxBis: (NSMutableData *) base10Number {
     @autoreleasepool{
         FGIntBase mod = 0;
         FGIntOverflow tempMod = 0;
         NSMutableString *base10StringResult = [[NSMutableString alloc] init], *tmpString;
         NSString *zeroStr = @"0", *tmpStr;
     
-        for( id fGIntBase in [base10Number reverseObjectEnumerator] ) {
-            tempMod =  (FGIntOverflow) mod*1000000000 + (FGIntOverflow) [fGIntBase digit];
+        [FGInt verifyAdjustNumber: base10Number];
+
+        FGIntBase* fGIntNumberArray = [base10Number mutableBytes];
+        FGIntOverflow length = [base10Number length] / 4;
+
+        for( FGIntIndex i = length - 1; i >= 0; i-- ) {
+            tempMod =  (FGIntOverflow) mod*1000000000 + (FGIntOverflow) fGIntNumberArray[i];
             tmpString = [NSMutableString stringWithFormat:@"%u", (FGIntBase) (tempMod >> 32)];
-            while (([tmpString length] % 9) != 0)
+            while (([tmpString length] % 9) != 0) {
                 [tmpString insertString: zeroStr atIndex:0];
+            }
             [base10StringResult appendString: tmpString];
             mod = tempMod;
         }
-    
+
+        while (([base10StringResult length] > 1) && ([base10StringResult characterAtIndex: 0] == '0')) {
+            [base10StringResult deleteCharactersInRange: NSMakeRange(0, 1)];
+        }
+
         FGIntOverflow nlength = [base10StringResult length];
-        [base10Number removeAllObjects];
-        FGIntNumberBase *tfginb;
+        [base10Number setLength: 0];
         
-        for(FGIntBase i = 1; i <= (nlength/9); ++i) {
+        for( FGIntOverflow i = 1; i <= (nlength/9); ++i ) {
             tmpStr = [base10StringResult substringWithRange: NSMakeRange(nlength - i*9, 9)];
-            tfginb = [[FGIntNumberBase alloc] initWithBase10String: tmpStr];
-            [base10Number addObject: tfginb];
-            [tfginb release];
+            FGIntBase tmpBase = [tmpStr longLongValue];
+            [base10Number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
         if ((nlength % 9) != 0) {
             tmpStr = [base10StringResult substringWithRange: NSMakeRange(0, nlength % 9)];
-            tfginb = [[FGIntNumberBase alloc] initWithBase10String: tmpStr];
-            [base10Number addObject: tfginb];
-            [tfginb release];
+            FGIntBase tmpBase = [tmpStr longLongValue];
+            [base10Number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
     
-        while (([base10Number count] > 1) && ([[base10Number lastObject] digit] == 0)) {
-            [base10Number removeLastObject];
-        }
         [base10StringResult release];
         [zeroStr release];
             
@@ -395,47 +324,46 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         self = [self init];
     
         FGIntBase nlength = [base10String length];
-        FGIntNumberBase *tfginb;
+        FGIntBase tmpBase;
     
         if ([base10String characterAtIndex: 0] == '-') {
             sign = false;
             --nlength;
-        } else
+        } else {
             sign = true;
+        }
         FGIntBase lengthInt = 1 + nlength / 9 + (((nlength % 9)==0) ? 0 : 1);
     
-        NSMutableArray *base10Number = [[NSMutableArray alloc] init];
+        NSMutableData *base10Number = [[NSMutableData alloc] init];
         NSString *tmpStr;
     
         for(FGIntBase i = 1; i <= (nlength/9); ++i) {
             tmpStr = [base10String substringWithRange: NSMakeRange(nlength + (sign ? 0 : 1) - i*9, 9)];
-            tfginb = [[FGIntNumberBase alloc] initWithBase10String: tmpStr];
-            [base10Number addObject: tfginb];
-            [tfginb release];
+            tmpBase = [tmpStr longLongValue];
+            [base10Number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
         if ((nlength % 9) != 0) {
             tmpStr = [base10String substringWithRange: NSMakeRange(sign ? 0 : 1, nlength % 9)];
-            tfginb = [[FGIntNumberBase alloc] initWithBase10String: tmpStr];
-            [base10Number addObject: tfginb];
-            [tfginb release];
+            tmpBase = [tmpStr longLongValue];
+            [base10Number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
-    
-        while (([base10Number count] > 1) || ([[base10Number objectAtIndex: 0] digit] != 0)) {
-            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: [self divideByFGIntBaseMaxBis: base10Number]];
-            [number addObject: tfginb]; 
-            [tfginb release];
+
+        NSMutableData *zeroNumber = [[NSMutableData alloc] initWithLength: 4];
+
+        while (![base10Number isEqualToData: zeroNumber]) {
+            tmpBase = [self divideByFGIntBaseMaxBis: base10Number];
+            [number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
-        while (([number count] > 1) && ([[number lastObject] digit] == 0)) {
-            [number removeLastObject];
-        }
-        if ([number count] == 0) {
-            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: 0];
-            [number addObject: tfginb];
-            [tfginb release];
+        // while (([number count] > 1) && ([[number lastObject] digit] == 0)) {
+        //     [number removeLastObject];
+        // }
+        if ([number length] == 0) {
+            tmpBase = 0;
+            tmpBase = [self divideByFGIntBaseMaxBis: base10Number];
+            [number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
         
         [base10Number release];
-        [self setLength: [number count]];
 
         return self;
     }
@@ -446,12 +374,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(FGInt *) initWithFGIntBase: (FGIntBase) fGIntBase {
     self = [self init];
-    FGIntNumberBase *tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: fGIntBase];
-    
-    [number addObject: tfginb];
-    [tfginb release];
-    
-    [self setLength: 1];
+    number = [[NSMutableData alloc] initWithBytes: &fGIntBase length: 4];
     [self setSign: YES];
         
     return self;
@@ -459,16 +382,10 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 -(FGInt *) initWithNegativeFGIntBase: (FGIntBase) fGIntBase {
-    self = [self init];
-    FGIntNumberBase *tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: fGIntBase];
-    
-    [number addObject: tfginb];
-    [tfginb release];
-    
-    [self setLength: 1];
-    [self setSign: NO];
+    FGInt *nFGInt = [self initWithFGIntBase: fGIntBase];
+    [nFGInt setSign: NO];
         
-    return self;
+    return  nFGInt;
 }
 
 
@@ -490,36 +407,18 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* provide NSData to initialize the FGInt */
 
 -(FGInt *) initWithNSData: (NSData *) nsData {
-    @autoreleasepool{
-        FGIntOverflow i, nsDataLength = [nsData length];
-        self = [self init];
-    
-        unsigned char aBuffer[4];
-        NSRange bytesRange;
-        FGIntNumberBase *fGIntBase;
-        
-        for ( i = 0; i < (nsDataLength / 4); ++i ) {
-            bytesRange = NSMakeRange(nsDataLength - (i + 1)*4, 4);
-            [nsData getBytes: aBuffer range: bytesRange];
-            fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: (aBuffer[3] | (aBuffer[2] << 8) | (aBuffer[1] << 16) | (aBuffer[0] << 24))];
-            [number addObject: fGIntBase];
-            [fGIntBase release];
-        }
-        if (([nsData length] % 4) != 0) {
-            bytesRange = NSMakeRange(0, nsDataLength % 4);
-            [nsData getBytes: aBuffer range: bytesRange];
-            FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: 0];
-            for ( i = 0; i < (nsDataLength % 4); ++i ) 
-                [fGIntBase setDigit: [fGIntBase digit] | (aBuffer[i] << (((nsDataLength % 4) - i - 1) * 8))];
-            [number addObject: fGIntBase];
-            [fGIntBase release];
-        }
-        while (([number count] > 1) && ([[number lastObject] digit] == 0)) 
-            [number removeLastObject];
-        [self setLength: [number count]];
-        [self setSign: YES];
-        return self;
+    NSMutableData *inputData = [[NSMutableData alloc] initWithData: nsData];
+    [FGInt verifyAdjustNumber: inputData];
+    FGIntOverflow length = [inputData length]/4;
+    FGIntBase* numberArray = [inputData mutableBytes];
+    while ((length > 1) && (numberArray[length - 1] == 0)) {
+        --length;
     }
+    if (length*4 < [inputData length]) {
+        [inputData setLength: length*4];
+    }
+
+    return [self initWithNumber: inputData];
 }
 
 
@@ -527,73 +426,30 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* returns NSData of self */
 
 -(NSData *) toNSData {
-    @autoreleasepool{
-        FGIntOverflow i = 0;
-        FGIntBase digit, j, l;
-        NSMutableData *fGIntData = [[NSMutableData alloc] init];
-        unsigned char aBuffer[4];
-
-        if ((length == 1) && ([[number objectAtIndex: 0] digit]== 0)) {
-            aBuffer[0] = 0;
-            [fGIntData appendBytes: aBuffer length: 1];
-            return fGIntData;
-        }
-        
-        for ( id fGIntBase in [number reverseObjectEnumerator] ) {
-            if (i == 0) {
-                ++i;
-                digit = [fGIntBase digit];
-                l = 0;
-                for ( j = 0; j < 4; ++j ) {
-                    if ((digit >> ((3 - j) * 8)) != 0) {
-                        aBuffer[l] = ((digit >> ((3 - j) * 8)) & 255);
-                        ++l;
-                    }
-                }
-                [fGIntData appendBytes: aBuffer length: l];
-            } else {
-                digit = [fGIntBase digit];
-                for ( j = 0; j < 4; ++j )
-                    aBuffer[j] = ((digit >> ((3 - j) * 8)) & 255);
-                [fGIntData appendBytes: aBuffer length: 4];
-            }
-        }
-//    for ( id fGIntBase in number ) {
-//        if (i < length - 1) {
-//            digit = [fGIntBase digit];
-//            for ( j = 0; j < 4; ++j )
-//                aBuffer[j] = ((digit >> (j*8)) & 255);
-//            [fGIntData appendBytes: aBuffer length: 4];
-//        } else {
-//            digit = [fGIntBase digit];
-//            l = 0;
-//            for ( j = 0; j < 4; ++j ) {
-//                aBuffer[j] = ((digit >> (j*8)) & 255);
-//                if ((digit >> (j*8)) != 0)
-//                    ++l;
-//            }
-//            [fGIntData appendBytes: aBuffer length: l];
-//        }
-//        ++i;
-//    }
-        return fGIntData;
+    FGIntOverflow length = [number length];
+    unsigned char* bytes = [number mutableBytes];
+    while ((bytes[length - 1] == 0) && (length > 1)) {
+        length--;
     }
+    return [[NSData alloc] initWithBytes: bytes length: length];
 }
 
 
 -(NSData *) toMPINSData {
     NSMutableData *mpiData = [[NSMutableData alloc] init];
     NSData *tmpData;
-    FGIntOverflow keyLength = (length - 1)*32; 
+    FGIntOverflow length = [number length]/4, keyLength = (length - 1)*32; 
+    FGIntBase* numberArray = [number mutableBytes];
     unsigned char aBuffer[2];
     
-    FGIntBase lastDigit = [[number lastObject] digit];
+    FGIntBase lastDigit = numberArray[length - 1];
     while (lastDigit != 0) {
         ++keyLength;
         lastDigit >>= 1;
     }
-    if (keyLength == 0)
+    if (keyLength == 0) {
         ++keyLength;
+    }
     aBuffer[0] = (keyLength / 256) & 255;
     aBuffer[1] = (keyLength) & 255;
     [mpiData appendBytes: aBuffer length: 2];
@@ -620,327 +476,107 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
    error otherwise */
 
 +(tCompare) compareAbsoluteValueOf: (FGInt *) fGInt1 with: (FGInt *) fGInt2 {
-    FGIntBase size1 = [fGInt1 length], size2 = [fGInt2 length], i = size2 - 1;
+    FGIntBase size1 = [[fGInt1 number] length]/4, size2 = [[fGInt2 number] length]/4, i = size2 - 1;
 
     if (size1 > size2)
         return larger;
     if (size1 < size2)
         return smaller;
-    while (([[[fGInt1 number] objectAtIndex: i] digit] == [[[fGInt2 number] objectAtIndex: i] digit]) && (i > 0)) {
+
+    FGIntBase* fGInt1Number = [[fGInt1 number] mutableBytes];
+    FGIntBase* fGInt2Number = [[fGInt2 number] mutableBytes];
+
+    while ((fGInt1Number[i] == fGInt2Number[i]) && (i > 0)) {
         --i;
     }
-    if ([[[fGInt1 number] objectAtIndex: i] digit] == [[[fGInt2 number] objectAtIndex: i] digit])
+    if (fGInt1Number[i] == fGInt2Number[i])
         return equal;
-    if ([[[fGInt1 number] objectAtIndex: i] digit] < [[[fGInt2 number] objectAtIndex: i] digit])
+    if (fGInt1Number[i] < fGInt2Number[i])
         return smaller;
-    if ([[[fGInt1 number] objectAtIndex: i] digit] > [[[fGInt2 number] objectAtIndex: i] digit])
+    if (fGInt1Number[i] > fGInt2Number[i])
         return larger;
     return error;
 }
 
 
-/* add fGInt1 with fGInt2 and return a FGInt */
-
-
-//+(FGInt *) add1: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-//    FGIntOverflow length1 = [fGInt1 length], length2 = [fGInt2 length], sumLength;
-//    FGIntNumberBase *tfginb, *fGIntBase;
-//    if (length1 < length2)
-//        return [FGInt add: fGInt2 and: fGInt1];
-//
-//    if ([fGInt1 sign] == [fGInt2 sign]) {
-//        FGInt *sum = [fGInt1 copy];
-//        NSMutableArray *sumNumber = [sum number], *fGInt2Number = [fGInt2 number];
-//        FGIntOverflow i = 0, tmpMod, mod = 0;
-//        NSEnumerator *tmpEnum1 = [sumNumber objectEnumerator];
-//
-//            
-//        for ( fGIntBase in fGInt2Number ) {
-//            tfginb = [tmpEnum1 nextObject];
-//            tmpMod = (FGIntOverflow) [tfginb digit] + [fGIntBase digit] + mod;
-//            [tfginb setDigit: tmpMod];
-//            mod = tmpMod >> 32;
-//        }
-//        while ( tfginb = [tmpEnum1 nextObject] ) {
-//            tmpMod = (FGIntOverflow) [tfginb digit] + mod;
-//            [tfginb setDigit: tmpMod];
-//            mod = tmpMod >> 32;
-//        }
-//        [tmpEnum1 release];
-//        sumLength = length1 + ((mod == 0) ? 0 : 1);
-//        if (mod != 0) {
-//            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: mod];
-//            [sumNumber addObject: tfginb];
-//            [tfginb release];
-//        }
-//        [sum setSign: [fGInt1 sign]];
-//        [sum setLength: sumLength];
-//        return sum;
-//    } else {
-//        if ([FGInt compareAbsoluteValueOf: fGInt2 with: fGInt1] == larger)
-//            return [FGInt add: fGInt2 and: fGInt1];
-//        FGIntOverflow tmpMod, mod = 0, i;
-//        FGInt *sum = [[FGInt alloc] init];
-//        NSMutableArray *sumNumber = [sum number], *fGInt2Number = [fGInt2 number], *fGInt1Number = [fGInt1 number];
-//
-//        for ( i = 0; i < length2; ++i ) {
-//            tmpMod = (FGIntOverflow) 4294967296 + [[fGInt1Number objectAtIndex: i] digit] - [[fGInt2Number objectAtIndex: i] digit] - mod;
-//            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: tmpMod];
-//            [sumNumber addObject: tfginb];
-//            [tfginb release];
-//            mod = (tmpMod > 4294967295u) ? 0 : 1;
-//        }
-//        for ( i = length2; i < length1; ++i ) {
-//            tmpMod = (FGIntOverflow) 4294967296 + [[fGInt1Number objectAtIndex: i] digit] - mod;
-//            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: tmpMod];
-//            [sumNumber addObject: tfginb];
-//            [tfginb release];
-//            mod = (tmpMod > 4294967295u) ? 0 : 1;
-//        }
-//
-//        sumLength = length1;
-//        while ((sumLength > 1) && ([[sumNumber lastObject] digit] == 0)) {
-//            sumLength -= 1;
-//            [sumNumber removeLastObject];
-//        }
-//        [sum setLength: sumLength];
-//        if ((sumLength == 1) && ([[sumNumber lastObject] digit] == 0))
-//            [sum setSign: YES];
-//        else
-//            [sum setSign: [fGInt1 sign]];
-//
-//        return sum;
-//    }
-//}
+// /* add fGInt1 with fGInt2 and return a FGInt */
 
 
 +(FGInt *) add: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntOverflow length1 = [fGInt1 length], length2 = [fGInt2 length], sumLength;
-    FGIntNumberBase *tfginb, *fGIntBase, *sumBase;
+    FGIntOverflow length1 = [[fGInt1 number] length] / 4, length2 = [[fGInt2 number] length] / 4, sumLength;
+
     if (length1 < length2)
         return [FGInt add: fGInt2 and: fGInt1];
 
     if ([fGInt1 sign] == [fGInt2 sign]) {
-        FGInt *sum = [fGInt1 copy];
-        NSMutableArray *sumNumber = [sum number], *fGInt2Number = [fGInt2 number], *fGInt1Number = [fGInt1 number];
-        FGIntOverflow i = 0, tmpMod, mod = 0;
+        FGInt *sum = [fGInt1 mutableCopy];
+        FGIntBase* sumNumber = [[sum number] mutableBytes];
+        FGIntBase* fGInt2Number = [[fGInt2 number] mutableBytes];
+        FGIntBase* fGInt1Number = [[fGInt1 number] mutableBytes];
+        FGIntOverflow tmpMod, mod = 0;
 
-            
-        for ( fGIntBase in fGInt2Number ) {
-            sumBase = [sumNumber objectAtIndex: i];
-            tmpMod = (FGIntOverflow) [sumBase digit] + [fGIntBase digit] + mod;
-            [sumBase setDigit: tmpMod];
+        for ( FGIntIndex i = 0; i < length2; i++ ) {
+            tmpMod = (FGIntOverflow) sumNumber[i] + fGInt2Number[i] + mod;
+            sumNumber[i] = tmpMod;
             mod = tmpMod >> 32;
-            ++i;
         }
-        for ( i = length2; i < length1; ++i ) {
+        for ( FGIntIndex i = length2; i < length1; ++i ) {
             if (mod == 0)
                 break;
-            sumBase = [sumNumber objectAtIndex: i];
-            tmpMod = (FGIntOverflow) [sumBase digit] + mod;
-            [sumBase setDigit: tmpMod];
+            tmpMod = (FGIntOverflow) sumNumber[i] + mod;
+            sumNumber[i] = tmpMod;
             mod = tmpMod >> 32;
         }
         sumLength = length1 + ((mod == 0) ? 0 : 1);
         if (mod != 0) {
-            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: mod];
-            [sumNumber addObject: tfginb];
-            [tfginb release];
+            [[sum number] setLength: 4*sumLength];
+            sumNumber = [[sum number] mutableBytes];
+            sumNumber[sumLength - 1] = mod;
         }
         [sum setSign: [fGInt1 sign]];
-        [sum setLength: sumLength];
         return sum;
     } else {
-        if ([FGInt compareAbsoluteValueOf: fGInt2 with: fGInt1] == larger)
+        if ([FGInt compareAbsoluteValueOf: fGInt2 with: fGInt1] == larger) {
             return [FGInt add: fGInt2 and: fGInt1];
-        FGIntOverflow tmpMod, mod = 0, i = 0;
-        FGInt *sum = [fGInt1 copy];
-        NSMutableArray *sumNumber = [sum number], *fGInt2Number = [fGInt2 number], *fGInt1Number = [fGInt1 number];
-
-
-        for ( fGIntBase in fGInt2Number ) {
-            sumBase = [sumNumber objectAtIndex: i];
-            tmpMod = (FGIntOverflow) 4294967296 + [sumBase digit] - [fGIntBase digit] - mod;
-            [sumBase setDigit: tmpMod];
-            mod = (tmpMod > 4294967295u) ? 0 : 1;
-            ++i;
         }
-        for ( i = length2; i < length1; ++i ) {
-            if (mod == 0)
+        FGIntOverflow tmpMod, mod = 0, i = 0;
+        FGInt *sum = [fGInt1 mutableCopy];
+        FGIntBase* sumNumber = [[sum number] mutableBytes];
+        FGIntBase* fGInt2Number = [[fGInt2 number] mutableBytes];
+        FGIntBase* fGInt1Number = [[fGInt1 number] mutableBytes];
+
+
+        for ( FGIntIndex i = 0; i < length2; i++ ) {
+            tmpMod = (FGIntOverflow) 4294967296 + sumNumber[i] - fGInt2Number[i] - mod;
+            sumNumber[i] = tmpMod;
+            mod = (tmpMod > 4294967295u) ? 0 : 1;
+        }
+        for ( FGIntIndex i = length2; i < length1; ++i ) {
+            if (mod == 0) {
                 break;
-            sumBase = [sumNumber objectAtIndex: i];
-            tmpMod = (FGIntOverflow) 4294967296 + [sumBase digit] - mod;
-            [sumBase setDigit: tmpMod];
+            }
+            tmpMod = (FGIntOverflow) 4294967296 + sumNumber[i] - mod;
+            sumNumber[i] = tmpMod;
             mod = (tmpMod > 4294967295u) ? 0 : 1;
         }
 
         sumLength = length1;
-        while ((sumLength > 1) && ([[sumNumber lastObject] digit] == 0)) {
+        while ((sumLength > 1) && (sumNumber[sumLength - 1] == 0)) {
             sumLength -= 1;
-            [sumNumber removeLastObject];
         }
-        [sum setLength: sumLength];
-        if ((sumLength == 1) && ([[sumNumber lastObject] digit] == 0))
+        if (sumLength < length1) {
+            [[sum number] setLength: sumLength*4];
+        }
+        if ((sumLength == 1) && (sumNumber[0] == 0)) {
             [sum setSign: YES];
-        else
+        } else {
             [sum setSign: [fGInt1 sign]];
+        }
 
         return sum;
     }
 }
 
-
-
-+(FGInt *) add1: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntOverflow length1 = [fGInt1 length], length2 = [fGInt2 length], sumLength;
-    FGIntNumberBase *tfginb, *fGIntBase, *sumBase;
-    if (length1 < length2)
-        return [FGInt add: fGInt2 and: fGInt1];
-
-    if ([fGInt1 sign] == [fGInt2 sign]) {
-        FGInt *sum = [fGInt1 copy];
-        NSMutableArray *sumNumber = [sum number], *fGInt2Number = [fGInt2 number], *fGInt1Number = [fGInt1 number];
-        FGIntOverflow i = 0, tmpMod, mod = 0;
-
-        FGIntBase tmpFGInt1Number[[fGInt1 length]];
-        for ( fGIntBase in fGInt1Number ) {
-        	tmpFGInt1Number[i] = [fGIntBase digit];
-        	++i;
-       	}
-
-
-        i = 0;
-        for ( fGIntBase in fGInt2Number ) {
-            tmpMod = (FGIntOverflow) tmpFGInt1Number[i] + [fGIntBase digit] + mod;
-            [sumBase setDigit: tmpMod];
-            mod = tmpMod >> 32;
-            ++i;
-        }
-        for ( i = length2; i < length1; ++i ) {
-            if (mod == 0)
-                break;
-            sumBase = [sumNumber objectAtIndex: i];
-            tmpMod = (FGIntOverflow) [sumBase digit] + mod;
-            [sumBase setDigit: tmpMod];
-            mod = tmpMod >> 32;
-        }
-        sumLength = length1 + ((mod == 0) ? 0 : 1);
-        if (mod != 0) {
-            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: mod];
-            [sumNumber addObject: tfginb];
-            [tfginb release];
-        }
-        [sum setSign: [fGInt1 sign]];
-        [sum setLength: sumLength];
-        return sum;
-    } else {
-        if ([FGInt compareAbsoluteValueOf: fGInt2 with: fGInt1] == larger)
-            return [FGInt add: fGInt2 and: fGInt1];
-        FGIntOverflow tmpMod, mod = 0, i = 0;
-        FGInt *sum = [fGInt1 copy];
-        NSMutableArray *sumNumber = [sum number], *fGInt2Number = [fGInt2 number], *fGInt1Number = [fGInt1 number];
-
-
-        for ( fGIntBase in fGInt2Number ) {
-            sumBase = [sumNumber objectAtIndex: i];
-            tmpMod = (FGIntOverflow) 4294967296 + [sumBase digit] - [fGIntBase digit] - mod;
-            [sumBase setDigit: tmpMod];
-            mod = (tmpMod > 4294967295u) ? 0 : 1;
-            ++i;
-        }
-        for ( i = length2; i < length1; ++i ) {
-            if (mod == 0)
-                break;
-            sumBase = [sumNumber objectAtIndex: i];
-            tmpMod = (FGIntOverflow) 4294967296 + [sumBase digit] - mod;
-            [sumBase setDigit: tmpMod];
-            mod = (tmpMod > 4294967295u) ? 0 : 1;
-        }
-
-        sumLength = length1;
-        while ((sumLength > 1) && ([[sumNumber lastObject] digit] == 0)) {
-            sumLength -= 1;
-            [sumNumber removeLastObject];
-        }
-        [sum setLength: sumLength];
-        if ((sumLength == 1) && ([[sumNumber lastObject] digit] == 0))
-            [sum setSign: YES];
-        else
-            [sum setSign: [fGInt1 sign]];
-
-        return sum;
-    }
-}
-
-//+(FGInt *) add2: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-//    FGIntOverflow length1 = [fGInt1 length], length2 = [fGInt2 length], sumLength;
-//    FGIntNumberBase *tfginb, *fGIntBase;
-//    if (length1 < length2)
-//        return [FGInt add: fGInt2 and: fGInt1];
-//
-//    if ([fGInt1 sign] == [fGInt2 sign]) {
-//        FGInt *sum = [fGInt1 copy];
-//        NSMutableArray *sumNumber = [sum number], *fGInt2Number = [fGInt2 number];
-//        FGIntNumberBase *sumBase;
-//
-//        FGIntOverflow tmpMod = 0, mod = 0, i = 0;
-//        for ( i = 0; i < length2; ++i ) {
-//            sumBase = [sumNumber objectAtIndex: i];
-//            tmpMod = (FGIntOverflow) [sumBase digit] + [[fGInt2Number objectAtIndex: i] digit] + mod;
-//            [sumBase setDigit: tmpMod];
-//            mod = tmpMod >> 32;
-//        }
-//        for ( i = length2; i < length1; ++i ) {
-//            sumBase = [sumNumber objectAtIndex: i];
-//            tmpMod = (FGIntOverflow) [sumBase digit] + mod;
-//            [sumBase setDigit: tmpMod];
-//            mod = tmpMod >> 32;
-//        }
-//        sumLength = length1 + ((mod == 0) ? 0 : 1);
-//        if (mod != 0) {
-//            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: mod];
-//            [sumNumber addObject: tfginb];
-//            [tfginb release];
-//        }
-//        [sum setSign: [fGInt1 sign]];
-//        [sum setLength: sumLength];
-//        return sum;
-//    } else {
-//        if ([FGInt compareAbsoluteValueOf: fGInt2 with: fGInt1] == larger)
-//            return [FGInt add: fGInt2 and: fGInt1];
-//        FGIntOverflow tmpMod, mod = 0, i;
-//        FGInt *sum = [[FGInt alloc] init];
-//        NSMutableArray *sumNumber = [sum number], *fGInt2Number = [fGInt2 number], *fGInt1Number = [fGInt1 number];
-//
-//        for ( i = 0; i < length2; ++i ) {
-//            tmpMod = (FGIntOverflow) 4294967296 + [[fGInt1Number objectAtIndex: i] digit] - [[fGInt2Number objectAtIndex: i] digit] - mod;
-//            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: tmpMod];
-//            [sumNumber addObject: tfginb];
-//            [tfginb release];
-//            mod = (tmpMod > 4294967295u) ? 0 : 1;
-//        }
-//        for ( i = length2; i < length1; ++i ) {
-//            tmpMod = (FGIntOverflow) 4294967296 + [[fGInt1Number objectAtIndex: i] digit] - mod;
-//            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: tmpMod];
-//            [sumNumber addObject: tfginb];
-//            [tfginb release];
-//            mod = (tmpMod > 4294967295u) ? 0 : 1;
-//        }
-//
-//        sumLength = length1;
-//        while ((sumLength > 1) && ([[sumNumber lastObject] digit] == 0)) {
-//            sumLength -= 1;
-//            [sumNumber removeLastObject];
-//        }
-//        [sum setLength: sumLength];
-//        if ((sumLength == 1) && ([[sumNumber lastObject] digit] == 0))
-//            [sum setSign: YES];
-//        else
-//            [sum setSign: [fGInt1 sign]];
-//
-//        return sum;
-//    }
-//}
 
 
 
@@ -964,50 +600,49 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* Multiply 2 FGInts, and return fGInt1 * fGInt2 */
 
 +(FGInt *) pencilPaperMultiply: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntBase length1 = [fGInt1 length],
-              length2 = [fGInt2 length],
-              productLength = length1 + length2, i, j, fGIntBaseDigit;
-    FGIntNumberBase *tfginb, *fGIntBase1, *fGIntBase2, *productBase;
+    FGIntBase length1 = [[fGInt1 number] length] / 4,
+              length2 = [[fGInt2 number] length] / 4,
+              productLength = length1 + length2, length;
     FGIntOverflow tempMod, mod;
-    NSMutableArray *fGInt1Number = [fGInt1 number], *fGInt2Number = [fGInt2 number];
+    FGIntBase* fGInt1Number = [[fGInt1 number] mutableBytes];
+    FGIntBase* fGInt2Number = [[fGInt2 number] mutableBytes];
 
     FGInt *product = [[FGInt alloc] initWithNZeroes: productLength];
-    NSMutableArray *productNumber = [product number];
+    FGIntBase* productNumber = [[product number] mutableBytes];
 
     [product setSign: [fGInt1 sign] == [fGInt2 sign]];
 
-    i = 0;
-    for( id fGIntBase2 in fGInt2Number ) {
+    FGIntIndex i, j;
+    for( j = 0; j < length2; j++ ) {
         mod = 0;
-        j = 0;
-        fGIntBaseDigit = [fGIntBase2 digit];
-        for( id fGIntBase1 in fGInt1Number ) {
-            productBase = [productNumber objectAtIndex: j + i];
-            tempMod = (FGIntOverflow) [fGIntBase1 digit] * fGIntBaseDigit + [productBase digit] + mod;
-            [productBase setDigit: tempMod];
+        for( i = 0; i < length1; i++ ) {
+            tempMod = (FGIntOverflow) fGInt1Number[i] * fGInt2Number[j] + productNumber[j + i] + mod;
+            productNumber[j + i] = tempMod;
             mod = tempMod >> 32;
-            ++j;
         }
-        [[productNumber objectAtIndex: (i + j)] setDigit: mod];
-        ++i;        
+        productNumber[j + i] = mod;
     }
-    while ((productLength > 1) && ([[productNumber lastObject] digit] == 0)) {
+
+    length = productLength;
+    while ((productLength > 1) && (productNumber[productLength - 1] == 0)) {
         --productLength;
-        [productNumber removeLastObject];
     }
-    [product setLength: productLength];
-    if ((productLength == 1) && ([[productNumber lastObject] digit] == 0))
+    if ((productLength == 1) && (productNumber[0] == 0)) {
         [product setSign: YES];
-    else
+    } else {
         [product setSign: ([fGInt1 sign]==[fGInt2 sign])];
+    }
+    if (productLength < length) {
+        [[product number] setLength: productLength * 4];
+    }
     return product;
 }
 
 
 
 +(FGInt *) karatsubaMultiply: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntBase length1 = [fGInt1 length],
-              length2 = [fGInt2 length],
+    FGIntBase length1 = [[fGInt1 number] length]/4,
+              length2 = [[fGInt2 number] length]/4,
               karatsubaLength = MAX(length1, length2);
 
     if (karatsubaLength <= karatsubaThreshold) return [FGInt pencilPaperMultiply: fGInt1 and: fGInt2];
@@ -1016,74 +651,52 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     FGIntOverflow halfLength = (karatsubaLength / 2) + (karatsubaLength % 2), i;
 
-    FGInt *f1a = [[FGInt alloc] init], *f1b = [[FGInt alloc] init],
-    *f2a, *f2b = [[FGInt alloc] init],
+    FGInt *f1a = [[FGInt alloc] initWithoutNumber], *f1b = [[FGInt alloc] initWithoutNumber],
+    *f2a, *f2b,
     *faa, *fbb, *fab, *f1ab, *f2ab, *zero;
-    NSMutableArray *f1aNumber = [f1a number], *f1bNumber = [f1b number],
-    *f2aNumber, *f2bNumber = [f2b number];
+    FGIntBase* fGInt1Number = [[fGInt1 number] mutableBytes];
+    FGIntBase* fGInt2Number = [[fGInt2 number] mutableBytes];
+
 
     zero = [[FGInt alloc] initWithFGIntBase: 0];
 
+    [f1b setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &fGInt1Number[0] length: halfLength*4 freeWhenDone: NO]];
+    [f1a setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &fGInt1Number[halfLength] length: (length1 - halfLength)*4 freeWhenDone: NO]];
     [f1a setSign: [fGInt1 sign]];
     [f1b setSign: [fGInt1 sign]];
-    i = 0;
-    for ( id fGIntBase in [fGInt1 number]) {
-        if ( i < halfLength ) {
-            [f1bNumber addObject: fGIntBase];
-        } else {
-            [f1aNumber addObject: fGIntBase];
-        }
-        ++i;
-    }
-    [f1b setLength: halfLength];
-    [f1a setLength: karatsubaLength - halfLength];
 
+    f2b = [[FGInt alloc] initWithoutNumber];
     if ( length2 <= halfLength ) {
-        f2a = [zero copy];
-        [f2a setSign: [fGInt2 sign]];
-        for ( id fGIntBase in [fGInt2 number]) 
-            [f2bNumber addObject: fGIntBase];
-        [f2b setSign: [fGInt2 sign]];
-        [f2b setLength: [fGInt2 length]];
+        f2a = [zero mutableCopy];
+        [f2b setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &fGInt2Number[0] length: length2*4 freeWhenDone: NO]];
     } else {
-        f2a = [[FGInt alloc] init];
-        f2aNumber = [f2a number];
-        [f2a setSign: [fGInt2 sign]];
-        [f2b setSign: [fGInt2 sign]];
-
-        i = 0;
-        for ( id fGIntBase in [fGInt2 number] ) {
-            if ( i < halfLength ) {
-                [f2bNumber addObject: fGIntBase];
-            } else {
-                [f2aNumber addObject: fGIntBase];
-            }
-            ++i;
-        }
-        [f2b setLength: halfLength];
-        [f2a setLength: length2 - halfLength];
+        f2a = [[FGInt alloc] initWithoutNumber];
+        [f2b setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &fGInt2Number[0] length: halfLength*4 freeWhenDone: NO]];
+        [f2a setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &fGInt2Number[halfLength] length: (length2 - halfLength)*4 freeWhenDone: NO]];
     }
-    if (([FGInt compareAbsoluteValueOf: f1a with: zero] != equal) && ([FGInt compareAbsoluteValueOf: f2a with: zero] != equal))
+    [f2a setSign: [fGInt2 sign]];
+    [f2b setSign: [fGInt2 sign]];
+
+    if (([FGInt compareAbsoluteValueOf: f1a with: zero] != equal) && ([FGInt compareAbsoluteValueOf: f2a with: zero] != equal)) {
         faa = [FGInt karatsubaMultiply: f1a and: f2a];
-    else {
-        faa = [zero copy];
+    } else {
+        faa = [zero mutableCopy];
         [faa setSign: [f1a sign] == [f2a sign]];
     }
-    if (([FGInt compareAbsoluteValueOf: f1b with: zero] != equal) && ([FGInt compareAbsoluteValueOf: f2b with: zero] != equal))
+    if (([FGInt compareAbsoluteValueOf: f1b with: zero] != equal) && ([FGInt compareAbsoluteValueOf: f2b with: zero] != equal)) {
         fbb = [FGInt karatsubaMultiply: f1b and: f2b];
-    else {
-        fbb = [zero copy];
+    } else {
+        fbb = [zero mutableCopy];
         [fbb setSign: [f1b sign] == [f2b sign]];
     }
     f1ab = [FGInt add: f1a and: f1b];
     f2ab = [FGInt add: f2a and: f2b];
-    if (([FGInt compareAbsoluteValueOf: f1ab with: zero] != equal) && ([FGInt compareAbsoluteValueOf: f2ab with: zero] != equal))
+    if (([FGInt compareAbsoluteValueOf: f1ab with: zero] != equal) && ([FGInt compareAbsoluteValueOf: f2ab with: zero] != equal)) {
         fab = [FGInt karatsubaMultiply: f1ab and: f2ab];
-    else {
-        fab = [zero copy];
+    } else {
+        fab = [zero mutableCopy];
         [fab setSign: [f1a sign] == [f2a sign]];
     }
-
 
 
     [zero release];
@@ -1109,120 +722,85 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 +(FGInt *) multiply: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntBase length1 = [fGInt1 length],
-              length2 = [fGInt2 length],
+    FGIntBase length1 = [[fGInt1 number] length]/4,
+              length2 = [[fGInt2 number] length]/4,
               length = MAX(length1,length2);
-    if (length >= karatsubaThreshold)
+    if (length >= karatsubaThreshold) {
         return [FGInt karatsubaMultiply: fGInt1 and: fGInt2];
-    else
+    } else {
         return [FGInt pencilPaperMultiply: fGInt1 and: fGInt2];
+    }
 }
 
 
 /* square a FGInt, return fGInt^2 */
 
 +(FGInt *) pencilPaperSquare: (FGInt *) fGInt {
-    FGIntOverflow length1 = [fGInt length], tempMod, mod, overflow,
+    FGIntOverflow length1 = [[fGInt number] length]/4, tempMod, mod, overflow,
               squareLength = 2 * length1, i, j, k, tempInt;
-//    FGIntBase fGIntBaseDigit;
-    FGIntNumberBase *squareBase;
-    NSArray *fGIntNumber = [fGInt number];
+    FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
 
     FGInt *square = [[FGInt alloc] initWithNZeroes: squareLength];
-    NSMutableArray *squareNumber = [square number];
+    FGIntBase* squareNumber = [[square number] mutableBytes];
 
-    i = 0;
-    for( id fGIntBase1 in fGIntNumber ) {
-        tempInt = [fGIntBase1 digit];
-        squareBase = [squareNumber objectAtIndex: 2 * i];
-        tempMod = (FGIntOverflow) tempInt*tempInt + [squareBase digit];
-        [squareBase setDigit: tempMod];
+    for( FGIntIndex i = 0; i < length1; i++ ) {
+        tempInt = fGIntNumber[i];
+        tempMod = (FGIntOverflow) tempInt*tempInt + squareNumber[2*i];
+        squareNumber[2*i] = tempMod;
         mod = (tempMod >> 32);
         j = 0;
-        for( id fGIntBase2 in fGIntNumber ) {
-            if (j > i) {
+        for( FGIntIndex j = i + 1; j < length1; j++ ) {
+            tempMod = (FGIntOverflow) tempInt * fGIntNumber[j];
+            if ((tempMod >> 63) == 1) {
+                overflow = 1;
+            } else {
                 overflow = 0;
-                squareBase = [squareNumber objectAtIndex: i + j];
-                tempMod = (FGIntOverflow) tempInt * [fGIntBase2 digit];
-                if ((tempMod >> 63) == 1)
-                    overflow = 1;
-                tempMod = (tempMod << 1) + [squareBase digit] + mod;
-                [squareBase setDigit: tempMod];
-                mod = (overflow << 32) | (tempMod >> 32);
             }
-            ++j;
+            tempMod = (tempMod << 1) + squareNumber[i + j] + mod;
+            squareNumber[i + j] = tempMod;
+            mod = (overflow << 32) | (tempMod >> 32);
         }
         k = 0;
         while (mod != 0) {
-            squareBase = [squareNumber objectAtIndex: (i + length1 + k)];
-            tempMod = (FGIntOverflow) [squareBase digit] + mod;
-            [squareBase setDigit: tempMod];
+            tempMod = (FGIntOverflow) squareNumber[i + length1 + k] + mod;
+            squareNumber[i + length1 + k] = tempMod;
             mod = tempMod >> 32;
             ++k;
         }
-        ++i;
     }
 
-    while ((squareLength > 1) && ([[squareNumber lastObject] digit] == 0)) {
+    while ((squareLength > 1) && (squareNumber[squareLength - 1] == 0)) {
         --squareLength;
-        [squareNumber removeLastObject];
     }
-    [square setLength: squareLength];
+    if (squareLength*4 < [[square number] length]) {
+        [[square number] setLength: squareLength*4];
+    }
+    [square setSign: YES];
     return square;
 }
 
 
 +(FGInt *) karatsubaSquare: (FGInt *) fGInt {
-    FGIntOverflow karatsubaLength = [fGInt length];
+    FGIntOverflow karatsubaLength = [[fGInt number] length]/4;
     FGIntOverflow halfLength = (karatsubaLength / 2) + (karatsubaLength % 2), i;
 
-    if (karatsubaLength <= karatsubaThreshold) return [FGInt pencilPaperSquare: fGInt];
+    if (karatsubaLength <= karatsubaThreshold) {
+        return [FGInt pencilPaperSquare: fGInt];
+    }
 
-    FGInt *fa = [[FGInt alloc] init], *fb = [[FGInt alloc] init],
+    FGInt *fa = [[FGInt alloc] initWithoutNumber], *fb = [[FGInt alloc] initWithoutNumber],
     *faa, *fbb, *fab, *zero;
-    NSMutableArray *faNumber = [fa number], *fbNumber = [fb number], *fGIntNumber = [fGInt number];
     zero = [[FGInt alloc] initWithFGIntBase: 0];
-    FGIntNumberBase *fGIntBaseCopy;
+    FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
 
-    i = 0;
-    for ( id fGIntBase in fGIntNumber ) {
-        if ( i < halfLength ) {
-            [fbNumber addObject: fGIntBase];
-        } else {
-            fGIntBaseCopy = [fGIntBase copy];
-            [faNumber addObject: fGIntBaseCopy];
-            [fGIntBaseCopy release];
-        }
-        ++i;
-    }
-    [fb setLength: halfLength];
-    [fa setLength: karatsubaLength - halfLength];
-        
-    while (([fa length] > 1) && ([[faNumber lastObject] digit] == 0)) {
-        [fa setLength: [fa length] - 1];
-        [faNumber removeLastObject];
-    }
+    [fb setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &fGIntNumber[0] length: halfLength*4 freeWhenDone: NO]];
+    [fa setNumber: [[NSMutableData alloc] initWithBytes: &fGIntNumber[halfLength] length: (karatsubaLength - halfLength)*4]];
 
-    if ([FGInt compareAbsoluteValueOf: fa with: zero] != equal)
-        faa = [FGInt karatsubaSquare: fa];
-    else
-        faa = [zero copy];
-
-    while (([fb length] > 1) && ([[[fb number] lastObject] digit] == 0)) {
-        [fb setLength: [fb length] - 1];
-        [fbNumber removeLastObject];
-    }
-
-    if ([FGInt compareAbsoluteValueOf: fb with: zero] != equal)
-        fbb = [FGInt karatsubaSquare: fb];
-    else
-        fbb = [zero copy];
+    faa = [FGInt karatsubaSquare: fa];
+    fbb = [FGInt karatsubaSquare: fb];
 
     [fa addWith: fb];
-    if ([FGInt compareAbsoluteValueOf: fa with: zero] != equal)
-        fab = [FGInt karatsubaSquare: fa];
-    else
-        fab = [zero copy];
+    fab = [FGInt karatsubaSquare: fa];
     
     [zero release];
     [fa release];
@@ -1243,12 +821,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 +(FGInt *) square: (FGInt *) fGInt {
-    FGIntBase length = [fGInt length];
+    FGIntBase length = [[fGInt number] length];
 
-    if (length >= karatsubaThreshold)
+    if (length >= karatsubaThreshold) {
         return [FGInt karatsubaSquare: fGInt];
-    else
+    } else {
         return [FGInt pencilPaperSquare: fGInt];
+    }
 }
 
 
@@ -1256,31 +835,30 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* raise fGInt to the power fGIntN, and return fGInt ^ fGIntN */
 
 +(FGInt *) raise: (FGInt *) fGInt toThePower: (FGInt *) fGIntN {
-    FGIntOverflow nLength = [fGIntN length], i, j;
-    FGIntNumberBase *tfginb;
+    FGIntOverflow nLength = [[fGIntN number] length]/4;
     FGIntBase tmp;
     FGInt *tmpFGInt1, *tmpFGInt2, *tmpFGInt;
+    int j;
 
     FGInt *power = [[FGInt alloc] initWithFGIntBase: 1];
-    tmpFGInt1 = [fGInt copy];
+    FGIntBase* fGIntNnumber = [[fGIntN number] mutableBytes];
+    tmpFGInt1 = [fGInt mutableCopy];
 
-    i = 0;
-    for( id fGIntBase in [fGIntN number] ) {
-        tmp = [fGIntBase digit];
-        if (i < nLength - 1)
-            for(j = 0; j < 32; ++j) {
-                if (((tmp >> j) % 2) == 1) {
-                    tmpFGInt = [FGInt multiply: power and: tmpFGInt1];
-                    [power release];
-                    power = tmpFGInt;
-                }
-                tmpFGInt = [FGInt square: tmpFGInt1];
-                [tmpFGInt1 release];
-                tmpFGInt1 = tmpFGInt;
+    for( FGIntIndex i = 0; i < nLength - 1; i++ ) {
+        tmp = fGIntNnumber[i];
+        for( j = 0; j < 32; ++j) {
+            if (((tmp >> j) % 2) == 1) {
+                tmpFGInt = [FGInt multiply: power and: tmpFGInt1];
+                [power release];
+                power = tmpFGInt;
             }
+            tmpFGInt = [FGInt square: tmpFGInt1];
+            [tmpFGInt1 release];
+            tmpFGInt1 = tmpFGInt;
+        }
     }
     j = 0;
-    tmp = [[[fGIntN number] lastObject] digit];
+    tmp = fGIntNnumber[nLength - 1];
     while((tmp >> j)  != 0) {
         if (((tmp >> j) % 2) == 1) {
             tmpFGInt = [FGInt multiply: power and: tmpFGInt1];
@@ -1288,10 +866,11 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             power = tmpFGInt;
         }
         ++j;
-        if ((tmp >> j)  != 0)
+        if ((tmp >> j)  != 0) {
             tmpFGInt = [FGInt square: tmpFGInt1];
             [tmpFGInt1 release];
             tmpFGInt1 = tmpFGInt;
+        }
     }
     return power;
 }
@@ -1300,85 +879,87 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* bitwise shift of self by 32 */
 
 -(void) shiftLeftBy32 {
-    if ((length != 1) || ([[number objectAtIndex: 0] digit] != 0)) {
-        [self setLength: length + 1];
-        FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: 0];
-        [number insertObject: fGIntBase atIndex: 0];
-        [fGIntBase release];
+    FGIntBase* numberArray = [number mutableBytes];
+    if (([number length] != 4) || (numberArray[0] != 0)) {
+        NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: 4];
+        [tmpNumber appendData: number];
+        [number release];
+        number = tmpNumber;
     }
 }
 
 -(void) shiftRightBy32 {
+    FGIntOverflow length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
     if (length == 1) {
-        [[number objectAtIndex: 0] setDigit: 0];
+        numberArray[0] = 0;
     } else {
-        [self setLength: length - 1];
-        [number removeObjectAtIndex: 0];
+        NSMutableData *shiftedNumber = [[NSMutableData alloc] initWithBytes: &numberArray[1] length: (length - 1)*4];
+        [number release];
+        number = shiftedNumber;
     }
 }
 
 -(void) shiftLeftBy32Times: (FGIntOverflow) n {
-    if (((length != 1) || ([[number objectAtIndex: 0] digit] != 0)) && (n > 0)) {
-        FGIntOverflow i;
-        [self setLength: length + n];
-
-        FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: 0], *fGIntBaseCopy;
-    
-        for ( i = 1; i < n; ++i ) {
-            fGIntBaseCopy = [fGIntBase copy];
-            [number insertObject: fGIntBaseCopy atIndex: 0];
-            [fGIntBaseCopy release];
-        }
-        [number insertObject: fGIntBase atIndex: 0];
-        [fGIntBase release];
+    FGIntBase* numberArray = [number mutableBytes];
+    if ((([number length] != 4) || (numberArray[0] != 0)) && (n > 0)) {
+        NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: 4*n];
+        [tmpNumber appendData: number];
+        // NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: 4*n + [number length]];
+        // FGIntBase* tmpNumberArray = [tmpNumber mutableBytes];
+        // for ( FGIntIndex i = 0; i < [number length]/4; i++ ) {
+        //     tmpNumberArray[i + n] = numberArray[i];
+        // }
+        [number release];
+        number = tmpNumber;
     }
 }
 
 
 
 -(void) shiftRightBy32Times: (FGIntOverflow) n {
+    FGIntOverflow length = [number length]/4;
     if (n >= length) {
-        [number removeObjectsInRange: NSMakeRange(0, length - 1)];
-        [self setLength: 1];
-        [[number objectAtIndex: 0] setDigit: 0];
+        [number setLength: 0];
+        [number setLength: 4];
     } else {
-        [self setLength: length - n];
-        [number removeObjectsInRange: NSMakeRange(0, n)];
+        FGIntBase* numberArray = [number mutableBytes];
+        NSMutableData *shiftedNumber = [[NSMutableData alloc] initWithBytes: &numberArray[n] length: (length - n)*4];
+        [number release];
+        number = shiftedNumber;
     }
 }
 
 
 
 -(void) shiftLeft {
-    FGIntOverflow tmpInt, mod = 0, i;
+    FGIntOverflow tmpInt, mod = 0, length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
 
-    for( id fGIntBase in number ) {
-        tmpInt = [fGIntBase digit];
-        [fGIntBase setDigit: mod | (tmpInt << 1)];
+    for( FGIntIndex i = 0; i < length; i++ ) {
+        tmpInt = numberArray[i];
+        numberArray[i] = mod | (tmpInt << 1);
         mod = tmpInt >> 31;
     }
     if (mod != 0) {
-        FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: mod];
-        [number addObject: fGIntBase];
-        [fGIntBase release];
-        [self setLength: length + 1];
+        [number setLength: (length + 1)*4];
+        numberArray = [number mutableBytes];
+        numberArray[length] = mod;
     }
 }
 
 
 -(void) shiftRight {
-    FGIntOverflow tmpInt, mod = 0, i;
+    FGIntOverflow tmpInt, mod = 0, length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
 
-    @autoreleasepool{
-        for( id fGIntBase in [number reverseObjectEnumerator] ) {
-            tmpInt = [fGIntBase digit];
-            [fGIntBase setDigit: mod | (tmpInt >> 1)];
-            mod = tmpInt << 31;
-        }
+    for( FGIntIndex i = length - 1; i >= 0; i-- ) {
+        tmpInt = numberArray[i];
+        numberArray[i] = mod | (tmpInt >> 1);
+        mod = tmpInt << 31;
     }
-    if (([[number lastObject] digit] == 0) && (length > 1)) {
-        [number removeLastObject];
-        [self setLength: length - 1];
+    if ((numberArray[length - 1] == 0) && (length > 1)) {
+        [number setLength: (length - 1)*4];
     }
 }
 
@@ -1386,104 +967,107 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* by can be any positive integer */
 
 -(void) shiftRightBy: (FGIntBase) by {
-    FGIntOverflow tmpInt, mod = 0, by32Times = by / 32, byMod32 = by % 32;
+    FGIntOverflow tmpInt, mod = 0, by32Times = by / 32, byMod32 = by % 32, length = [number length]/4;
 
     if (by32Times != 0) {
+        FGIntOverflow length = [number length]/4;
         if (by32Times >= length) {
-            [number removeObjectsInRange: NSMakeRange(0, length - 1)];
-            [self setLength: 1];
-            [[number objectAtIndex: 0] setDigit: 0];
+            [number setLength: 0];
+            [number setLength: 4];
         } else {
-            [self setLength: length - by32Times];
-            [number removeObjectsInRange: NSMakeRange(0, by32Times)];
+            FGIntBase* numberArray = [number mutableBytes];
+            NSMutableData *shiftedNumber = [[NSMutableData alloc] initWithBytes: &numberArray[by32Times] length: (length - by32Times)*4];
+            [number release];
+            number = shiftedNumber;
         }
     }
         
     if (byMod32 != 0) {
-        @autoreleasepool{
-            for( id fGIntBase in [number reverseObjectEnumerator] ) {
-                tmpInt = [fGIntBase digit];
-                [fGIntBase setDigit: mod | (tmpInt >> byMod32)];
-                mod = tmpInt << (32 - byMod32);
-            }
+        FGIntOverflow tmpInt, mod = 0, length = [number length]/4;
+        FGIntBase* numberArray = [number mutableBytes];
+
+        for( FGIntIndex i = length - 1; i >= 0; i-- ) {
+            tmpInt = numberArray[i];
+            numberArray[i] = mod | (tmpInt >> byMod32);
+            mod = tmpInt << (32 - byMod32);
         }
-        if (([[number lastObject] digit] == 0) && (length > 1)) {
-            [number removeLastObject];
-            [self setLength: length - 1];
+        if ((numberArray[length - 1] == 0) && (length > 1)) {
+            [number setLength: (length - 1)*4];
         }
     }
 }
 
 
 -(void) shiftLeftBy: (FGIntBase) by {
-    FGIntOverflow tmpInt, mod = 0, by32Times = by / 32, byMod32 = by % 32, i;
+    FGIntOverflow by32Times = by / 32, byMod32 = by % 32, i;
 
-    if (((length != 1) || ([[number objectAtIndex: 0] digit] != 0)) && (by32Times > 0)) {
-        [self setLength: length + by32Times];
-
-        FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: 0], *fGIntBaseCopy;
-    
-        for ( i = 1; i < by32Times; ++i ) {
-            fGIntBaseCopy = [fGIntBase copy];
-            [number insertObject: fGIntBaseCopy atIndex: 0];
-            [fGIntBaseCopy release];
-        }
-        [number insertObject: fGIntBase atIndex: 0];
-        [fGIntBase release];
-    }
-        
     if (byMod32 != 0) {
-        for( id fGIntBase in number ) {
-            tmpInt = [fGIntBase digit];
-            [fGIntBase setDigit: mod | (tmpInt << byMod32)];
+        FGIntOverflow tmpInt, mod = 0, length = [number length]/4;
+        FGIntBase* numberArray = [number mutableBytes];
+
+        for( FGIntIndex i = 0; i < length; i++ ) {
+            tmpInt = numberArray[i];
+            numberArray[i] = mod | (tmpInt << byMod32);
             mod = tmpInt >> (32 - byMod32);
         }
         if (mod != 0) {
-            FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: mod];
-            [number addObject: fGIntBase];
-            [fGIntBase release];
-            [self setLength: length + 1];
+            [number setLength: (length + 1)*4];
+            numberArray = [number mutableBytes];
+            numberArray[length] = mod;
         }
+    }
+
+    FGIntOverflow length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
+    if (((length != 1) || (numberArray[0] != 0)) && (by32Times > 0)) {
+        NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: 4*by32Times];
+        [tmpNumber appendData: number];
+        [number release];
+        number = tmpNumber;
     }
 }
 
 
 -(void) increment {
-    FGIntOverflow mod = 1, tmpMod, i = 0;
-    FGIntNumberBase *tfginb;
-    NSMutableArray *fGIntNumber = number;
+    FGIntOverflow mod = 1, tmpMod, length = [number length]/4;
+    FGIntBase* fGIntNumber = [number mutableBytes];
 
-    for (id fGIntBase in fGIntNumber ) {
-        tmpMod = (FGIntOverflow) [fGIntBase digit] + mod;
-        [fGIntBase setDigit: tmpMod];
+    for( FGIntIndex i = 0; i < length; i++ ) {
+        tmpMod = (FGIntOverflow) fGIntNumber[i] + mod;
+        fGIntNumber[i] = tmpMod;
         mod = tmpMod >> 32;
+        if (mod == 0) {
+            break;
+        }
     }
     
     if (mod != 0) {
-        ++length;
-        tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: (FGIntBase) mod];
-        [number addObject: tfginb];
-        [tfginb release];
+        [number setLength: 4*length + 4];
+        fGIntNumber = [number mutableBytes];
+        fGIntNumber[length] = mod;
     }
 }
 
 -(void) decrement {
-    FGIntOverflow mod = 1, tmpMod, i = 0;
+    FGIntOverflow mod = 1, tmpMod, i = 0, length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
 
-    if ((length > 1) || ([[number objectAtIndex: 0] digit] != 0)) {
-        for (id fGIntBase in number ) {
-            tmpMod = (FGIntOverflow) (4294967296u | [fGIntBase digit]) - mod;
+    if ((length > 1) || (numberArray[0] != 0)) {
+        for ( FGIntIndex i = 0; i < length; i++ ) {
+            tmpMod = (FGIntOverflow) (4294967296u | numberArray[i]) - mod;
             if (tmpMod > 4294967295u) 
                 mod = 0; 
             else 
                 mod = 1;
-            [fGIntBase setDigit: tmpMod];
+            numberArray[i] = tmpMod;
             if (mod == 0)
                 break;
         }
-        while ((length > 1) && ([[number lastObject] digit] == 0)) {
+        while ((length > 1) && (numberArray[length - 1] == 0)) {
             --length;
-            [number removeLastObject];
+        }
+        if (length*4 < [number length]) {
+            [number setLength: length*4];
         }
     } 
 }
@@ -1494,21 +1078,18 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* multiply the self by a 32bit unsigned integer */
 
 -(void) multiplyByInt: (FGIntBase) multInt {
-    FGIntOverflow tmpInt, mod = 0;
-    FGIntBase i;
+    FGIntOverflow tmpInt, mod = 0, length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
 
-    for( id fGIntBase in number ) {
-        tmpInt = (FGIntOverflow) [fGIntBase digit] * multInt;
-        tmpInt += (FGIntOverflow) mod;
-        [fGIntBase setDigit: (FGIntBase) tmpInt];
+    for( FGIntIndex i = 0; i < length; i++ ) {
+        tmpInt = (FGIntOverflow) numberArray[i] * multInt + mod;
+        numberArray[i] = tmpInt;
         mod = tmpInt >> 32;
     }
     if (mod != 0) {
-        FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: mod];
-        [number addObject: fGIntBase];
-        [fGIntBase release];
-        ++length;
-//        [self setLength: [self length] + 1];
+        [number setLength: 4*(length + 1)];
+        numberArray = [number mutableBytes];
+        numberArray[length] = mod;
     }
 }
 
@@ -1516,140 +1097,75 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* replaces self with self - fGInt, assumes that 0 < fGInt < self */
 
 -(void) subtractWith: (FGInt *) fGInt {
-    FGIntBase length1 = [self length], length2 = [fGInt length];
+    FGIntOverflow length1 = [[self number] length]/4, length2 = [[fGInt number] length]/4;
     FGIntOverflow mod = 0, tmpMod, i = 0;
-    FGIntNumberBase *numberBase;
 
-//    if (length2 > length1) {
-//        NSLog(@"Oh-oh, length1 = %u, and length2 is %u and and selfcount is %lu count is %lu",length1, length2,[[self number] count], [[fGInt number] count]);
-//        NSLog(@"the base10 string of  self %@",[self toBase10String]);
-//        NSLog(@"the base10 string of fgint %@",[fGInt toBase10String]);
-//    }
+    FGIntBase* numberArray = [number mutableBytes];
+    FGIntBase* fGIntNumberArray = [[fGInt number] mutableBytes];
 
-//    for( id fGIntBase in [fGInt number] ) {
     for( i = 0; i < length2; ++i ) {
-        numberBase = [number objectAtIndex: i];
-        tmpMod = (FGIntOverflow) (4294967296u | [numberBase digit]) - [[[fGInt number] objectAtIndex: i] digit] - mod;
+        tmpMod = (FGIntOverflow) (4294967296u | numberArray[i]) - fGIntNumberArray[i] - mod;
         if (tmpMod > 4294967295u) mod = 0; else mod = 1;
-        [numberBase setDigit: tmpMod];
+        numberArray[i] = tmpMod;
     }
     for( i = length2; i < length1; ++i ) {
         if (mod == 0)
             break;
-        numberBase = [number objectAtIndex: i];
-        tmpMod = (FGIntOverflow) (4294967296u | [numberBase digit]) - mod;
+        tmpMod = (FGIntOverflow) (4294967296u | numberArray[i]) - mod;
         if (tmpMod > 4294967295u) mod = 0; else mod = 1;
-        [numberBase setDigit: tmpMod];
+        numberArray[i] = tmpMod;
     }
-    while ((length1 > 1) && ([[number lastObject] digit] == 0)) {
+    while ((length1 > 1) && (numberArray[length1 - 1] == 0)) {
         --length1;
-        [number removeLastObject];
     }
-    [self setLength: length1];
+    if (length1*4 < [number length]) {
+        [number setLength: length1*4];
+    }
+    while ((length1 > 1) && (numberArray[length1 - 1] == 0)) {
+        --length1;
+    }
+    if (length1*4 < [number length]) {
+        [number setLength: length1*4];
+    }
 }
-
-//-(void) subtractWith1: (FGInt *) fGInt {
-//    FGIntBase length1 = [self length], length2 = [fGInt length];
-//    FGIntOverflow mod = 0, tmpMod, i = 0;
-//    FGIntNumberBase *numberBase;
-//
-////    if (length2 > length1) {
-////        NSLog(@"Oh-oh, length1 = %u, and length2 is %u and and selfcount is %lu count is %lu",length1, length2,[[self number] count], [[fGInt number] count]);
-////        NSLog(@"the base10 string of  self %@",[self toBase10String]);
-////        NSLog(@"the base10 string of fgint %@",[fGInt toBase10String]);
-////    }
-//    for( id fGIntBase in [fGInt number] ) {
-//        numberBase = [number objectAtIndex: i];
-//        tmpMod = (FGIntOverflow) (4294967296u | [numberBase digit]) - [fGIntBase digit] - mod;
-//        if (tmpMod > 4294967295u) mod = 0; else mod = 1;
-//        [numberBase setDigit: tmpMod];
-//        ++i;
-//    }
-//    for( i = length2; i < length1; ++i ) {
-//        numberBase = [number objectAtIndex: i];
-//        tmpMod = (FGIntOverflow) (4294967296u | [numberBase digit]) - mod;
-//        if (tmpMod > 4294967295u) mod = 0; else mod = 1;
-//        [numberBase setDigit: tmpMod];
-//    }
-//    while ((length1 > 1) && ([[number lastObject] digit] == 0)) {
-//        --length1;
-//        [number removeLastObject];
-//    }
-//    [self setLength: length1];
-//}
-
 
 /* replaces self with self + fGInt */
 
 -(void) addWith: (FGInt *) fGInt {
-    FGIntOverflow length1 = [self length], length2 = [fGInt length], mod = 0, tmpMod, i = 0, minLength = MIN(length1, length2);
-    FGIntNumberBase *tfginb;
-    NSMutableArray *fGIntNumber = [fGInt number];
-    
+    FGIntOverflow length1 = [number length]/4, length2 = [[fGInt number] length]/4, mod = 0, tmpMod, i = 0, minLength = MIN(length1, length2);
+
+    if (length1 < MAX(length1, length2)) {
+        [number setLength: length2*4];
+    }
+
+    FGIntBase* numberArray = [number mutableBytes];
+    FGIntBase* fGIntNumberArray = [[fGInt number] mutableBytes];
+
     for( i = 0; i < minLength; ++i ) {
-        tfginb = [number objectAtIndex: i];
-        tmpMod = (FGIntOverflow) [tfginb digit] + [[fGIntNumber objectAtIndex: i] digit] + mod;
-        [tfginb setDigit: tmpMod];
+        tmpMod = (FGIntOverflow) numberArray[i] + fGIntNumberArray[i] + mod;
+        numberArray[i] = tmpMod;
         mod = tmpMod >> 32;
     }
     for( i = minLength; i < length1; ++i ) {
         if (mod == 0)
             break;
-        tfginb = [number objectAtIndex: i];
-        tmpMod = (FGIntOverflow) [tfginb digit] + mod;
+        tmpMod = (FGIntOverflow) numberArray[i] + mod;
         mod = tmpMod >> 32;
-        [tfginb setDigit: tmpMod];
+        numberArray[i] = tmpMod;
     }
     for( i = minLength; i < length2; ++i ) {
-        tmpMod = (FGIntOverflow) [[fGIntNumber objectAtIndex: i] digit] + mod;
+        tmpMod = (FGIntOverflow) fGIntNumberArray[i] + mod;
+        numberArray[i] = tmpMod;
         mod = tmpMod >> 32;
-        tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: tmpMod];
-        [number addObject: tfginb];
-        [tfginb release];
     }
     
     if (mod != 0) {
-        [self setLength: MAX(length1, length2) + 1];
-        if ([number count] != MAX(length1, length2) + 1) {
-            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: (FGIntBase) mod];
-            [number addObject: tfginb];
-            [tfginb release];
-        }
-        else
-            [[number objectAtIndex: MAX(length1, length2)] setDigit: (FGIntBase) mod];
-    } else
-        [self setLength: MAX(length1, length2)];
+        [number setLength: (MAX(length1, length2) + 1)*4];
+        numberArray = [number mutableBytes];
+        numberArray[MAX(length1, length2)] = mod;
+    }
 }
 
-//-(void) addWith1: (FGInt *) fGInt {
-//    FGIntOverflow length1 = [self length], length2 = [fGInt length], mod = 0, tmpMod, i = 0;
-//    FGIntNumberBase *tfginb;
-//    NSMutableArray *fGIntNumber = [fGInt number];
-//    
-//    for( id fGIntBase in number ) {
-//        tmpMod = (FGIntOverflow) [fGIntBase digit] + ((i < length2) ? [[fGIntNumber objectAtIndex: i] digit] : 0) + mod;
-//        [fGIntBase setDigit: tmpMod];
-//        mod = tmpMod >> 32;
-//        ++i;
-//    }
-//    for( i = length1; i < length2; ++i ) {
-//        tmpMod = (FGIntOverflow) [[fGIntNumber objectAtIndex: i] digit] + mod;
-//        mod = tmpMod >> 32;
-//        tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: (FGIntBase) tmpMod];
-//        [number addObject: tfginb];
-//    }
-//    
-//    if (mod != 0) {
-//        [self setLength: MAX(length1, length2) + 1];
-//        if ([number count] != MAX(length1, length2) + 1) {
-//            tfginb = [[FGIntNumberBase alloc] initWithFGIntBase: (FGIntBase) mod];
-//            [number addObject: tfginb];
-//        }
-//        else
-//            [[number objectAtIndex: MAX(length1, length2)] setDigit: (FGIntBase) mod];
-//    } else
-//        [self setLength: MAX(length1, length2)];
-//}
 
 
 
@@ -1665,56 +1181,61 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     
     FGInt *modFGInt, *resFGInt, *tmpFGInt;
     FGIntBase divInt;
-    FGIntOverflow tmpInt, i, j, k, divisorLength = [divisorFGInt length], tmpFGIntHead1, tmpFGIntHead2, modFGIntLength;
-    FGIntNumberBase *fGIntBase;
+    FGIntOverflow tmpInt, i, j, k, divisorLength = [[divisorFGInt number] length]/4, tmpFGIntHead1, tmpFGIntHead2, modFGIntLength, 
+                length = [[fGInt number] length]/4, tmpFGIntLength;
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
-        j = ([fGInt length] + 1 > divisorLength) ? ([fGInt length] - divisorLength + 1) : 0;
+        j = (length + 1 > divisorLength) ? (length - divisorLength + 1) : 0;
         resFGInt = [[FGInt alloc] initWithNZeroes: j];
-        tmpFGInt = [divisorFGInt copy];
-        modFGInt = [fGInt copy];
+        tmpFGInt = [divisorFGInt mutableCopy];
+        modFGInt = [fGInt mutableCopy];
             
-        NSMutableArray *tmpFGIntNumber = [tmpFGInt number], *modFGIntNumber = [modFGInt number], *resFGIntNumber = [resFGInt number];
+        FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
+        FGIntBase* resFGIntNumber = [[resFGInt number] mutableBytes];
 
-        if (j > 0) 
+        if (j > 0) {
             [tmpFGInt shiftLeftBy32Times: j - 1];
-        tmpFGIntHead1 = ((FGIntOverflow) [[tmpFGIntNumber lastObject] digit] + 1);
-        if ([tmpFGInt length] > 1) {
-            tmpFGIntHead2 = (((FGIntOverflow) [[tmpFGIntNumber lastObject] digit] << 32) + 
-                                      [[tmpFGIntNumber objectAtIndex: [tmpFGInt length] - 2] digit] + 1);
+        }
+
+        FGIntBase* tmpFGIntNumber = [[tmpFGInt number] mutableBytes];
+        tmpFGIntLength = [[tmpFGInt number] length]/4;
+
+        tmpFGIntHead1 = ((FGIntOverflow) tmpFGIntNumber[tmpFGIntLength - 1] + 1);
+        if (tmpFGIntLength > 1) {
+            tmpFGIntHead2 = (((FGIntOverflow) tmpFGIntNumber[tmpFGIntLength - 1] << 32) + 
+                                      tmpFGIntNumber[tmpFGIntLength - 2] + 1);
         } else {
             tmpFGIntHead2 = 0;
         }
 
-        modFGIntLength = [modFGInt length];
+        modFGIntLength = [[modFGInt number] length]/4;
+
         while ([FGInt compareAbsoluteValueOf: modFGInt with: divisorFGInt] != smaller) {
             while ([FGInt compareAbsoluteValueOf: modFGInt with: tmpFGInt] != smaller) {
-                if (modFGIntLength > [tmpFGInt length]) {
-                    divInt = (FGIntOverflow) (((FGIntOverflow) [[modFGIntNumber lastObject] digit] << 32) +
-                                              [[modFGIntNumber objectAtIndex: [modFGInt length] - 2] digit]) /
-                             tmpFGIntHead1;
+                if (modFGIntLength > [[tmpFGInt number] length]/4) {
+                    divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead1;
                 } else {
                     if ((modFGIntLength > 1) && (tmpFGIntHead2 != 0)) {
-                       divInt = (((FGIntOverflow) [[modFGIntNumber lastObject] digit] << 32) +
-                              [[modFGIntNumber objectAtIndex: [modFGInt length] - 2] digit]) / tmpFGIntHead2;
+                        divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead2;
                     } else {
-                        divInt = (FGIntOverflow) ([[modFGIntNumber lastObject] digit]) /
-                                 tmpFGIntHead1;
+                        divInt = (FGIntOverflow) (modFGIntNumber[modFGIntLength - 1]) / tmpFGIntHead1;
                     }
                 }
+                // NSLog(@"kitten %llu and %llu, and %llu", modFGIntLength, [[tmpFGInt number] length]/4, divInt);
+                // NSLog(@"kitten %@ and %@", [modFGInt toBase10String], [tmpFGInt toBase10String]);
                 if (divInt != 0) {
                     [modFGInt subtractWith: tmpFGInt multipliedByInt: divInt];
-                    fGIntBase = [resFGIntNumber objectAtIndex: j - 1];
-                    [fGIntBase setDigit: [fGIntBase digit] + divInt];
+                    resFGIntNumber[j - 1] = resFGIntNumber[j - 1] + divInt;
                 } else {
                     [modFGInt subtractWith: tmpFGInt];
-                    fGIntBase = [resFGIntNumber objectAtIndex: j - 1];
-                    [fGIntBase setDigit: [fGIntBase digit] + 1];
+                    resFGIntNumber[j - 1] = resFGIntNumber[j - 1] + 1;
                 }
-                modFGIntLength = [modFGInt length];
+                modFGIntNumber = [[modFGInt number] mutableBytes];
+                modFGIntLength = [[modFGInt number] length]/4;
             }
-            if (([modFGInt length] <= [tmpFGInt length]) &&
-                ([tmpFGInt length] > divisorLength)) {
+            if ((modFGIntLength <= [[tmpFGInt number] length]/4) && ([[tmpFGInt number] length]/4 > divisorLength)) {
                 [tmpFGInt shiftRightBy32];
                 --j;
             }
@@ -1723,12 +1244,12 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     } else {
         if ([fGInt sign]) {
             resFGInt = [[FGInt alloc] initWithFGIntBase: 0];
-            modFGInt = [fGInt copy];
+            modFGInt = [fGInt mutableCopy];
         } else {
             resFGInt = [[FGInt alloc] initWithFGIntBase: 1];
             if ([divisorFGInt sign])
                 [resFGInt setSign: NO];
-            modFGInt = [divisorFGInt copy];
+            modFGInt = [divisorFGInt mutableCopy];
             [modFGInt makePositive];
             [modFGInt subtractWith: fGInt];
         }
@@ -1739,16 +1260,23 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
         return quotientAndRemainder;
     }
-    while (([resFGInt length] > 1) && ([[[resFGInt number] lastObject] digit] == 0)) {
-        [resFGInt setLength: [resFGInt length] - 1];
-        [[resFGInt number] removeLastObject];
+
+    FGIntOverflow resFGIntLength = [[resFGInt number] length]/4;
+    FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
+    FGIntBase* resFGIntNumber = [[resFGInt number] mutableBytes];
+
+    while ((resFGIntLength > 1) && (resFGIntNumber[resFGIntLength - 1] == 0)) {
+        resFGIntLength--;
+    }
+    if (resFGIntLength*4 < [[resFGInt number] length]) {
+        [[resFGInt number] setLength: resFGIntLength*4];
     }
 
     [resFGInt setSign: [fGInt sign] == [divisorFGInt sign]];
-    if ((![fGInt sign]) && (!(([modFGInt length] == 1) && ([[[modFGInt number] objectAtIndex: 0] digit] == 0)))) {
+    if ((![fGInt sign]) && (!(([[modFGInt number] length]/4 == 1) && (modFGIntNumber[0] == 0)))) {
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1];
         [resFGInt addWith: one];
-        tmpFGInt = [divisorFGInt copy];
+        tmpFGInt = [divisorFGInt mutableCopy];
         [tmpFGInt subtractWith: modFGInt];
         [modFGInt release];
         modFGInt = tmpFGInt;
@@ -1770,15 +1298,15 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) newtonInitialValue: (FGInt *) fGInt precision: (FGIntBase) kZero {
     FGInt *resFGInt, *tmpFGInt, *bFGInt;
-    FGIntBase divInt;
-    FGIntOverflow tmpInt, i, j, k, l, isTwo = 0, divisorLength = [fGInt length], 
-                    tmpFGIntHead1, tmpFGIntHead2, bFGIntLength;
+    FGIntOverflow tmpInt, i, j, k, l, isTwo = 0, divisorLength = [[fGInt number] length]/4, 
+                    tmpFGIntHead1, tmpFGIntHead2, bFGIntLength, tmpFGIntLength, divInt;
     
     k = divisorLength;
-    for ( id fGIntBase in [fGInt number] ) {
-        if ([fGIntBase digit] != 0 ) {
+    FGIntBase* fGIntNumberArray = [[fGInt number] mutableBytes];
+    for ( FGIntIndex i = 0; i < divisorLength; i++ ) {
+        if (fGIntNumberArray[i] != 0 ) {
             for ( l = 0; l <= 31; ++l ) {
-                if (([fGIntBase digit] & (1 << l)) != 0)
+                if ((fGIntNumberArray[i] & (1 << l)) != 0)
                     ++isTwo;
             }
         }
@@ -1788,79 +1316,84 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         j = (FGIntOverflow) ceil( (double) kZero / 32 );
         k = divisorLength + j;
         
-        bFGInt = [[FGInt alloc] initWithNZeroes: k];
-        FGIntNumberBase *fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: 1];
-        [[bFGInt number] addObject: fGIntBase];
-        [fGIntBase release];
-        [bFGInt setLength: k + 1];
+        bFGInt = [[FGInt alloc] initWithNZeroes: 4*(k + 1)];
+        FGIntBase* bFGIntNumber = [[bFGInt number] mutableBytes];
+        bFGIntNumber[k] = 1;
 
-        j = ([bFGInt length] + 1 > divisorLength) ? ([bFGInt length] - divisorLength + 1) : 0;
+        j = (k + 1 > divisorLength) ? (k - divisorLength + 1) : 0;
             
-        tmpFGInt = [fGInt copy];
+        tmpFGInt = [fGInt mutableCopy];
     
-        if (j > 0) 
+        if (j > 0) {
             [tmpFGInt shiftLeftBy32Times: j - 1];
+        }
 
         resFGInt = [[FGInt alloc] initWithNZeroes: j];
 
-        NSMutableArray *resFGIntNumber = [resFGInt number], *bFGIntNumber = [bFGInt number], *tmpFGIntNumber = [tmpFGInt number];
-        tmpFGIntHead1 = ((FGIntOverflow) [[tmpFGIntNumber lastObject] digit] + 1);
-        if ([tmpFGInt length] > 1) {
-            tmpFGIntHead2 = (((FGIntOverflow) [[tmpFGIntNumber lastObject] digit] << 32) + 
-                                      [[tmpFGIntNumber objectAtIndex: [tmpFGInt length] - 2] digit] + 1);
+        FGIntBase* resFGIntNumber = [[resFGInt number] mutableBytes];
+        FGIntBase* tmpFGIntNumber = [[tmpFGInt number] mutableBytes];
+        tmpFGIntLength = [[tmpFGInt number] length]/4;
+        tmpFGIntHead1 = (FGIntOverflow) tmpFGIntNumber[tmpFGIntLength - 1] + 1;
+        if (tmpFGIntLength > 1) {
+            tmpFGIntHead2 = (((FGIntOverflow) tmpFGIntNumber[tmpFGIntLength - 1] << 32) + 
+                                      tmpFGIntNumber[tmpFGIntLength - 2] + 1);
         } else {
             tmpFGIntHead2 = 0;
         }
         
-        bFGIntLength = [bFGInt length];
+        bFGIntLength = k + 1;
         while ([FGInt compareAbsoluteValueOf: bFGInt with: fGInt] != smaller) {
             while ([FGInt compareAbsoluteValueOf: bFGInt with: tmpFGInt] != smaller) {
-                if (bFGIntLength > [tmpFGInt length]) {
-                    divInt = (FGIntOverflow) (((FGIntOverflow) [[bFGIntNumber lastObject] digit] << 32) +
-                                              [[bFGIntNumber objectAtIndex: [bFGInt length] - 2] digit]) /
-                             tmpFGIntHead1;
+                if (bFGIntLength > tmpFGIntLength) {
+                    divInt = (FGIntOverflow) (((FGIntOverflow) bFGIntNumber[bFGIntLength - 1] << 32) +
+                                              bFGIntNumber[bFGIntLength - 2]) / tmpFGIntHead1;
                 } else {
                     if ((bFGIntLength > 1) && (tmpFGIntHead2 != 0)) {
-                       divInt = (((FGIntOverflow) [[bFGIntNumber lastObject] digit] << 32) +
-                              [[bFGIntNumber objectAtIndex: [bFGInt length] - 2] digit]) / tmpFGIntHead2;
+                       divInt = (((FGIntOverflow) bFGIntNumber[bFGIntLength - 1] << 32) +
+                              bFGIntNumber[bFGIntLength - 2]) / tmpFGIntHead2;
                     } else {
-                        divInt = (FGIntOverflow) ([[bFGIntNumber lastObject] digit]) /
+                        divInt = (FGIntOverflow) (bFGIntNumber[bFGIntLength - 1]) /
                                  tmpFGIntHead1;
                     }
                 }
                 if (divInt != 0) {
                     [bFGInt subtractWith: tmpFGInt multipliedByInt: divInt];
-                    fGIntBase = [resFGIntNumber objectAtIndex: j - 1];
-                    [fGIntBase setDigit: [fGIntBase digit] + divInt];
+                    resFGIntNumber[j - 1] = resFGIntNumber[j - 1] + divInt;
                 } else {
                     [bFGInt subtractWith: tmpFGInt];
-                    fGIntBase = [resFGIntNumber objectAtIndex: j - 1];
-                    [fGIntBase setDigit: [fGIntBase digit] + 1];
+                    resFGIntNumber[j - 1] = resFGIntNumber[j - 1] + 1;
                 }
-                bFGIntLength = [bFGInt length];
+                bFGIntLength = [[bFGInt number] length]/4;
+                bFGIntNumber = [[bFGInt number] mutableBytes];
             }
-            if ((bFGIntLength <= [tmpFGInt length]) && ([tmpFGInt length] > divisorLength)) {
+            if ((bFGIntLength <= tmpFGIntLength) && (tmpFGIntLength > divisorLength)) {
                 [tmpFGInt shiftRightBy32];
                 --j;
+                --tmpFGIntLength;
             }
         }
 
-    
-        while (([resFGInt length] > 1) && ([[[resFGInt number] lastObject] digit] == 0)) {
-            [resFGInt setLength: [resFGInt length] - 1];
-            [resFGIntNumber removeLastObject];
+        FGIntOverflow resFGIntLength = [[resFGInt number] length]/4;
+        while ((resFGIntLength > 1) && (resFGIntNumber[resFGIntLength - 1] == 0)) {
+            --resFGIntLength;
+        }
+        if (resFGIntLength*4 < [[resFGInt number] length]) {
+            [[resFGInt number] setLength: resFGIntLength*4];
+            resFGIntNumber = [[resFGInt number] mutableBytes];
         }
     
         j = kZero + 1; 
 
-        i = 32 * ([resFGInt length] - 1);
-        while (([[resFGIntNumber lastObject] digit] >> i) != 0)
+        i = 32 * (resFGIntLength - 1);
+        while ((resFGIntNumber[resFGIntLength - 1] >> i) != 0) {
             ++i;
+        }
 
-        if (i > j) 
+        if (i > j) {
             [resFGInt shiftRightBy: i - j];
-        else 
+        } else {
             [resFGInt shiftLeftBy: j - i];
+        }
 
         [bFGInt release];
         [tmpFGInt release];
@@ -1881,44 +1414,45 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
               vRadix, zRadix, zSquareRadix, tRadix, sRadix, vIndex, correction = 0;
     NSMutableArray *kValues = [[NSMutableArray alloc] init];      
 
-    vFGInt = [fGInt copy];
-    vLength = [vFGInt length];
-    while ([[[vFGInt number] lastObject] digit] < 2147483648)
-        [vFGInt shiftLeft];
+    vFGInt = [fGInt mutableCopy];
+    vLength = [[vFGInt number] length]/4;
+    i = 0;
+    FGIntBase* vFGIntNumber = [[vFGInt number] mutableBytes];
+    FGIntBase tmpInt = vFGIntNumber[vLength - 1];
+    while ((tmpInt << i) < 2147483648) {
+        ++i;
+    }
+    [vFGInt shiftLeftBy: i];
 
 
-    FGIntNumberBase *fGIntBase;
     while (k > baseCaseLength) {
         k = (FGIntOverflow) ceil( (double) k / 2);
-        fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: k];
-        [kValues insertObject: fGIntBase atIndex: 0];
-        [fGIntBase release];
+        [kValues insertObject: [NSNumber numberWithInteger: k] atIndex: 0];
     }
     z = [FGInt newtonInitialValue: vFGInt precision: k];
     zRadix = k;
-    tFGInt = [[FGInt alloc] init];
     vIndex = 0;
     tRadix = 0;
+    tFGInt = [[FGInt alloc] init];
     
-    NSMutableArray *tFGIntNumber = [tFGInt number], *vFGIntNumber = [vFGInt number];
-    fGIntBase = [[FGIntNumberBase alloc] initWithFGIntBase: 0];
-
-    for ( i = 0; i < [kValues count]; ++i ) {
-        k = [[kValues objectAtIndex: i] digit];
+    for ( id kValue in kValues ) {
+        k = [kValue longLongValue];
         zSquare = [FGInt square: z];
         zSquareRadix = zRadix * 2;
 
-
-        while (tRadix < 2*k + 3) {
-            if (vLength > vIndex) {
-                [tFGIntNumber insertObject: [vFGIntNumber objectAtIndex: vLength - 1 - vIndex] atIndex: 0];
-            } else {
-                [tFGIntNumber insertObject: fGIntBase atIndex: 0];
-            }
-            ++vIndex;
+        tRadix = 32 * ((2*k + 3) / 32);
+        if ((2*k + 3) % 32 != 0) {
             tRadix += 32;
         }
-        [tFGInt setLength: tRadix / 32];
+        [tFGInt release];
+        tFGInt = [[FGInt alloc] initWithoutNumber];
+        if (tRadix/32 <= vLength) {
+            [tFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &vFGIntNumber[vLength - tRadix/32] length: tRadix/8 freeWhenDone: NO]];
+        } else {
+            [tFGInt setNumber: [[NSMutableData alloc] initWithLength: tRadix/8 - vLength*4]];
+            [[tFGInt number] appendData: [vFGInt number]];
+        }
+
         h = tRadix - 2*k - 3;
         uFGInt = [FGInt multiply: tFGInt and: zSquare];
         [zSquare release];
@@ -1936,14 +1470,12 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         [z subtractWith: uFGInt];
         [uFGInt release];
     }
-    [fGIntBase release];
 
     if (zRadix > precision) 
         [z shiftRightBy: zRadix - precision];
     [z setSign: YES];
 
     [kValues release];
-    [tFGInt release];
     [vFGInt release];
     return z;    
 }
@@ -1954,7 +1486,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     NSMutableDictionary *quotientAndRemainder = [[NSMutableDictionary alloc] init];
     FGInt *modFGInt = [[FGInt alloc] init], *resFGInt = [[FGInt alloc] init], *tmpFGInt = [[FGInt alloc] init], 
           *fGIntCopy, *divisorCopy;
-    FGIntOverflow tmpInt, i, j, k, m = ([fGInt length] - 1) * 32, n = ([divisorFGInt length] - 1) * 32;
+    FGIntOverflow i, j, k, m = ([[fGInt number] length] - 4) * 8, n = ([[divisorFGInt number] length] - 4) * 8;
     BOOL mnCorrect = NO, fGIntSign = [fGInt sign], divisorSign = [divisorFGInt sign];
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
@@ -1962,22 +1494,25 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         [fGInt setSign: YES];
         [divisorFGInt setSign: YES];    
             
-        NSMutableArray *fGIntNumber = [fGInt number], *divisorFGIntNumber = [divisorFGInt number];
-                
+        FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
+        FGIntBase* divisorFGIntNumber = [[divisorFGInt number] mutableBytes];
+        
+        FGIntBase tmpInt = fGIntNumber[[[fGInt number] length]/4 - 1];
         for ( i = 0; i < 32; ++i ) {
-            if (([[fGIntNumber lastObject] digit] >> i) == 0) 
+            if ((tmpInt >> i) == 0) 
                 break;
             ++m;
         }
+        tmpInt = divisorFGIntNumber[[[divisorFGInt number] length]/4 - 1];
         for ( i = 0; i < 32; ++i ) {
-            if (([[divisorFGIntNumber lastObject] digit] >> i) == 0) 
+            if ((tmpInt >> i) == 0) 
                 break;
             ++n;
         }
         
         if (m > 2*n) {
-            fGIntCopy = [fGInt copy];
-            divisorCopy = [divisorFGInt copy];
+            fGIntCopy = [fGInt mutableCopy];
+            divisorCopy = [divisorFGInt mutableCopy];
             mnCorrect = YES;
         }
         
@@ -1997,22 +1532,22 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
         invertedDivisor = [FGInt newtonInversion: divisorFGInt withPrecision: m - n];
 
-        tmpFGInt = [fGInt copy];
+        tmpFGInt = [fGInt mutableCopy];
         i = n - 1;
-        if (i > 0) 
+        if (i > 0) {
             [tmpFGInt shiftRightBy: i];
+        }
         resFGInt = [FGInt multiply: tmpFGInt and: invertedDivisor];
         [tmpFGInt release];
 
         i = m - n + 1;
-        if (i > 0) 
+        if (i > 0) {
             [resFGInt shiftRightBy: i];
+        }
         
         if (mnCorrect) {
             [fGInt setNumber: [fGIntCopy number]];
-            [fGInt setLength: [fGIntCopy length]];
             [divisorFGInt setNumber: [divisorCopy number]];
-            [divisorFGInt setLength: [divisorCopy length]];
         }
         [fGInt setSign: fGIntSign];
         [divisorFGInt setSign: divisorSign];
@@ -2052,13 +1587,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     } else {
         if ([fGInt sign]) {
             resFGInt = [[FGInt alloc] initWithFGIntBase: 0];
-            modFGInt = [fGInt copy];
+            modFGInt = [fGInt mutableCopy];
         } else {
-            if ([divisorFGInt sign])
-                resFGInt = [[FGInt alloc] initWithBase10String: @"-1"];
-            else
-                resFGInt = [[FGInt alloc] initWithFGIntBase: 1];
-            modFGInt = [divisorFGInt copy];
+            resFGInt = [[FGInt alloc] initWithFGIntBase: 1];
+            if ([divisorFGInt sign]) {
+                [resFGInt setSign: NO];
+            }
+            modFGInt = [divisorFGInt mutableCopy];
             [modFGInt makePositive];
             [modFGInt subtractWith: fGInt];
         }
@@ -2072,31 +1607,36 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 +(FGInt *) barrettMod: (FGInt *) fGInt by: (FGInt *) divisorFGInt {
-    FGInt *modFGInt, *resFGInt, *tmpFGInt, *fGIntCopy, *divisorCopy;
-    FGIntOverflow tmpInt, i, j, k, m = ([fGInt length] - 1) * 32, n = ([divisorFGInt length] - 1) * 32;
+    NSMutableDictionary *quotientAndRemainder = [[NSMutableDictionary alloc] init];
+    FGInt *modFGInt = [[FGInt alloc] init], *resFGInt = [[FGInt alloc] init], *tmpFGInt = [[FGInt alloc] init], 
+          *fGIntCopy, *divisorCopy;
+    FGIntOverflow i, j, k, m = ([[fGInt number] length] - 4) * 8, n = ([[divisorFGInt number] length] - 4) * 8;
     BOOL mnCorrect = NO, fGIntSign = [fGInt sign], divisorSign = [divisorFGInt sign];
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
-        FGInt *invertedDivisor = [[FGInt alloc] init], *one;
+        FGInt *invertedDivisor, *one;
         [fGInt setSign: YES];
         [divisorFGInt setSign: YES];    
             
-        NSMutableArray *fGIntNumber = [fGInt number], *divisorFGIntNumber = [divisorFGInt number];
-                
+        FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
+        FGIntBase* divisorFGIntNumber = [[divisorFGInt number] mutableBytes];
+        
+        FGIntBase tmpInt = fGIntNumber[[[fGInt number] length]/4 - 1];
         for ( i = 0; i < 32; ++i ) {
-            if (([[fGIntNumber lastObject] digit] >> i) == 0) 
+            if ((tmpInt >> i) == 0) 
                 break;
             ++m;
         }
+        tmpInt = divisorFGIntNumber[[[divisorFGInt number] length]/4 - 1];
         for ( i = 0; i < 32; ++i ) {
-            if (([[divisorFGIntNumber lastObject] digit] >> i) == 0) 
+            if ((tmpInt >> i) == 0) 
                 break;
             ++n;
         }
         
         if (m > 2*n) {
-            fGIntCopy = [fGInt copy];
-            divisorCopy = [divisorFGInt copy];
+            fGIntCopy = [fGInt mutableCopy];
+            divisorCopy = [divisorFGInt mutableCopy];
             mnCorrect = YES;
         }
         
@@ -2116,26 +1656,26 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
         invertedDivisor = [FGInt newtonInversion: divisorFGInt withPrecision: m - n];
 
-        tmpFGInt = [fGInt copy];
+        tmpFGInt = [fGInt mutableCopy];
         i = n - 1;
-        if (i > 0) 
+        if (i > 0) {
             [tmpFGInt shiftRightBy: i];
+        }
         resFGInt = [FGInt multiply: tmpFGInt and: invertedDivisor];
         [tmpFGInt release];
 
         i = m - n + 1;
-        if (i > 0) 
+        if (i > 0) {
             [resFGInt shiftRightBy: i];
+        }
         
         if (mnCorrect) {
             [fGInt setNumber: [fGIntCopy number]];
-            [fGInt setLength: [fGIntCopy length]];
             [divisorFGInt setNumber: [divisorCopy number]];
-            [divisorFGInt setLength: [divisorCopy length]];
         }
-        
         [fGInt setSign: fGIntSign];
         [divisorFGInt setSign: divisorSign];
+
         tmpFGInt = [FGInt multiply: divisorFGInt and: resFGInt];
         modFGInt = [FGInt subtract: fGInt and: tmpFGInt];
         [tmpFGInt release];
@@ -2151,19 +1691,20 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             }
         }
         if (!fGIntSign) {
-            tmpFGInt = [FGInt subtract: divisorFGInt and: modFGInt];
-            [modFGInt release];
-            modFGInt = tmpFGInt;
+                modFGInt = [FGInt subtract: divisorFGInt and: modFGInt];
         }
 
         [invertedDivisor release];
+        [one release];
         
+        [resFGInt release];
+
         return modFGInt;
     } else {
         if ([fGInt sign])
-            return [fGInt copy];
+            return [fGInt mutableCopy];
         else {
-            modFGInt = [divisorFGInt copy];
+            modFGInt = [divisorFGInt mutableCopy];
             [modFGInt makePositive];
             [modFGInt subtractWith: fGInt];
             return modFGInt;
@@ -2176,116 +1717,84 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 -(void) subtractWith: (FGInt *) fGInt multipliedByInt: (FGIntBase) multInt {
-    FGIntBase length1 = [self length], length2 = [fGInt length];
-    FGIntOverflow mod = 0, tmpMod, i = 0, mMod = 0, mTmpMod;
-    FGIntNumberBase *numberBase;
+    FGIntOverflow length1 = [number length]/4, length2 = [[fGInt number] length]/4;
+    FGIntOverflow mod = 0, tmpMod, mMod = 0, mTmpMod;
 
-//    if (length2 > length1) {
-//        NSLog(@"Oh-oh, length1 = %u, and length2 is %u and count is %lu",length1, length2, [[fGInt number] count]);
-//        NSLog(@"the base10 string of  self %@",[self toBase10String]);
-//        NSLog(@"the base10 string of fgint %@",[fGInt toBase10String]);
-//    }
-    for( id fGIntBase in [fGInt number] ) {
-        mTmpMod = (FGIntOverflow) [fGIntBase digit] * multInt + mMod;
+   // if (length2 > length1) {
+   //     NSLog(@"Oh-oh, length1 = %lu, and length2 is %lu",length1, length2);
+   //     NSLog(@"the base10 string of  self %@",[self toBase10String]);
+   //     NSLog(@"the base10 string of fgint %@",[fGInt toBase10String]);
+   // }
+    FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
+    FGIntBase* numberArray = [number mutableBytes];
+
+    for( FGIntIndex i = 0; i < length2; i++ ) {
+        mTmpMod = (FGIntOverflow) fGIntNumber[i] * multInt + mMod;
         mMod = mTmpMod >> 32;
-        numberBase = [number objectAtIndex: i];
-        tmpMod = (FGIntOverflow) (4294967296u | [numberBase digit]) - (mTmpMod & 4294967295u) - mod;
+        tmpMod = (FGIntOverflow) (4294967296u | numberArray[i]) - (mTmpMod & 4294967295u) - mod;
         mod = (tmpMod > 4294967295u) ?  0 : 1;
-        [numberBase setDigit: tmpMod];
-        ++i;
+        numberArray[i] = tmpMod;
     }
-    for( i = length2; i < length1; ++i ) {
-        if ((mod == 0) && (mMod == 0))
+    for( FGIntIndex i = length2; i < length1; i++ ) {
+        if ((mod == 0) && (mMod == 0)) {
             break;
-        numberBase = [number objectAtIndex: i];
-        tmpMod = (FGIntOverflow) (4294967296u | [numberBase digit]) - mMod - mod;
+        }
+        tmpMod = (FGIntOverflow) (4294967296u | numberArray[i]) - mMod - mod;
         mMod >>= 32;
         mod = (tmpMod > 4294967295u) ?  0 : 1;
-        [numberBase setDigit: tmpMod];
+        numberArray[i] = tmpMod;
     }
-    while ((length1 > 1) && ([[number lastObject] digit] == 0)) {
+    while ((length1 > 1) && (numberArray[length1 - 1] == 0)) {
         --length1;
-        [number removeLastObject];
     }
-    [self setLength: length1];
+    if (length1*4 < [number length]) {
+        [number setLength: length1*4];
+    }
 }
-
-
--(void) subtractWith1: (FGInt *) fGInt multipliedByInt: (FGIntBase) multInt {
-    FGIntBase length1 = [self length], length2 = [fGInt length];
-    FGIntOverflow mod = 0, tmpMod, i = 0, mMod = 0, mTmpMod;
-    FGIntNumberBase *numberBase;
-    NSMutableArray *fGIntNumber = [fGInt number];
-//    if (length2 > length1) {
-//        NSLog(@"Oh-oh, length1 = %u, and length2 is %u and count is %lu",length1, length2, [[fGInt number] count]);
-//        NSLog(@"the base10 string of  self %@",[self toBase10String]);
-//        NSLog(@"the base10 string of fgint %@",[fGInt toBase10String]);
-//    }
-
-//    for( id fGIntBase in [fGInt number] ) {
-    for( i = 0; i < length2; ++i ) {
-        mTmpMod = (FGIntOverflow) [[fGIntNumber objectAtIndex: i] digit] * multInt + mMod;
-        mMod = mTmpMod >> 32;
-        numberBase = [number objectAtIndex: i];
-        tmpMod = (FGIntOverflow) (4294967296u | [numberBase digit]) - (mTmpMod & 4294967295u) - mod;
-        mod = (tmpMod > 4294967295u) ?  0 : 1;
-        [numberBase setDigit: tmpMod];
-//        ++i;
-    }
-    for( i = length2; i < length1; ++i ) {
-        if ((mod == 0) && (mMod == 0))
-            break;
-        numberBase = [number objectAtIndex: i];
-        tmpMod = (FGIntOverflow) (4294967296u | [numberBase digit]) - mMod - mod;
-        mMod >>= 32;
-        mod = (tmpMod > 4294967295u) ?  0 : 1;
-        [numberBase setDigit: tmpMod];
-    }
-    while ((length1 > 1) && ([[number lastObject] digit] == 0)) {
-        --length1;
-        [number removeLastObject];
-    }
-    [self setLength: length1];
-}
-
 
 
 +(FGInt *) longDivisionMod: (FGInt *) fGInt by: (FGInt *) divisorFGInt {
     FGInt *modFGInt, *tmpFGInt;
     FGIntBase divInt;
-    FGIntOverflow tmpInt, i, j, k, divisorLength = [divisorFGInt length], tmpFGIntHead1, tmpFGIntHead2, modFGIntLength;
-
+    FGIntOverflow tmpInt, i, j, k, divisorLength = [[divisorFGInt number] length]/4, tmpFGIntHead1, tmpFGIntHead2, modFGIntLength, 
+                length = [[fGInt number] length]/4, tmpFGIntLength;
+    
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
-        j = ([fGInt length] + 1 > divisorLength) ? ([fGInt length] - divisorLength + 1) : 0;
-        tmpFGInt = [divisorFGInt copy];
-        modFGInt = [fGInt copy];
+        j = (length + 1 > divisorLength) ? (length - divisorLength + 1) : 0;
+        tmpFGInt = [divisorFGInt mutableCopy];
+        modFGInt = [fGInt mutableCopy];
             
-        if (j > 0) 
-            [tmpFGInt shiftLeftBy32Times: j - 1];
+        FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
 
-        NSMutableArray *tmpFGIntNumber = [tmpFGInt number], *modFGIntNumber = [modFGInt number];
-        tmpFGIntHead1 = ((FGIntOverflow) [[tmpFGIntNumber lastObject] digit] + 1);
-        if ([tmpFGInt length] > 1) {
-            tmpFGIntHead2 = (((FGIntOverflow) [[tmpFGIntNumber lastObject] digit] << 32) + 
-                                      [[tmpFGIntNumber objectAtIndex: [tmpFGInt length] - 2] digit] + 1);
+        if (j > 0) {
+            [tmpFGInt shiftLeftBy32Times: j - 1];
+        }
+
+        FGIntBase* tmpFGIntNumber = [[tmpFGInt number] mutableBytes];
+        tmpFGIntLength = [[tmpFGInt number] length]/4;
+
+        tmpFGIntHead1 = ((FGIntOverflow) tmpFGIntNumber[tmpFGIntLength - 1] + 1);
+        if (tmpFGIntLength > 1) {
+            tmpFGIntHead2 = (((FGIntOverflow) tmpFGIntNumber[tmpFGIntLength - 1] << 32) + 
+                                      tmpFGIntNumber[tmpFGIntLength - 2] + 1);
         } else {
             tmpFGIntHead2 = 0;
         }
-        
-        modFGIntLength = [modFGInt length];
+
+        modFGIntLength = [[modFGInt number] length]/4;
+
+
         while ([FGInt compareAbsoluteValueOf: modFGInt with: divisorFGInt] != smaller) {
             while ([FGInt compareAbsoluteValueOf: modFGInt with: tmpFGInt] != smaller) {
-                if ([modFGInt length] > [tmpFGInt length]) {
-                    divInt = (FGIntOverflow) (((FGIntOverflow) [[modFGIntNumber lastObject] digit] << 32) +
-                                              [[modFGIntNumber objectAtIndex: [modFGInt length] - 2] digit]) /
-                             tmpFGIntHead1;
+                if (modFGIntLength > [[tmpFGInt number] length]/4) {
+                    divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead1;
                 } else {
                     if ((modFGIntLength > 1) && (tmpFGIntHead2 != 0)) {
-                       divInt = (((FGIntOverflow) [[modFGIntNumber lastObject] digit] << 32) +
-                              [[modFGIntNumber objectAtIndex: [modFGInt length] - 2] digit]) / tmpFGIntHead2;
+                        divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead2;
                     } else {
-                        divInt = (FGIntOverflow) ([[modFGIntNumber lastObject] digit]) /
-                                 tmpFGIntHead1;
+                        divInt = (FGIntOverflow) (modFGIntNumber[modFGIntLength - 1]) / tmpFGIntHead1;
                     }
                 }
                 if (divInt != 0) {
@@ -2293,25 +1802,37 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 } else {
                     [modFGInt subtractWith: tmpFGInt];
                 }
-                modFGIntLength = [modFGInt length];
+                modFGIntNumber = [[modFGInt number] mutableBytes];
+                modFGIntLength = [[modFGInt number] length]/4;
             }
-            if (([modFGInt length] <= [tmpFGInt length]) &&
-                ([tmpFGInt length] > divisorLength)) {
+            if ((modFGIntLength <= [[tmpFGInt number] length]/4) && ([[tmpFGInt number] length]/4 > divisorLength)) {
                 [tmpFGInt shiftRightBy32];
+                --j;
             }
         }
         [tmpFGInt release];
-    } 
-    else {
-        modFGInt = [fGInt copy];
+    } else {
+        if ([fGInt sign]) {
+            modFGInt = [fGInt mutableCopy];
+        } else {
+            modFGInt = [divisorFGInt mutableCopy];
+            [modFGInt makePositive];
+            [modFGInt subtractWith: fGInt];
+        }
+        
+        return modFGInt;
     }
-    if ((![fGInt sign]) && (!(([modFGInt length] == 1) && ([[[modFGInt number] objectAtIndex: 0] digit] == 0)))) {
-        tmpFGInt = [divisorFGInt copy];
+
+    FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
+
+    if ((![fGInt sign]) && (!(([[modFGInt number] length]/4 == 1) && (modFGIntNumber[0] == 0)))) {
+        tmpFGInt = [divisorFGInt mutableCopy];
         [tmpFGInt subtractWith: modFGInt];
         [modFGInt release];
         modFGInt = tmpFGInt;
         [modFGInt setSign: YES];
     }
+    
     return modFGInt;
 }
 
@@ -2319,39 +1840,45 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 +(FGInt *) longDivisionModBis: (FGInt *) fGInt by: (FGInt *) divisorFGInt {
     FGInt *modFGInt, *tmpFGInt;
     FGIntBase divInt;
-    FGIntOverflow tmpInt, i, j, k, divisorLength = [divisorFGInt length], modFGIntLength, tmpFGIntHead1, tmpFGIntHead2;
-
+    FGIntOverflow tmpInt, i, j, k, divisorLength = [[divisorFGInt number] length]/4, tmpFGIntHead1, tmpFGIntHead2, modFGIntLength, 
+                length = [[fGInt number] length]/4, tmpFGIntLength;
+    
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
-        j = ([fGInt length] + 1 > divisorLength) ? ([fGInt length] - divisorLength + 1) : 0;
-        tmpFGInt = [divisorFGInt copy];
+        j = (length + 1 > divisorLength) ? (length - divisorLength + 1) : 0;
+        tmpFGInt = [divisorFGInt mutableCopy];
         modFGInt = fGInt;
             
-        if (j > 0) 
-            [tmpFGInt shiftLeftBy32Times: j - 1];
+        FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
 
-        NSMutableArray *tmpFGIntNumber = [tmpFGInt number], *modFGIntNumber = [modFGInt number];
-        tmpFGIntHead1 = ((FGIntOverflow) [[tmpFGIntNumber lastObject] digit] + 1);
-        if ([tmpFGInt length] > 1) {
-            tmpFGIntHead2 = (((FGIntOverflow) [[tmpFGIntNumber lastObject] digit] << 32) + 
-                                      [[tmpFGIntNumber objectAtIndex: [tmpFGInt length] - 2] digit] + 1);
+        if (j > 0) {
+            [tmpFGInt shiftLeftBy32Times: j - 1];
+        }
+
+        tmpFGIntLength = [[tmpFGInt number] length]/4;
+        NSMutableData *retainTmpFGInt = [[tmpFGInt number] retain];
+        FGIntBase* tmpFGIntNumber = [retainTmpFGInt mutableBytes];
+
+        tmpFGIntHead1 = ((FGIntOverflow) tmpFGIntNumber[tmpFGIntLength - 1] + 1);
+        if (tmpFGIntLength > 1) {
+            tmpFGIntHead2 = (((FGIntOverflow) tmpFGIntNumber[tmpFGIntLength - 1] << 32) + 
+                                      tmpFGIntNumber[tmpFGIntLength - 2] + 1);
         } else {
             tmpFGIntHead2 = 0;
         }
-        
+
+        modFGIntLength = [[modFGInt number] length]/4;
+        i = 0;
         while ([FGInt compareAbsoluteValueOf: modFGInt with: divisorFGInt] != smaller) {
-            modFGIntLength = [modFGInt length];
             while ([FGInt compareAbsoluteValueOf: modFGInt with: tmpFGInt] != smaller) {
-                if (modFGIntLength > [tmpFGInt length]) {
-                    divInt = (FGIntOverflow) (((FGIntOverflow) [[modFGIntNumber lastObject] digit] << 32) +
-                                              [[modFGIntNumber objectAtIndex: modFGIntLength - 2] digit]) /
-                             tmpFGIntHead1;
+                if (modFGIntLength > tmpFGIntLength) {
+                    divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead1;
                 } else {
                     if ((modFGIntLength > 1) && (tmpFGIntHead2 != 0)) {
-                       divInt = (((FGIntOverflow) [[modFGIntNumber lastObject] digit] << 32) +
-                              [[modFGIntNumber objectAtIndex: [modFGInt length] - 2] digit]) / tmpFGIntHead2;
+                        divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead2;
                     } else {
-                        divInt = (FGIntOverflow) ([[modFGIntNumber lastObject] digit]) /
-                                 tmpFGIntHead1;
+                        divInt = (FGIntOverflow) (modFGIntNumber[modFGIntLength - 1]) / tmpFGIntHead1;
                     }
                 }
                 if (divInt != 0) {
@@ -2359,22 +1886,28 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 } else {
                     [modFGInt subtractWith: tmpFGInt];
                 }
-                modFGIntLength = [modFGInt length];
+                modFGIntNumber = [[modFGInt number] mutableBytes];
+                modFGIntLength = [[modFGInt number] length]/4;
             }
-            if ((modFGIntLength <= [tmpFGInt length]) &&
-                ([tmpFGInt length] > divisorLength)) {
-                [tmpFGInt shiftRightBy32];
+            if ((modFGIntLength <= tmpFGIntLength) && (tmpFGIntLength > divisorLength)) {
+                ++i;
+                --tmpFGIntLength;
+                [[tmpFGInt number] release];
+                [tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &tmpFGIntNumber[i] length: tmpFGIntLength*4 freeWhenDone: NO]];
+                // tmpFGIntNumber = [[tmpFGInt number] mutableBytes];
             }
         }
         [tmpFGInt release];
+        [retainTmpFGInt release];
     } else {
         if ([fGInt sign])
             return fGInt;
         else 
             modFGInt = fGInt;
     }
-    if ((![fGInt sign]) && (!(([modFGInt length] == 1) && ([[[modFGInt number] objectAtIndex: 0] digit] == 0)))) {
-        tmpFGInt = [divisorFGInt copy];
+    FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
+    if ((![fGInt sign]) && (!(([[modFGInt number] length]/4 == 1) && (modFGIntNumber[0] == 0)))) {
+        tmpFGInt = [divisorFGInt mutableCopy];
         [tmpFGInt subtractWith: modFGInt];
         [modFGInt release];
         modFGInt = tmpFGInt;
@@ -2398,29 +1931,22 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
 
-        tmpFGInt = [[FGInt alloc] init];
-        NSMutableArray *tmpFGIntNumber = [tmpFGInt number], *fGIntNumber = [fGInt number];
-        FGIntNumberBase *fGIntBaseCopy;
+        tmpFGInt = [[FGInt alloc] initWithoutNumber];
+        FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
         i = precision - 1;
         j = i / 32;
         k = 0;
-        for ( id fGIntBase in fGIntNumber ) {
-            ++k;
-            if (k > j) {
-                fGIntBaseCopy = [fGIntBase copy];
-                [tmpFGIntNumber addObject: fGIntBaseCopy];
-                [fGIntBaseCopy release];
-            }
-        }
-        [tmpFGInt setLength: [tmpFGIntNumber count]];
+        [tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &fGIntNumber[j] length: [[fGInt number] length] - j*4 freeWhenDone: NO]];
         j = i % 32;
-        if (j > 0) 
+        if (j > 0) {
             [tmpFGInt shiftRightBy: j];
+        }
         resFGInt = [FGInt multiply: tmpFGInt and: invertedDivisor];
         [tmpFGInt release];
         i = precision + 1;
-        if (i > 0) 
+        if (i > 0) {
             [resFGInt shiftRightBy: i];
+        }
         
         tmpFGInt = [FGInt multiply: divisorFGInt and: resFGInt];
         [resFGInt release];
@@ -2439,7 +1965,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         
         return modFGInt;
     } else 
-        return [fGInt copy];
+        return [fGInt mutableCopy];
 }
 
 
@@ -2449,30 +1975,22 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
 
-        tmpFGInt = [[FGInt alloc] init];
-        NSMutableArray *tmpFGIntNumber = [tmpFGInt number], *fGIntNumber = [fGInt number];
-        FGIntNumberBase *fGIntBaseCopy;
+        tmpFGInt = [[FGInt alloc] initWithoutNumber];
+        FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
         i = precision - 1;
         j = i / 32;
         k = 0;
-        for ( id fGIntBase in fGIntNumber ) {
-            ++k;
-            if (k > j) {
-                fGIntBaseCopy = [fGIntBase copy];
-                [tmpFGIntNumber addObject: fGIntBaseCopy];
-                [fGIntBaseCopy release];
-            }
-        }
-        [tmpFGInt setLength: [tmpFGIntNumber count]];
+        [tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: &fGIntNumber[j] length: [[fGInt number] length] - j*4 freeWhenDone: NO]];
         j = i % 32;
-        if (j > 0) 
+        if (j > 0) {
             [tmpFGInt shiftRightBy: j];
-                
+        }
         resFGInt = [FGInt multiply: tmpFGInt and: invertedDivisor];
         [tmpFGInt release];
         i = precision + 1;
-        if (i > 0) 
+        if (i > 0) {
             [resFGInt shiftRightBy: i];
+        }
         
         modFGInt = [FGInt multiply: divisorFGInt and: resFGInt];
         [resFGInt release];
@@ -2511,26 +2029,26 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) raise: (FGInt *) fGInt toThePower: (FGInt *) fGIntN barrettMod: (FGInt *) modFGInt {
     FGInt *power = [[FGInt alloc] initWithFGIntBase: 1];
-    FGIntOverflow nLength = [fGIntN length], i, j, precision = ([modFGInt length] - 1) * 32;
+    FGIntOverflow nLength = [[fGIntN number] length]/4, precision = ([[modFGInt number] length]/4 - 1) * 32;
     FGIntBase tmp;
     FGInt *tmpFGInt1, *tmpFGInt;
-    NSMutableArray *modFGIntNumber = [modFGInt number], *nFGIntNumber = [fGIntN number];
+    FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
+    FGIntBase* nFGIntNumber = [[fGIntN number] mutableBytes];
     
-    for ( i = 0; i < 32; ++i ) {
-        if (([[modFGIntNumber lastObject] digit] >> i) == 0) 
+    tmp = modFGIntNumber[[[modFGInt number] length]/4 - 1];
+    for ( int i = 0; i < 32; ++i ) {
+        if ((tmp >> i) == 0) {
             break;
+        }
         ++precision;
     }
 
     FGInt *invertedDivisor = [FGInt newtonInversion: modFGInt withPrecision: precision];
     tmpFGInt1 = [fGInt retain];
 
-    i = 1;
-    for( id fGIntBase in nFGIntNumber ) {
-        if (i >= nLength)
-            break;
-        tmp = [fGIntBase digit];
-        for( j = 0; j < 32; ++j ) {
+    for( FGIntIndex i = 0; i < nLength - 1; i++ ) {
+        tmp = nFGIntNumber[i];
+        for( FGIntIndex j = 0; j < 32; ++j ) {
             if ((tmp % 2) == 1) {
                 tmpFGInt = [FGInt multiply: power and: tmpFGInt1];
                 [power release];
@@ -2545,9 +2063,8 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 //            [tmpFGInt release];
             tmp >>= 1;
         }
-        ++i;
     }
-    tmp = [[nFGIntNumber lastObject] digit];
+    tmp = nFGIntNumber[nLength - 1];
     while(tmp != 0) {
         if ((tmp % 2) == 1) {
             tmpFGInt = [FGInt multiply: power and: tmpFGInt1];
@@ -2575,51 +2092,48 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) raise: (FGInt *) fGInt toThePower: (FGInt *) fGIntN longDivisionMod: (FGInt *) modFGInt {
     FGInt *power = [[FGInt alloc] initWithFGIntBase: 1];
-    FGIntOverflow nLength = [fGIntN length], i, j, precision = ([modFGInt length] - 1) * 32;
+    FGIntOverflow nLength = [[fGIntN number] length]/4, j;
     FGIntBase tmp;
     FGInt *tmpFGInt1, *tmpFGInt;
-    NSMutableArray *nFGIntNumber = [fGIntN number];
+    FGIntBase* nFGIntNumber = [[fGIntN number] mutableBytes];
 
     tmpFGInt1 = [fGInt retain];
+    // tmpFGInt1 = [fGInt mutableCopy];
 
-    i = 1;
-    for( id fGIntBase in nFGIntNumber ) {
-        if (i >= nLength)
-            break;
-        tmp = [fGIntBase digit];
-        for( j = 0; j < 32; ++j ) {
+    for( FGIntIndex i = 0; i < nLength - 1; i++ ) {
+        tmp = nFGIntNumber[i];
+        for( FGIntIndex j = 0; j < 32; ++j ) {
             if ((tmp % 2) == 1) {
                 tmpFGInt = [FGInt multiply: power and: tmpFGInt1];
                 [power release];
                 power = [FGInt longDivisionModBis: tmpFGInt by: modFGInt];
-//              power = [FGInt longDivisionMod: tmpFGInt by: modFGInt];
-//              [tmpFGInt release];
+             // power = [FGInt longDivisionMod: tmpFGInt by: modFGInt];
+             // [tmpFGInt release];
             }
             tmpFGInt = [FGInt square: tmpFGInt1];
             [tmpFGInt1 release];
-            tmpFGInt1 = [FGInt longDivisionModBis: tmpFGInt by: modFGInt];
-//            tmpFGInt1 = [FGInt longDivisionMod: tmpFGInt by: modFGInt];
-//            [tmpFGInt release];
+            // tmpFGInt1 = [FGInt longDivisionModBis: tmpFGInt by: modFGInt];
+           tmpFGInt1 = [FGInt longDivisionMod: tmpFGInt by: modFGInt];
+           [tmpFGInt release];
             tmp >>= 1;
         }
-        ++i;
     }
-    tmp = [[nFGIntNumber lastObject] digit];
+    tmp = nFGIntNumber[nLength - 1];
     while(tmp != 0) {
         if ((tmp % 2) == 1) {
             tmpFGInt = [FGInt multiply: power and: tmpFGInt1];
             [power release];
             power = [FGInt longDivisionModBis: tmpFGInt by: modFGInt];
-//            power = [FGInt longDivisionMod: tmpFGInt by: modFGInt];
-//            [tmpFGInt release];
+           // power = [FGInt longDivisionMod: tmpFGInt by: modFGInt];
+           // [tmpFGInt release];
         }
         tmp >>= 1;
         if (tmp != 0) {
             tmpFGInt = [FGInt square: tmpFGInt1];
             [tmpFGInt1 release];
             tmpFGInt1 = [FGInt longDivisionModBis: tmpFGInt by: modFGInt];
-//            tmpFGInt1 = [FGInt longDivisionMod: tmpFGInt by: modFGInt];
-//            [tmpFGInt release];
+           // tmpFGInt1 = [FGInt longDivisionMod: tmpFGInt by: modFGInt];
+           // [tmpFGInt release];
         }
     }
     
@@ -2630,7 +2144,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 +(FGInt *) mod: (FGInt *) fGInt by: (FGInt *) modFGInt {
-    if (([fGInt length] > [modFGInt length]) && ([fGInt length] - [modFGInt length] > barrettThreshold))
+    if (([[fGInt number] length] > [[modFGInt number] length]) && ([[fGInt number] length]/4 - [[modFGInt number] length]/4 > barrettThreshold))
         return [FGInt barrettMod: fGInt by: modFGInt];
     else
         return [FGInt longDivisionMod: fGInt by: modFGInt];
@@ -2638,7 +2152,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 +(NSDictionary *) divide: (FGInt *) fGInt by: (FGInt *) divisorFGInt {
-    if (([fGInt length] > [divisorFGInt length]) && ([fGInt length] - [divisorFGInt length] > barrettThreshold))
+    if (([[fGInt number] length] > [[divisorFGInt number] length]) && ([[fGInt number] length]/4 - [[divisorFGInt number] length]/4 > barrettThreshold))
         return [FGInt barrettDivision: fGInt by: divisorFGInt];
     else
         return [FGInt longDivision: fGInt by: divisorFGInt];
@@ -2649,14 +2163,14 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) gcd: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
     if ( [FGInt compareAbsoluteValueOf: fGInt1 with: fGInt2] == equal) 
-        return [fGInt1 copy];
+        return [fGInt1 mutableCopy];
         else {
             if ([FGInt compareAbsoluteValueOf: fGInt1 with: fGInt2] == smaller)
                 return [FGInt gcd: fGInt2 and: fGInt1];
             else {
                 FGInt *tmpFGInt1, *tmpFGInt2, *tmpFGInt3, *tmpFGInt, *zero = [[FGInt alloc] initWithFGIntBase: 0];
-                tmpFGInt1 = [fGInt1 copy];
-                tmpFGInt2 = [fGInt2 copy];
+                tmpFGInt1 = [fGInt1 mutableCopy];
+                tmpFGInt2 = [fGInt2 mutableCopy];
                 while ([FGInt compareAbsoluteValueOf: tmpFGInt2 with: zero] != equal) {
                     tmpFGInt = tmpFGInt2;
                     tmpFGInt2 = [FGInt longDivisionModBis: tmpFGInt1 by: tmpFGInt2];
@@ -2701,10 +2215,10 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     if ([FGInt compareAbsoluteValueOf: one with: gcd] == equal) {
         zero = [[FGInt alloc] initWithFGIntBase: 0];
         [gcd release];
-        r2 = [fGInt copy];
-        r1 = [modFGInt copy];
-        inverse = [zero copy];
-        tmpB = [one copy];
+        r2 = [fGInt mutableCopy];
+        r1 = [modFGInt mutableCopy];
+        inverse = [zero mutableCopy];
+        tmpB = [one mutableCopy];
         do {
             tmpDivMod = [FGInt divide: r1 by: r2];
             [r1 release];
@@ -2739,244 +2253,122 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 
-+(FGInt *) mModBis: (FGInt *) fGInt withLength: (FGIntOverflow) bLength andHead: (FGIntBase) head {
-    if (bLength <= [fGInt length]) {
-        NSMutableArray *fGIntNumber = [fGInt number];
-        FGIntOverflow i = 0;
-        FGIntNumberBase *resBase;
-        
-        FGInt *resFGInt = [[FGInt alloc] init];
-        NSMutableArray *resFGIntNumber = [resFGInt number];
-        for ( id fGIntBase in fGIntNumber ) {
-            [resFGIntNumber addObject: fGIntBase];
-            ++i;
-            if (i >= bLength - 1)
-                break;
-        }
-
-        resBase = [[fGIntNumber objectAtIndex: bLength - 1] copy];
-        [resBase setDigit: [resBase digit] & head];
-        [resFGIntNumber addObject: resBase];
-        [resBase release];
-        [resFGInt setSign: YES];
-        i = bLength;
-        while ((i > 1) && ([[resFGIntNumber lastObject] digit]== 0)) {
-            --i;
-            [resFGIntNumber removeLastObject];
-        }
-        [resFGInt setLength: i];
-        return resFGInt;
-    } else {
-        return [fGInt retain];
-    }
-}
-
-
-
-+(FGInt *) mMultiplyMod: (FGInt *) fGInt1 and: (FGInt *) fGInt2 withLength: (FGIntOverflow) bLength andHead: (FGIntBase) head {
-    FGIntOverflow length1 = [fGInt1 length], length2 = [fGInt2 length], resLength = MIN(bLength, length1 + length2), 
-                    i, j, t, mod, tmpMod = 0;
-    FGInt *product = [[FGInt alloc] initWithNZeroes: resLength];
-    NSMutableArray *productNumber = [product number], *fGInt2Number = [fGInt2 number], *fGInt1Number = [fGInt1 number];
-    FGIntNumberBase *productBase;
-    FGIntBase fGIntBaseDigit;
-    
-    i = 0;
-    for ( id fGInt2Base in fGInt2Number ) {
-        mod = 0;
-        t = MIN(length1, bLength - i);
-        j = 0;
-        fGIntBaseDigit = [fGInt2Base digit];
-        for ( id fGInt1Base in fGInt1Number ) {
-            productBase = [productNumber objectAtIndex: j + i];
-            tmpMod = (FGIntOverflow) fGIntBaseDigit*[fGInt1Base digit] + [productBase digit] + mod;
-            [productBase setDigit: tmpMod];
-            mod = tmpMod >> 32;    
-            ++j;
-            if (j >= t)
-                break;
-        }
-        if (i + length1 <= bLength - 1)
-            [[productNumber objectAtIndex: i + length1] setDigit: mod];
-        ++i;
-    }
-    if (resLength == bLength) {
-        productBase = [productNumber objectAtIndex: bLength - 1];
-        [productBase setDigit: [productBase digit] & head];
-    }
-    i = resLength;
-    while ((i > 1) && ([[productNumber lastObject] digit] == 0)) {
-        --i;
-        [productNumber removeLastObject];
-    }
-    [product setLength: i];
-    [product setSign: [fGInt1 sign] == [fGInt2 sign]];
-    return product;
-}
-
-
-+(FGInt *) mMod: (FGInt *) fGInt withBase: (FGInt *) baseFGInt andInverseBase: (FGInt *) inverseBaseFGInt withLength: (FGIntOverflow) bLength andHead: (FGIntBase) head {
-    FGInt *tmpFGInt, *tmpFGInt1, *mFGInt;
-    FGIntBase tmp;
-    FGIntOverflow i;
-    NSMutableArray *mFGIntNumber;
-    
-    tmpFGInt = [FGInt mModBis: fGInt withLength: bLength andHead: head];
-    tmpFGInt1 = [FGInt mMultiplyMod: tmpFGInt and: inverseBaseFGInt withLength: bLength andHead: head];
-//    tmpFGInt1 = [FGInt mMultiplyModBis: fGInt and: inverseBaseFGInt withLength: bLength andHead: head];
-    [tmpFGInt release];
-    mFGInt = [FGInt multiply: tmpFGInt1 and: baseFGInt];
-    [tmpFGInt1 release];
-    if ([mFGInt sign] == [fGInt sign])
-        [mFGInt addWith: fGInt];
-    else {
-        if ([FGInt compareAbsoluteValueOf: mFGInt with: fGInt] == larger)
-            [mFGInt subtractWith: fGInt];
-        else {
-            tmpFGInt = mFGInt;
-            mFGInt = [FGInt subtract: fGInt and: tmpFGInt];
-            [tmpFGInt release];
-        }
-    }
-
-    if (bLength > 1)
-        [mFGInt shiftRightBy32Times: bLength - 1];
-    [mFGInt setSign: YES];
-    if (head < 2147483648) {
-        mFGIntNumber = [mFGInt number];
-        tmp = [FGInt divideFGIntNumberByIntBis: mFGIntNumber divideBy: head + 1];
-        [mFGInt setLength: [mFGIntNumber count]];
-    } else
-        [mFGInt shiftRightBy32];
-    if ([FGInt compareAbsoluteValueOf: mFGInt with: baseFGInt] != smaller)
-        [mFGInt subtractWith: baseFGInt];
-    return mFGInt;
-}
-
 
 +(FGInt *) montgomeryMod: (FGInt *) fGInt withBase: (FGInt *) baseFGInt andInverseBase: (FGInt *) inverseBaseFGInt withLength: (FGIntOverflow) bLength andHead: (FGIntBase) head {
     FGInt *tmpFGInt, *tmpFGInt1, *mFGInt;
-    FGIntOverflow length1 = MIN([fGInt length], bLength), length2 = [inverseBaseFGInt length], resLength = MIN(bLength, length1 + length2), 
+    FGIntOverflow length = [[fGInt number] length]/4, length1 = MIN(length, bLength), length2 = [[inverseBaseFGInt number] length]/4, resLength = MIN(bLength, length1 + length2), 
                     i, j, t, mod, tmpMod = 0, tmpInt;
     FGInt *product = [[FGInt alloc] initWithNZeroes: resLength];
-    FGIntBase tmp, fGIntBaseDigit;
-    NSMutableArray *mFGIntNumber, *fGIntNumber = [fGInt number], *inverseNumber = [inverseBaseFGInt number], *productNumber = [product number];
-    FGIntNumberBase *productBase;
+    FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
+    FGIntBase* inverseNumber = [[inverseBaseFGInt number] mutableBytes]; 
+    FGIntBase *productNumber = [[product number] mutableBytes];
     
-    i = 0;
-    for ( id fGInt2Base in inverseNumber ) {
+    for ( i = 0; i < length2; i++ ) {
         mod = 0;
         t = MIN(length1, bLength - i);
-        j = 0;
-        fGIntBaseDigit = [fGInt2Base digit];
-        if (i == 0)
-            for ( id fGInt1Base in fGIntNumber ) {
-                productBase = [productNumber objectAtIndex: j + i];
-                if (j < bLength - 1) 
-                    tmpMod = (FGIntOverflow) fGIntBaseDigit*[fGInt1Base digit] + [productBase digit] + mod;
-                else // if (j == bLength - 1)
-                    tmpMod = (FGIntOverflow) fGIntBaseDigit*([fGInt1Base digit] & head) + [productBase digit] + mod;
-                [productBase setDigit: tmpMod];
+        if (i == 0) {
+            for ( j = 0; j < t; j++ ) {
+                if (j < bLength - 1) {
+                    tmpMod = (FGIntOverflow) inverseNumber[i]*fGIntNumber[j] + productNumber[j + i] + mod;
+                } else {
+                    tmpMod = (FGIntOverflow) inverseNumber[i]*(fGIntNumber[j] & head) + productNumber[j + i] + mod;
+                }
+                productNumber[j + i] = tmpMod;
                 mod = tmpMod >> 32;    
-                ++j;
-                if (j >= t)
-                    break;
             }
-        else
-            for ( id fGInt1Base in fGIntNumber ) {
-                productBase = [productNumber objectAtIndex: j + i];
-                tmpMod = (FGIntOverflow) fGIntBaseDigit*[fGInt1Base digit] + [productBase digit] + mod;
-                [productBase setDigit: tmpMod];
+        } else {
+            for ( j = 0; j < t; j++ ) {
+                tmpMod = (FGIntOverflow) inverseNumber[i]*fGIntNumber[j] + productNumber[j + i] + mod;
+                productNumber[j + i] = tmpMod;
                 mod = tmpMod >> 32;    
-                ++j;
-                if (j >= t)
-                    break;
             }
-        if (i + length1 <= bLength - 1)
-            [[productNumber objectAtIndex: i + length1] setDigit: mod];
-        ++i;
+        }
+        if (i + length1 <= bLength - 1) {
+            productNumber[i + length1] = mod;
+        }
     }
     if (resLength == bLength) {
-//        productBase = [productNumber objectAtIndex: bLength - 1];
-        productBase = [productNumber lastObject];
-        [productBase setDigit: [productBase digit] & head];
+        productNumber[resLength - 1] = productNumber[resLength - 1] & head;
     }
     i = resLength;
-    while ((i > 1) && ([[productNumber lastObject] digit] == 0)) {
+    while ((i > 1) && (productNumber[i - 1] == 0)) {
         --i;
-        [productNumber removeLastObject];
     }
-    [product setLength: i];
+    if (i < resLength) {
+       [[product number] setLength: i*4];
+    }
 
     mFGInt = [FGInt multiply: product and: baseFGInt];
     [product release];
-    if ([mFGInt sign] == [fGInt sign])
+    if ([mFGInt sign] == [fGInt sign]) {
         [mFGInt addWith: fGInt];
-    else {
-        if ([FGInt compareAbsoluteValueOf: mFGInt with: fGInt] == larger)
+    } else {
+        if ([FGInt compareAbsoluteValueOf: mFGInt with: fGInt] == larger) {
             [mFGInt subtractWith: fGInt];
-        else {
+        } else {
             tmpFGInt = mFGInt;
             mFGInt = [FGInt subtract: fGInt and: tmpFGInt];
             [tmpFGInt release];
         }
     }
 
-    mFGIntNumber = [mFGInt number];
     if (bLength > 1) {
-        [mFGInt setLength: [mFGInt length] - bLength + 1];
-        [mFGIntNumber removeObjectsInRange: NSMakeRange(0, bLength - 1)];
+        [mFGInt shiftRightBy32Times: bLength - 1];
     }
-//        [mFGInt shiftRightBy32Times: bLength - 1];
     [mFGInt setSign: YES];
     if (head < 2147483648) {
-        tmp = [FGInt divideFGIntNumberByIntBis: mFGIntNumber divideBy: head + 1];
-        [mFGInt setLength: [mFGIntNumber count]];
-    } else
+        FGIntBase tmp = [FGInt divideFGIntNumberByIntBis: [mFGInt number] divideBy: head + 1];
+    } else {
         [mFGInt shiftRightBy32];
-    if ([FGInt compareAbsoluteValueOf: mFGInt with: baseFGInt] != smaller)
+    }
+    if ([FGInt compareAbsoluteValueOf: mFGInt with: baseFGInt] != smaller) {
         [mFGInt subtractWith: baseFGInt];
+    }
     return mFGInt;
 }
 
 
 +(FGInt *) raise: (FGInt *) fGInt toThePower: (FGInt *) fGIntN montgomeryMod: (FGInt *) modFGInt {
     FGInt *tmpFGInt2, *tmpFGInt, *power, *rFGInt, *inverseBaseFGInt;
-    FGIntOverflow bLength = [modFGInt length], i, nLength = [fGIntN length],
-                    tmpLength = bLength + ((([[[modFGInt number] objectAtIndex: bLength - 1] digit] >> 31) == 0) ? 0 : 1);
+    FGIntOverflow bLength = [[modFGInt number] length]/4, i, nLength = [[fGIntN number] length]/4,
+                    tmpLength;
     int j;
     FGIntBase head, tmp;
-    NSMutableArray *rNumber, *modFGIntNumber = [modFGInt number], *nFGIntNumber = [fGIntN number];
-    
+    FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
+    FGIntBase* nFGIntNumber = [[fGIntN number] mutableBytes];
+    tmpLength = bLength + (((modFGIntNumber[bLength - 1] >> 31) == 0) ? 0 : 1);
+
     power = [FGInt mod: fGInt by: modFGInt];
-    if (([power length] == 1) && ([[[power number] objectAtIndex: 0] digit] == 0))
+    FGIntBase* powerNumber = [[power number] mutableBytes];
+    if (([[power number] length] == 4) && (powerNumber[0] == 0)) {
         return power;
+    }
     [power release];
     
     rFGInt = [[FGInt alloc] initWithNZeroes: tmpLength];
-    rNumber = [rFGInt number];
-    FGIntNumberBase *fGIntBase = [rNumber lastObject];
+    FGIntBase* rNumber = [[rFGInt number] mutableBytes];
+    i = [[rFGInt number] length]/4;
     if (tmpLength == bLength) {
         head = 4294967295u;
-        tmp = [[modFGIntNumber objectAtIndex: tmpLength - 1] digit];
+        tmp = modFGIntNumber[tmpLength - 1];
         for ( j = 30; j >= 0; --j ) {
             head >>= 1;
             if ((tmp >> j) == 1) {
-                [fGIntBase setDigit: 1 << (j + 1)];
+                rNumber[i - 1] = 1 << (j + 1);
                 break;
             }
         }
     } else {
-        [fGIntBase setDigit: 1];
+        rNumber[i - 1] = 1;
         head = 4294967295u;
     }
 
-//    tmpFGInt2 = [FGInt modularInverse: modFGInt mod: rFGInt];
+    // tmpFGInt2 = [FGInt modularInverse: modFGInt mod: rFGInt];
     tmpFGInt2 = [FGInt leftShiftModularInverse: modFGInt mod: rFGInt];
-    if (![tmpFGInt2 sign])
+    if (![tmpFGInt2 sign]) {
         inverseBaseFGInt = tmpFGInt2;
-    else {
-        inverseBaseFGInt = [rFGInt copy];
+    } else {
+        inverseBaseFGInt = [rFGInt mutableCopy];
         [inverseBaseFGInt subtractWith: tmpFGInt2];
         [tmpFGInt2 release];
     }
@@ -2987,34 +2379,30 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     tmpFGInt2 = [FGInt mod: tmpFGInt by: modFGInt];
     [tmpFGInt release];
     
-    i = 1;
-    for( id fGIntBase in nFGIntNumber ) {
-        if (i >= nLength)
-            break;
-        tmp = [fGIntBase digit];
+    for( FGIntIndex i = 0; i < nLength - 1; i++ ) {
+        tmp = nFGIntNumber[i];
         for( j = 0; j < 32; ++j ) {
             if ((tmp % 2) == 1) {
                 tmpFGInt = [FGInt multiply: power and: tmpFGInt2];
                 [power release];
-//                power = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+                // power = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
                 power = [FGInt montgomeryMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
                 [tmpFGInt release];
             }
             tmpFGInt = [FGInt square: tmpFGInt2];
             [tmpFGInt2 release];
-//            tmpFGInt2 = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+            // tmpFGInt2 = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
             tmpFGInt2 = [FGInt montgomeryMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
             [tmpFGInt release];
             tmp >>= 1;
+        }
     }
-        ++i;
-    }
-    tmp = [[nFGIntNumber lastObject] digit];
+    tmp = nFGIntNumber[nLength - 1];
     while(tmp != 0) {
         if ((tmp % 2) == 1) {
             tmpFGInt = [FGInt multiply: power and: tmpFGInt2];
             [power release];
-//            power = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+            // power = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
             power = [FGInt montgomeryMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
             [tmpFGInt release];
         }
@@ -3022,12 +2410,12 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         if (tmp != 0) {
             tmpFGInt = [FGInt square: tmpFGInt2];
             [tmpFGInt2 release];
-//            tmpFGInt2 = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+            // tmpFGInt2 = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
             tmpFGInt2 = [FGInt montgomeryMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
             [tmpFGInt release];
         }
     }
-    power = [FGInt mMod: power withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+    power = [FGInt montgomeryMod: power withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
     
     [tmpFGInt2 release];
     
@@ -3037,29 +2425,33 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 // work in progress, maybe 
 
 +(FGInt *) leftShiftModularInverse: (FGInt *) fGInt mod: (FGInt *) modFGInt {
-    FGIntOverflow cU = 0, cV = 0, modLength = [modFGInt length];
-    FGInt *u = [modFGInt copy], *v = [fGInt copy],  *cU2 = [[FGInt alloc] initWithFGIntBase: 1], *cV2 = [cU2 copy], 
-        *r = [[FGInt alloc] initWithFGIntBase: 0], *s = [cU2 copy], *tmpFGInt, *modBits = [[FGInt alloc] initWithNZeroes: modLength];
-    FGIntBase modHead = (1 << 31), tmpInt = [[[modFGInt number] lastObject] digit];
-//    NSMutableArray *uNumber = [u number], *vNumber = [v number];
-    while (modHead > tmpInt)
+    FGIntOverflow cU = 0, cV = 0, modLength = [[modFGInt number] length]/4;
+    FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
+    FGInt *u = [modFGInt mutableCopy], *v = [fGInt mutableCopy],  *cU2 = [[FGInt alloc] initWithFGIntBase: 1], *cV2 = [cU2 mutableCopy], 
+        *r = [[FGInt alloc] initWithFGIntBase: 0], *s = [cU2 mutableCopy], *tmpFGInt, *modBits = [[FGInt alloc] initWithNZeroes: modLength];
+    FGIntBase modHead = (1 << 31), tmpInt = modFGIntNumber[modLength - 1];
+    FGIntBase* modBitsNumber = [[modBits number] mutableBytes];
+    while (modHead > tmpInt) {
         modHead >>= 1;
-    [[[modBits number] lastObject] setDigit: modHead];
+    }
+    modBitsNumber[modLength - 1] = modHead;
     
     while (([FGInt compareAbsoluteValueOf: u with: cU2] != equal) && ([FGInt compareAbsoluteValueOf: v with: cV2] != equal)) {
         if ([FGInt compareAbsoluteValueOf: modBits with: u] == larger) {
-            if (cU >= cV) 
+            if (cU >= cV) {
                 [r shiftLeft];
-            else
+            } else {
                 [s shiftRight];
+            }
             [u shiftLeft];
             ++cU;
             [cU2 shiftLeft];
         } else if ([FGInt compareAbsoluteValueOf: modBits with: v] == larger) {
-            if (cV >= cU) 
+            if (cV >= cU) {
                 [s shiftLeft];
-            else
+            } else {
                 [r shiftRight];
+            }
             [v shiftLeft];
             ++cV;
             [cV2 shiftLeft];
@@ -3109,9 +2501,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         [v release];
     }
     if (![u sign]) {
-        if (![r sign]) 
+        if (![r sign]) {
             [r makePositive];
-        else {
+        } else {
             tmpFGInt = [FGInt subtract: modFGInt and: r];
             [r release];
             r = tmpFGInt;
@@ -3137,13 +2529,12 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(FGIntBase) modFGIntByInt: (FGIntBase) divInt {
     FGIntBase mod = 0;
-    FGIntOverflow tempMod = 0;
+    FGIntOverflow tempMod = 0, length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
 
-    @autoreleasepool{
-        for( id fGIntBase in [number reverseObjectEnumerator] ) {
-            tempMod =  (((FGIntOverflow) mod << 32) | (FGIntOverflow) [fGIntBase digit]);
-            mod = (FGIntOverflow) tempMod % divInt;
-        }
+    for( FGIntIndex i = length - 1; i >= 0; i-- ) {
+        tempMod =  (((FGIntOverflow) mod << 32) | (FGIntOverflow) numberArray[i]);
+        mod = (FGIntOverflow) tempMod % divInt;
     }
     
     return mod;
@@ -3151,32 +2542,36 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(void) divideByInt: (FGIntBase) divInt {
     FGIntBase mod = 0;
-    FGIntOverflow tempMod = 0;
+    FGIntOverflow tempMod = 0, length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
     
-    @autoreleasepool{
-        for( id fGIntBase in [number reverseObjectEnumerator] ) {
-            tempMod =  (((FGIntOverflow) mod << 32) | (FGIntOverflow) [fGIntBase digit]);
-            [fGIntBase setDigit: (FGIntOverflow) (tempMod / divInt)];
-            mod = (FGIntOverflow) tempMod % divInt;
-        }
+    for( FGIntIndex i = length - 1; i >= 0; i-- ) {
+        tempMod =  (((FGIntOverflow) mod << 32) | (FGIntOverflow) numberArray[i]);
+        numberArray[i] = (FGIntOverflow) (tempMod / divInt);
+        mod = (FGIntOverflow) tempMod % divInt;
     }
 
-    while ((length > 1) && ([[number lastObject] digit] == 0)) {
-        [number removeLastObject];
+    while ((length > 1) && (numberArray[length - 1] == 0)) {
         --length;
     }
-//    [self setLength: length];
+    if (length*4 < [number length]) {
+        [number setLength: length*4];
+    }
 }
 
 // Trialdivision of a FGInt upto 9999 and stopping when a divisor is found, returning ok=false
 
 -(BOOL) trialDivision {
-    if (([[number objectAtIndex: 0] digit] % 2) == 0) return NO;
+    FGIntOverflow length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
+    if ((numberArray[0] % 2) == 0) {
+        return NO;
+    }
     BOOL isPrime = YES;
     FGIntBase i = 0;
     while (isPrime && (i < 1228)) {
         isPrime = ([self modFGIntByInt: primes[i]] != 0);
-        if ((!isPrime) && ([self length] == 1) && ([[number objectAtIndex: 0] digit] == primes[i])) {
+        if ((!isPrime) && (length == 1) && (numberArray[0] == primes[i])) {
             isPrime = YES;
             break;
         }
@@ -3197,10 +2592,10 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     one = [[FGInt alloc] initWithFGIntBase: 1];
     zero = [[FGInt alloc] initWithFGIntBase: 0];
 
-    r1 = [fGInt1 copy];
-    r2 = [fGInt2 copy];
-    aFGInt = [zero copy];
-    tmpA = [one copy];
+    r1 = [fGInt1 mutableCopy];
+    r2 = [fGInt2 mutableCopy];
+    aFGInt = [zero mutableCopy];
+    tmpA = [one mutableCopy];
     do {
         tmpDivMod = [FGInt divide: r1 by: r2];
         [r1 release];
@@ -3240,19 +2635,20 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(BOOL) rabinMillerTest: (FGIntBase) numberOfTests {
     BOOL isPrime = YES;
-    FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *pMinusOne = [FGInt subtract: self and: one], *mFGInt = [pMinusOne copy],
+    FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *pMinusOne = [FGInt subtract: self and: one], *mFGInt = [pMinusOne mutableCopy],
             *zFGInt, *tmpFGInt;
     FGIntOverflow i = 0, j, b = 0;
-    NSMutableArray *mFGIntNumber = [mFGInt number];
+    FGIntBase* mFGIntNumber = [[mFGInt number] mutableBytes];
     
-    while (([[mFGIntNumber objectAtIndex: 0] digit] % 2) == 0) {
-        if ([[mFGIntNumber objectAtIndex: 0] digit] == 0) {
+    while ((mFGIntNumber[0] % 2) == 0) {
+        if (mFGIntNumber[0] == 0) {
             b += 32;
             [mFGInt shiftRightBy32];
         } else {
             ++b;
             [mFGInt shiftRight];
         }
+        mFGIntNumber = [[mFGInt number] mutableBytes];
     }
     
     while ((i < numberOfTests) && isPrime) {
@@ -3297,13 +2693,17 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 */
 
 -(BOOL) primalityTest: (FGIntBase) numberOfTests {
-    if ([self trialDivision])
-        if (([self length] == 1) && ([[number objectAtIndex: 0] digit] < 9974))
+    if ([self trialDivision]) {
+        FGIntOverflow length = [number length]/4;
+        FGIntBase* numberArray = [number mutableBytes];
+        if ((length == 1) && (numberArray[0] < 9974)) {
             return YES;
-        else 
+        } else {
             return [self rabinMillerTest: numberOfTests];
-    else
+        }
+    } else {
         return NO;
+    }
 }
 
 
@@ -3311,23 +2711,23 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* divide fGInt by a 32bit integer divInt and return the result = fGInt / divInt */
 
 +(FGInt *) divide: (FGInt *) fGInt byFGIntBase: (FGIntBase) divInt {
-    FGInt *result = [[FGInt alloc] init];
-    NSMutableArray *fGIntNumber = [fGInt number], *resultNumber = [result number];
-    FGIntOverflow mod = 0, tmpMod, resultLength;
+    FGIntOverflow mod = 0, tmpMod, resultLength, length = [[fGInt number] length]/4;
+    FGInt *result = [[FGInt alloc] initWithNZeroes: length];
+    FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
+    FGIntBase* resultNumber = [[result number] mutableBytes];
     
-    @autoreleasepool{
-        for ( id fGIntBase in [fGIntNumber reverseObjectEnumerator] ) {
-            tmpMod = (mod << 32) | [fGIntBase digit];
-            [resultNumber insertObject: [[FGIntNumberBase alloc] initWithFGIntBase: (tmpMod / divInt)] atIndex: 0];
-            mod = tmpMod % divInt;
-        }
+    for ( FGIntIndex i = length - 1; i >= 0; i-- ) {
+        tmpMod = (mod << 32) | fGIntNumber[i];
+        resultNumber[i] = (tmpMod / divInt);
+        mod = tmpMod % divInt;
     }
-    resultLength = [resultNumber count];
-    while ((resultLength > 1) && ([[resultNumber lastObject] digit] == 0)) {
-        [resultNumber removeLastObject];
+    resultLength = length;
+    while ((resultLength > 1) && (resultNumber[resultLength - 1] == 0)) {
         --resultLength;
     }
-    [result setLength: resultLength];
+    if (resultLength < length) {
+        [[result number] setLength: resultLength*4];
+    }
     [result setSign: [fGInt sign]];
     return result;
 }
@@ -3348,16 +2748,20 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         return 0;
     } else {
         [tmpFGInt release];
-        FGInt *tmpFGInt1 = [pFGInt copy], *tmpFGInt2 = [self copy], *tmpFGInt3, *tmpFGInt4, *tmpFGInt5;
+        FGInt *tmpFGInt1 = [pFGInt mutableCopy], *tmpFGInt2 = [self mutableCopy], *tmpFGInt3, *tmpFGInt4, *tmpFGInt5;
         int legendre = 1;
-        
+        FGIntBase* tmpNumber;
+
         while ([FGInt compareAbsoluteValueOf: tmpFGInt1 with: one] != equal) {
-            if (([[[tmpFGInt2 number] objectAtIndex: 0] digit] % 2) == 0) {
+            tmpNumber = [[tmpFGInt2 number] mutableBytes];
+            if ((tmpNumber[0] % 2) == 0) {
                 tmpFGInt3 = [FGInt square: tmpFGInt1];
                 [tmpFGInt3 decrement];
                 [tmpFGInt3 shiftRightBy: 3];
-                if (([[[tmpFGInt3 number] objectAtIndex: 0] digit] % 2) != 0) 
+                tmpNumber = [[tmpFGInt3 number] mutableBytes];
+                if ((tmpNumber[0] % 2) != 0) {
                     legendre *= (-1);
+                }
                 [tmpFGInt3 release];
                 [tmpFGInt2 shiftRight];
             } else {
@@ -3367,8 +2771,11 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 [tmpFGInt3 release];
                 [tmpFGInt4 release];
                 [tmpFGInt5 shiftRightBy: 2];
-                if (([[[tmpFGInt5 number] objectAtIndex: 0] digit] % 2) != 0)
+
+                tmpNumber = [[tmpFGInt5 number] mutableBytes];
+                if ((tmpNumber[0] % 2) != 0) {
                     legendre *= (-1);
+                }
                 [tmpFGInt5 release];
                 tmpFGInt3 = [FGInt mod: tmpFGInt1 by: tmpFGInt2];
                 [tmpFGInt1 release];
@@ -3390,9 +2797,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
   SquareRoot^2 mod Prime = Square
 */
 
-+(FGInt *) squareRootOf: (FGInt *) fGInt mod: pFGInt {
++(FGInt *) squareRootOf: (FGInt *) fGInt mod: (FGInt *) pFGInt {
     FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *nFGInt = [[FGInt alloc] initWithFGIntBase: 2], 
-            *sFGInt = [pFGInt copy], *bFGInt, *rFGInt, *tmpFGInt, *tmpFGInt1, 
+            *sFGInt = [pFGInt mutableCopy], *bFGInt, *rFGInt, *tmpFGInt, *tmpFGInt1, 
             *tmpFGInt2 = [[FGInt alloc] init], *tempFGInt;
         
     FGIntOverflow a = 0, i, j;
@@ -3400,14 +2807,16 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     while ([nFGInt legendreSymbolMod: pFGInt] != -1) 
         [nFGInt increment];
     [sFGInt decrement];
-    while (([[[sFGInt number] objectAtIndex: 0] digit] % 2) == 0) {
-        if ([[[sFGInt number] objectAtIndex: 0] digit] == 0) {
+    FGIntBase* sFGIntNumber = [[sFGInt number] mutableBytes];
+    while ((sFGIntNumber[0] % 2) == 0) {
+        if (sFGIntNumber[0] == 0) {
             a += 32;
             [sFGInt shiftRightBy32];
         } else {
             ++a;
             [sFGInt shiftRight];
         }
+        sFGIntNumber = [[sFGInt number] mutableBytes];
     }
     bFGInt = [FGInt raise: nFGInt toThePower: sFGInt montgomeryMod: pFGInt];
     tmpFGInt = [FGInt add: sFGInt and: one];
@@ -3457,7 +2866,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(FGInt *) factorial {
     FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *result = [[FGInt alloc] initWithFGIntBase: 1], 
-        *tmpFGInt = [self copy], *tmpFGInt1;
+        *tmpFGInt = [self mutableCopy], *tmpFGInt1;
     while ([FGInt compareAbsoluteValueOf: tmpFGInt with: one] == larger) {
         tmpFGInt1 = [FGInt multiply: result and: tmpFGInt];
         [result release];
@@ -3472,7 +2881,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* Searches for a nearest prime number p larger than the number self is initialized with */
 
 //-(FGInt *) findNearestLargerPrime {
-//    FGInt *two = [[FGInt alloc] initWithFGIntBase: 2], *prime = [self copy];
+//    FGInt *two = [[FGInt alloc] initWithFGIntBase: 2], *prime = [self mutableCopy];
 //    if (([[[prime number] objectAtIndex: 0] digit] % 2) == 0)
 //        [[[prime number] objectAtIndex: 0] setDigit: [[[prime number] objectAtIndex: 0] digit] + 1];
 //    while (![prime primalityTest: 5])
@@ -3484,31 +2893,41 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(void) findNearestLargerPrime {
     FGInt *two = [[FGInt alloc] initWithFGIntBase: 2];
-    [self addWith: two];
-    if (([[number objectAtIndex: 0] digit] % 2) == 0)
-        [[number objectAtIndex: 0] setDigit: [[number objectAtIndex: 0] digit] + 1];
-    while (![self primalityTest: 5])
+    FGIntBase* numberArray = [number mutableBytes];
+
+    if ((numberArray[0] % 2) == 0) {
+        numberArray[0] = numberArray[0] + 1;
+    } else {
+            [self addWith: two];
+    }
+    while (![self primalityTest: 5]) {
         [self addWith: two];
+    }
     [two release];
 }
 
 
 -(void) findNearestLargerPrimeWithRabinMillerTests: (FGIntBase) numberOfTests {
     FGInt *two = [[FGInt alloc] initWithFGIntBase: 2];
-    [self addWith: two];
-    if (([[number objectAtIndex: 0] digit] % 2) == 0)
-        [[number objectAtIndex: 0] setDigit: [[number objectAtIndex: 0] digit] + 1];
-    while (![self primalityTest: numberOfTests])
+    FGIntBase* numberArray = [number mutableBytes];
+
+    if ((numberArray[0] % 2) == 0) {
+        numberArray[0] = numberArray[0] + 1;
+    } else {
+            [self addWith: two];
+    }
+    while (![self primalityTest: numberOfTests]) {
         [self addWith: two];
+    }
     [two release];
 }
 
 
-/* Searches for a nearest prime number p larger than self, such that (p mod q = 1), make sure qFGInt is a prime number */
+// /* Searches for a nearest prime number p larger than self, such that (p mod q = 1), make sure qFGInt is a prime number */
 
 //-(FGInt *) findNearestLargerDSAPrimeWith: (FGInt *) qFGInt {
 //    FGInt *two = [[FGInt alloc] initWithFGIntBase: 2], *one = [[FGInt alloc] initWithFGIntBase: 1], 
-//        *prime = [self copy], *doubleQ = [qFGInt copy], *tmpFGInt;
+//        *prime = [self mutableCopy], *doubleQ = [qFGInt mutableCopy], *tmpFGInt;
 //    [doubleQ shiftRight];
 //    tmpFGInt = [FGInt mod: prime by: qFGInt];
 //    [prime addWith: tmpFGInt];
@@ -3525,16 +2944,19 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 //}
 
 -(void) findNearestLargerDSAPrimeWith: (FGInt *) qFGInt {
-    FGInt *doubleQ = [qFGInt copy], *tmpFGInt;
+    FGInt *doubleQ = [qFGInt mutableCopy], *tmpFGInt;
     [doubleQ shiftLeft];
     tmpFGInt = [FGInt mod: self by: qFGInt];
     [self subtractWith: tmpFGInt];
     [tmpFGInt release];
     [self increment];
-    if (([[[self number] objectAtIndex: 0] digit] % 2) == 0)
+    FGIntBase* numberArray = [number mutableBytes];
+    if ((numberArray[0] % 2) == 0) {
         [self addWith: qFGInt];
-    while (![self primalityTest: 5])
+    }
+    while (![self primalityTest: 5]) {
         [self addWith: doubleQ];
+    }
     [doubleQ release];
 }
 
@@ -3544,13 +2966,16 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 */
 
 -(FGInt *) isNearlyPrimeAndAtLeast: (FGIntOverflow) leastSize {
-    FGInt *rFGInt = [self copy];
+    FGInt *rFGInt = [self mutableCopy];
     FGIntBase i, mod;
-    while (([[[rFGInt number] objectAtIndex: 0] digit] % 2) == 0) {
-        if ([[[rFGInt number] objectAtIndex: 0] digit] == 0)
+    FGIntBase* rNumber = [[rFGInt number] mutableBytes];
+    while ((rNumber[0] % 2) == 0) {
+        if (rNumber[0] == 0) {
             [rFGInt shiftRightBy32];
-        else 
+        } else {
             [rFGInt shiftRight];
+        }
+        rNumber = [[rFGInt number] mutableBytes];
     }
     for ( i = 0; i < 1228; ++i ) {
         while ([rFGInt modFGIntByInt: primes[i]] == 0) {
@@ -3563,13 +2988,24 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         return nil;
     }
     FGIntBase rmTests = 4;
-    if (bitSize < 460) rmTests = 7;
-    if (bitSize < 300) rmTests = 13;
-    if (bitSize < 260) rmTests = 19;
-    if (bitSize < 200) rmTests = 29;
-    if (bitSize < 160) rmTests = 37;
-    if ([rFGInt rabinMillerTest: rmTests])
+    if (bitSize < 460) {
+        rmTests = 7;
+    }
+    if (bitSize < 300) {
+        rmTests = 13;
+    }
+    if (bitSize < 260) {
+        rmTests = 19;
+    }
+    if (bitSize < 200) {
+        rmTests = 29;
+    }
+    if (bitSize < 160) {
+        rmTests = 37;
+    }
+    if ([rFGInt rabinMillerTest: rmTests]) {
         return rFGInt;
+    }
     else {
         [rFGInt release];
         return nil;
@@ -3635,18 +3071,24 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 +(int) getBase64Index: (char) base64Char {
-    if (base64Char == 43)
+    if (base64Char == 43) {
         return 62;
-    if (base64Char == 47)
+    }
+    if (base64Char == 47) {
         return 63;
-    if (base64Char < 58)
+    }
+    if (base64Char < 58) {
         return (base64Char - 48) + 52;
-    if (base64Char == 61)
+    }
+    if (base64Char == 61) {
         return 0;
-    if (base64Char < 91)
+    }
+    if (base64Char < 91) {
         return (base64Char - 65);
-    if (base64Char < 123)
+    }
+    if (base64Char < 123) {
         return (base64Char - 97) + 26;
+    }
     return 0;
 }
 
@@ -3705,8 +3147,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 -(FGIntOverflow) bitSize {
-    FGIntOverflow bits = (length - 1) * 32;
-    FGIntBase lastDigit = [[number lastObject] digit];
+    FGIntOverflow length = [number length]/4, bits = (length - 1) * 32;
+    FGIntBase* numberArray = [number mutableBytes];
+    FGIntBase lastDigit = numberArray[length - 1];
     while (lastDigit != 0) {
         ++bits;
         lastDigit >>= 1;

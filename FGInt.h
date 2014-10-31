@@ -22,10 +22,11 @@ This header may not be removed.
 
 typedef unsigned int FGIntBase;
 typedef unsigned long long FGIntOverflow;
+typedef long long FGIntIndex;
 
 typedef enum {error, equal, smaller, larger} tCompare;
-#define FGInt_version 20120726
-#define karatsubaThreshold 126
+#define FGInt_version 201411020
+#define karatsubaThreshold 300 // ToBeDetermined
 #define barrettThreshold 512
 #define quotientKey @"quotient"
 #define remainderKey @"remainder"
@@ -33,35 +34,26 @@ typedef enum {error, equal, smaller, larger} tCompare;
 #define bKey @"b"
 
 
-@interface FGIntNumberBase : NSObject <NSCopying>
-@property (assign, readwrite) FGIntBase digit;
 
--(id) initWithBase10String: (NSString *) base10String; 
--(id) initWithFGIntBase: (FGIntBase) initDigit;
--(void) dealloc;
-
-@end
-
-
-
-@interface FGInt : NSObject <NSCopying> {
-    NSMutableArray *number;
+@interface FGInt : NSObject <NSMutableCopying> {
+    NSMutableData *number;
     BOOL sign;
-    FGIntOverflow length;
 }
 
 @property (assign, readwrite) BOOL sign;
-@property (assign, readwrite) FGIntOverflow length;
+@property (retain, readwrite) NSMutableData *number;
 
 -(FGInt *) initWithNZeroes: (FGIntOverflow) n;
 -(id) initWithCapacity: (FGIntOverflow) capacity;
--(id) initWithNumber: (NSMutableArray *) initNumber;
+-(id) initWithNumber: (NSMutableData *) initNumber;
 -(id) initWithoutNumber;
 -(void) dealloc;
--(id) shallowCopy;
+// -(id) shallowCopy;
+-(void) verifyAdjust;
++(void) verifyAdjustNumber: (NSMutableData *) numberData;
 
--(NSMutableArray *) number;
--(void) setNumber: (NSMutableArray *) inputNumber;
+-(NSMutableData *) number;
+-(void) setNumber: (NSMutableData *) inputNumber;
 
 -(FGInt *) initWithBase10String: (NSString *) base10String;
 -(FGInt *) initWithFGIntBase: (FGIntBase) fGIntBase;
@@ -72,14 +64,12 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(NSData *) toMPINSData;
 -(NSString *) toNSString;
 
-+(FGIntBase) divideFGIntNumberByIntBis: (NSMutableArray *) FGIntNumber divideBy: (FGIntBase) divInt;
-//-(id) duplicate;
--(NSMutableArray *) duplicateNumber;
+// +(FGIntBase) divideFGIntNumberByIntBis: (NSMutableArray *) FGIntNumber divideBy: (FGIntBase) divInt;
+// //-(id) duplicate;
+// -(NSMutableArray *) duplicateNumber;
 -(NSString *) toBase10String;
 +(tCompare) compareAbsoluteValueOf: (FGInt *) fGInt1 with: (FGInt *) fGInt2;
 +(FGInt *) add: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
-//+(FGInt *) add2: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
-+(FGInt *) add1: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
 -(void) changeSign;
 +(FGInt *) subtract: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
 +(FGInt *) pencilPaperMultiply: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
@@ -128,7 +118,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(BOOL) primalityTest: (FGIntBase) numberOfTests;
 +(FGInt *) divide: (FGInt *) fGInt byFGIntBase: (FGIntBase) divInt;
 -(int) legendreSymbolMod: (FGInt *) pFGInt;
-+(FGInt *) squareRootOf: (FGInt *) fGInt mod: pFGInt;
++(FGInt *) squareRootOf: (FGInt *) fGInt mod: (FGInt *) pFGInt;
 -(FGInt *) factorial;
 //-(FGInt *) findNearestLargerPrime;
 -(void) findNearestLargerPrime;

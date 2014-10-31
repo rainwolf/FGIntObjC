@@ -47,30 +47,37 @@ This header may not be removed.
 }
 
 
--(id) copyWithZone: (NSZone *) zone {
+-(id) mutableCopyWithZone: (NSZone *) zone {
     FGIntRSA *newKeys = [[FGIntRSA allocWithZone: zone] init];
-    if (modulus)
-        [newKeys setModulus: [modulus copy]];
-    if (publicExponent)
-        [newKeys setPublicExponent: [publicExponent copy]];
-    if (privateKey)
-        [newKeys setPrivateKey: [privateKey copy]];
-    if (pFGInt)
-        [newKeys setPFGInt: [pFGInt copy]];
-    if (qFGInt)
-        [newKeys setQFGInt: [qFGInt copy]];
-    if (pInvertedModQ)
-        [newKeys setPInvertedModQ: [pInvertedModQ copy]];
+    if (modulus) {
+        [newKeys setModulus: [modulus mutableCopy]];
+    }
+    if (publicExponent) {
+        [newKeys setPublicExponent: [publicExponent mutableCopy]];
+    }
+    if (privateKey) {
+        [newKeys setPrivateKey: [privateKey mutableCopy]];
+    }
+    if (pFGInt) {
+        [newKeys setPFGInt: [pFGInt mutableCopy]];
+    }
+    if (qFGInt) {
+        [newKeys setQFGInt: [qFGInt mutableCopy]];
+    }
+    if (pInvertedModQ) {
+        [newKeys setPInvertedModQ: [pInvertedModQ mutableCopy]];
+    }
     return newKeys;
 }
 
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow primeByteLength, i, j, halfBitLength = (bitLength / 2) + (bitLength % 2);
+        FGIntOverflow primeByteLength, i, j, halfBitLength = (bitLength / 2) + (bitLength % 2), length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
         NSMutableData *tmpData;
+        FGIntBase* numberArray;
 
         primeByteLength = (halfBitLength / 8) + (((halfBitLength % 8) == 0) ? 0 : 1);
         tmpData = [[NSMutableData alloc] initWithLength: primeByteLength];
@@ -80,10 +87,12 @@ This header may not be removed.
         j = halfBitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[qFGInt number] lastObject] digit];
+        length = [[qFGInt number] length]/4;
+        numberArray = [[qFGInt number] mutableBytes];
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[qFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [qFGInt findNearestLargerPrime];
     
         halfBitLength = bitLength - halfBitLength; 
@@ -95,10 +104,12 @@ This header may not be removed.
         j = halfBitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[pFGInt number] lastObject] digit];
+        length = [[pFGInt number] length]/4;
+        numberArray = [[pFGInt number] mutableBytes];
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[pFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [pFGInt findNearestLargerPrime];
 
 
@@ -136,6 +147,9 @@ This header may not be removed.
 
 
 -(id) initWithNSData: (NSData *) dataSeed {
+    FGIntOverflow length;
+    FGIntBase* numberArray;
+
     if (!dataSeed) {
         NSLog(@"No dataSeed available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return nil;
@@ -145,45 +159,31 @@ This header may not be removed.
         return nil;
     }
     if (self = [super init]) {
-        FGInt *seedFGInt = [[FGInt alloc] initWithNSData: dataSeed], *tmpFGInt;
-        FGIntOverflow seedLength = [seedFGInt length], i;
-        pFGInt = [[FGInt alloc] init];
-        qFGInt = [[FGInt alloc] init];
+        FGInt *tmpFGInt;
+        FGIntOverflow seedLength = [dataSeed length], i;
+        pFGInt = [[FGInt alloc] initWithNSData: [dataSeed subdataWithRange: NSMakeRange(0, seedLength/2)]];
+        qFGInt = [[FGInt alloc] initWithNSData: [dataSeed subdataWithRange: NSMakeRange(seedLength/2, seedLength - seedLength/2)]];
         FGIntBase firstBit, firstNumberBase;
-        FGIntNumberBase *numberBase;
         
-        i = 0;
-        for ( id fGIntBase in [seedFGInt number] ) {
-            if (i < (seedLength / 2))
-                [[pFGInt number] addObject: fGIntBase];
-            else
-                [[qFGInt number] addObject: fGIntBase];
-            ++i;
-        }
-        if ((seedLength % 2) == 0) {
-            firstBit = 1 << 31;
-            firstNumberBase = 4294967295;
-            numberBase = [[pFGInt number] lastObject];
-            [numberBase setDigit: ([numberBase digit] & firstNumberBase) | firstBit];
-            numberBase = [[qFGInt number] lastObject];
-            [numberBase setDigit: ([numberBase digit] & firstNumberBase) | firstBit];
-        } else {
-            ++seedLength;
-            firstBit = 1 << 15;
-            firstNumberBase = 4294967295 >> 16;
-            numberBase = [[[qFGInt number] lastObject] copy];
-            [[pFGInt number] addObject: numberBase];
-            [numberBase release];
-            numberBase = [[pFGInt number] lastObject];
-            [numberBase setDigit: ([numberBase digit] >> 16) | firstBit];
-            numberBase = [[qFGInt number] lastObject];
-            [numberBase setDigit: ([numberBase digit] & firstNumberBase) | firstBit];
-        }
-        [pFGInt setLength: seedLength / 2];
-        [qFGInt setLength: seedLength / 2];
-        [pFGInt setSign: YES];
-        [qFGInt setSign: YES];
-
+        // if ((seedLength % 2) == 0) {
+        //     firstBit = 1 << 31;
+        //     firstNumberBase = 4294967295;
+        //     numberBase = [[pFGInt number] lastObject];
+        //     [numberBase setDigit: ([numberBase digit] & firstNumberBase) | firstBit];
+        //     numberBase = [[qFGInt number] lastObject];
+        //     [numberBase setDigit: ([numberBase digit] & firstNumberBase) | firstBit];
+        // } else {
+        //     ++seedLength;
+        //     firstBit = 1 << 15;
+        //     firstNumberBase = 4294967295 >> 16;
+        //     numberBase = [[[qFGInt number] lastObject] mutableCopy];
+        //     [[pFGInt number] addObject: numberBase];
+        //     [numberBase release];
+        //     numberBase = [[pFGInt number] lastObject];
+        //     [numberBase setDigit: ([numberBase digit] >> 16) | firstBit];
+        //     numberBase = [[qFGInt number] lastObject];
+        //     [numberBase setDigit: ([numberBase digit] & firstNumberBase) | firstBit];
+        // }
 
         [pFGInt findNearestLargerPrime];
         [qFGInt findNearestLargerPrime];
@@ -494,7 +494,7 @@ This header may not be removed.
     if (pInvertedModQ != nil) 
         [pInvertedModQ release];
     [super dealloc];
-}
+}   
 
 -(NSData *) encryptNSString: (NSString *) plainText {
     if (!modulus) {
@@ -519,6 +519,8 @@ This header may not be removed.
 }
 
 -(NSData *) encryptNSData: (NSData *) plainText {
+    FGInt *dataFGInt, *encryptedFGInt;
+
     if (!modulus) {
         NSLog(@"No modulus available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return nil;
@@ -531,18 +533,13 @@ This header may not be removed.
         NSLog(@"No plainText available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return nil;
     }
-    FGIntOverflow bitLength = [modulus length]*32 - 1;
-    FGIntBase lastBit = [[[modulus number] lastObject] digit];
-    while (lastBit != 0) {
-        ++bitLength;
-        lastBit >>= 1;
-    }
-    if (([plainText length] * 8) >= bitLength) {
-        NSLog(@"plainText is too big for %s at line %d, decryption will lead to data loss", __PRETTY_FUNCTION__, __LINE__);
+    dataFGInt = [[FGInt alloc] initWithNSData: plainText];
+    if ([FGInt compareAbsoluteValueOf: dataFGInt with: modulus] != smaller) {
+        NSLog(@"plainText (%lu bytes) is too big for %s at line %d, decryption will lead to data loss", [plainText length], __PRETTY_FUNCTION__, __LINE__);
+        [dataFGInt release];
         return nil;
     }
         
-    FGInt *dataFGInt = [[FGInt alloc] initWithNSData: plainText], *encryptedFGInt;
     encryptedFGInt = [FGInt raise: dataFGInt toThePower: publicExponent montgomeryMod: modulus];
     [dataFGInt release];
     NSData *encryptedData = [encryptedFGInt toNSData];
@@ -720,11 +717,13 @@ This header may not be removed.
 -(void) setGFGIntAndComputeY: (FGInt *) newG {
     if (secretKey) {
         if (primeFGInt) {
-            if (gFGInt) 
+            if (gFGInt) {
                 [gFGInt release];
+            }
             gFGInt = newG;
-            if (yFGInt)
+            if (yFGInt) {
                 [yFGInt release];
+            }
             yFGInt = [FGInt raise: gFGInt toThePower: secretKey montgomeryMod: primeFGInt];
         } else {
             NSLog(@"primeFGInt is empty for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -737,11 +736,13 @@ This header may not be removed.
 -(void) setSecretKeyAndComputeY: (FGInt *) newSecretKey {
     if (gFGInt) {
         if (primeFGInt) {
-            if (secretKey) 
+            if (secretKey) {
                 [secretKey release];
+            }
             secretKey = newSecretKey;
-            if (yFGInt)
+            if (yFGInt) {
                 [yFGInt release];
+            }
             yFGInt = [FGInt raise: gFGInt toThePower: secretKey montgomeryMod: primeFGInt];
         } else {
             NSLog(@"primeFGInt is empty for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -754,24 +755,29 @@ This header may not be removed.
 
 -(id) copyWithZone: (NSZone *) zone {
     FGIntElGamal *newKeys = [[FGIntElGamal allocWithZone: zone] init];
-    if (primeFGInt)
-        [newKeys setPrimeFGInt: [primeFGInt copy]];
-    if (gFGInt)
-        [newKeys setGFGInt: [gFGInt copy]];
-    if (secretKey)
-        [newKeys setSecretKey: [secretKey copy]];
-    if (yFGInt)
-        [newKeys setYFGInt: [yFGInt copy]];
+    if (primeFGInt) {
+        [newKeys setPrimeFGInt: [primeFGInt mutableCopy]];
+    }
+    if (gFGInt) {
+        [newKeys setGFGInt: [gFGInt mutableCopy]];
+    }
+    if (secretKey) {
+        [newKeys setSecretKey: [secretKey mutableCopy]];
+    }
+    if (yFGInt) {
+        [newKeys setYFGInt: [yFGInt mutableCopy]];
+    }
     return newKeys;
 }
 
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength, length;
         FGInt *tmpFGInt, *qFGInt;
+        FGIntBase firstBit, firstNumberBase;
         NSMutableData *tmpData;
+        FGIntBase* numberArray;
 
         if (bitLength > 7936) qBitLength = (bitLength * 512) / 15424;
         if (bitLength <= 7936) qBitLength = (bitLength * 384) / 7936;
@@ -790,10 +796,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[qFGInt number] lastObject] digit];
+        numberArray = [[qFGInt number] mutableBytes];
+        length = [[qFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[qFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [qFGInt findNearestLargerPrime];
 
         byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
@@ -804,10 +812,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[primeFGInt number] lastObject] digit];
+        numberArray = [[primeFGInt number] mutableBytes];
+        length = [[primeFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[primeFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [primeFGInt findNearestLargerDSAPrimeWith: qFGInt];
 
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -821,10 +831,12 @@ This header may not be removed.
             j = qBitLength % 32;
             firstBit = (1u << 31) >> ((32 - j) % 32);
             firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            j = [[[secretKey number] lastObject] digit];
+            numberArray = [[tmpFGInt number] mutableBytes];
+            length = [[tmpFGInt number] length]/4;
+            j = numberArray[length - 1];
             j = j & firstNumberBase;
             j = j | firstBit;
-            [[[tmpFGInt number] lastObject] setDigit: j];
+            numberArray[length - 1] = j;
             secretKey = [FGInt mod: tmpFGInt by: qFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
@@ -838,14 +850,16 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[gFGInt number] lastObject] digit];
+        numberArray = [[gFGInt number] mutableBytes];
+        length = [[gFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[gFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         gFGInt = [FGInt longDivisionModBis: gFGInt by: primeFGInt];
 
         FGInt *phi;
-        tmpFGInt = [primeFGInt copy];
+        tmpFGInt = [primeFGInt mutableCopy];
         [tmpFGInt decrement];
         NSDictionary *tmpDiv = [FGInt divide: tmpFGInt by: qFGInt];
         [qFGInt release];
@@ -876,10 +890,11 @@ This header may not be removed.
         return nil;
     }
     if (self = [super init]) {
-        FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength;
+        FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt, *qFGInt;
         NSMutableData *tmpData;
+        FGIntBase* numberArray;
 
 //        if (bitLength > 7936) qBitLength = (bitLength * 512) / 15424;
 //        if (bitLength <= 7936) qBitLength = (bitLength * 384) / 7936;
@@ -908,10 +923,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[qFGInt number] lastObject] digit];
+        numberArray = [[qFGInt number] mutableBytes];
+        length = [[qFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[qFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [qFGInt findNearestLargerPrime];
 
         byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
@@ -922,10 +939,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[primeFGInt number] lastObject] digit];
+        numberArray = [[primeFGInt number] mutableBytes];
+        length = [[primeFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[primeFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [primeFGInt findNearestLargerDSAPrimeWith: qFGInt];
     
         tmpFGInt = [[FGInt alloc] initWithNSData: secretKeyData];
@@ -949,13 +968,15 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[gFGInt number] lastObject] digit];
+        numberArray = [[gFGInt number] mutableBytes];
+        length = [[gFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[gFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
 
         FGInt *phi;
-        tmpFGInt = [primeFGInt copy];
+        tmpFGInt = [primeFGInt mutableCopy];
         [tmpFGInt decrement];
         NSDictionary *tmpDiv = [FGInt divide: tmpFGInt by: qFGInt];
         [qFGInt release];
@@ -1202,12 +1223,7 @@ This header may not be removed.
         return nil;
     }
         
-    FGIntOverflow bitLength = [primeFGInt length]*32 - 1, kLength, byteLength, j, firstBit;
-    FGIntBase lastBit = [[[primeFGInt number] lastObject] digit];
-    while (lastBit != 0) {
-        ++bitLength;
-        lastBit >>= 1;
-    }
+    FGIntOverflow bitLength = [primeFGInt bitSize], kLength, byteLength, j, firstBit;
     if (([plainText length] * 8) >= bitLength) {
         NSLog(@"plainText is too big for %s at line %d, decryption will lead to data loss", __PRETTY_FUNCTION__, __LINE__);
         return nil;
@@ -1215,6 +1231,9 @@ This header may not be removed.
         
     FGInt *dataFGInt = [[FGInt alloc] initWithNSData: plainText], *encryptedFGInt, *kFGInt, *hFGInt, *yKFGInt, *tmpFGInt;
     NSMutableData *tmpData;
+    FGIntOverflow length;
+    FGIntBase* numberArray;
+
     if (bitLength > 7936) kLength = (bitLength * 512) / 15424;
     if (bitLength <= 7936) kLength = (bitLength * 384) / 7936;
     if (bitLength <= 5312) kLength = (bitLength * 320) / 5312;
@@ -1230,9 +1249,11 @@ This header may not be removed.
     kFGInt = [[FGInt alloc] initWithNSData: tmpData];
     [tmpData release];
     firstBit = (1u << 31);
-    j = [[[kFGInt number] lastObject] digit];
+    numberArray = [[kFGInt number] mutableBytes];
+    length = [[kFGInt number] length]/4;
+    j = numberArray[length - 1];
     j = j | firstBit;
-    [[[kFGInt number] lastObject] setDigit: j];
+    numberArray[length - 1] = j;
         
     hFGInt = [FGInt raise: gFGInt toThePower: kFGInt montgomeryMod: primeFGInt];
     yKFGInt = [FGInt raise: yFGInt toThePower: kFGInt montgomeryMod: primeFGInt];
@@ -1391,16 +1412,20 @@ This header may not be removed.
 
     FGInt *rFGInt, *sFGInt;
     BOOL noLuck;
+    FGIntOverflow length;
+    FGIntBase* numberArray;
     do {
         FGInt *dataFGInt = [[FGInt alloc] initWithNSData: plainText], *kFGInt, *hFGInt, *tmpFGInt, *kInvertedFGInt;
         FGIntOverflow j, firstBit;
         kFGInt = [[FGInt alloc] initWithNSData: kData];
         firstBit = (1u << 31);
-        j = [[[kFGInt number] lastObject] digit];
+        numberArray = [[kFGInt number] mutableBytes];
+        length = [[kFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j | firstBit;
-        [[[kFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         
-        FGInt *phi = [primeFGInt copy], *gcd, *one = [[FGInt alloc] initWithFGIntBase: 1];
+        FGInt *phi = [primeFGInt mutableCopy], *gcd, *one = [[FGInt alloc] initWithFGIntBase: 1];
         [phi decrement];
         gcd = [FGInt gcd: kFGInt and: phi];
         while ([FGInt compareAbsoluteValueOf: gcd with: one] != equal) {
@@ -1466,7 +1491,7 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow bitLength = [primeFGInt length]*32, kLength, byteLength, j, firstBit;
+    FGIntOverflow bitLength = [primeFGInt bitSize], kLength, byteLength, j, firstBit;
     NSMutableData *kData;
     if (bitLength > 7936) kLength = (bitLength * 512) / 15424;
     if (bitLength <= 7936) kLength = (bitLength * 384) / 7936;
@@ -1566,8 +1591,9 @@ This header may not be removed.
         signatureCheck = NO;
     }
     [primeFGInt increment];
-    if (!signatureCheck)
+    if (!signatureCheck) {
         return signatureCheck;
+    }
 
     FGInt *plainTextFGInt = [[FGInt alloc] initWithNSData: plainText], 
         *gPlainTextFGInt = [FGInt raise: gFGInt toThePower: plainTextFGInt montgomeryMod: primeFGInt],
@@ -1650,11 +1676,13 @@ This header may not be removed.
 -(void) setGFGIntAndComputeY: (FGInt *) newG {
     if (secretKey) {
         if (pFGInt) {
-            if (gFGInt) 
+            if (gFGInt) {
                 [gFGInt release];
+            }
             gFGInt = newG;
-            if (yFGInt)
+            if (yFGInt) {
                 [yFGInt release];
+            }
             yFGInt = [FGInt raise: gFGInt toThePower: secretKey montgomeryMod: pFGInt];
         } else {
             NSLog(@"pFGInt is empty for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -1667,11 +1695,13 @@ This header may not be removed.
 -(void) setSecretKeyAndComputeY: (FGInt *) newSecretKey {
     if (gFGInt) {
         if (pFGInt) {
-            if (secretKey) 
+            if (secretKey) {
                 [secretKey release];
+            }
             secretKey = newSecretKey;
-            if (yFGInt)
+            if (yFGInt) {
                 [yFGInt release];
+            }
             yFGInt = [FGInt raise: gFGInt toThePower: secretKey montgomeryMod: pFGInt];
         } else {
             NSLog(@"pFGInt is empty for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -1684,26 +1714,33 @@ This header may not be removed.
 
 -(id) copyWithZone: (NSZone *) zone {
     FGIntDSA *newKeys = [[FGIntDSA allocWithZone: zone] init];
-    if (pFGInt)
-        [newKeys setPFGInt: [pFGInt copy]];
-    if (qFGInt)
-        [newKeys setQFGInt: [qFGInt copy]];
-    if (gFGInt)
-        [newKeys setGFGInt: [gFGInt copy]];
-    if (secretKey)
-        [newKeys setSecretKey: [secretKey copy]];
-    if (yFGInt)
-        [newKeys setYFGInt: [yFGInt copy]];
+    if (pFGInt) {
+        [newKeys setPFGInt: [pFGInt mutableCopy]];
+    }
+    if (qFGInt) {
+        [newKeys setQFGInt: [qFGInt mutableCopy]];
+    }
+    if (gFGInt) {
+        [newKeys setGFGInt: [gFGInt mutableCopy]];
+    }
+    if (secretKey) {
+        [newKeys setSecretKey: [secretKey mutableCopy]];
+    }
+    if (yFGInt) {
+        [newKeys setYFGInt: [yFGInt mutableCopy]];
+    }
     return newKeys;
 }
 
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength;
+        FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
         NSMutableData *tmpData;
+        FGIntBase* numberArray;
+
 
         if (bitLength > 7936) qBitLength = (bitLength * 512) / 15424;
         if (bitLength <= 7936) qBitLength = (bitLength * 384) / 7936;
@@ -1722,10 +1759,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[qFGInt number] lastObject] digit];
+        numberArray = [[qFGInt number] mutableBytes];
+        length = [[qFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[qFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [qFGInt findNearestLargerPrime];
 
         byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
@@ -1736,10 +1775,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[pFGInt number] lastObject] digit];
+        numberArray = [[pFGInt number] mutableBytes];
+        length = [[pFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[pFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
 
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -1753,10 +1794,12 @@ This header may not be removed.
             j = qBitLength % 32;
             firstBit = (1u << 31) >> ((32 - j) % 32);
             firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            j = [[[secretKey number] lastObject] digit];
+            numberArray = [[tmpFGInt number] mutableBytes];
+            length = [[tmpFGInt number] length]/4;
+            j = numberArray[length - 1];
             j = j & firstNumberBase;
             j = j | firstBit;
-            [[[tmpFGInt number] lastObject] setDigit: j];
+            numberArray[length - 1] = j;
             secretKey = [FGInt mod: tmpFGInt by: qFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
@@ -1770,14 +1813,16 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[gFGInt number] lastObject] digit];
+        numberArray = [[hFGInt number] mutableBytes];
+        length = [[hFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[hFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         hFGInt = [FGInt longDivisionModBis: hFGInt by: pFGInt];
 
         FGInt *phi;
-        tmpFGInt = [pFGInt copy];
+        tmpFGInt = [pFGInt mutableCopy];
         [tmpFGInt decrement];
         NSDictionary *tmpDiv = [FGInt divide: tmpFGInt by: qFGInt];
         [tmpFGInt release];
@@ -1809,10 +1854,11 @@ This header may not be removed.
         return nil;
     }
     if (self = [super init]) {
-        FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength;
+        FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
         NSMutableData *tmpData;
+        FGIntBase* numberArray;
 
         if (qBitLength > 384) bitLength = (qBitLength * 15424) / 512;
         if (qBitLength <= 384) bitLength = (qBitLength * 7936) / 384;
@@ -1831,10 +1877,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[qFGInt number] lastObject] digit];
+        numberArray = [[qFGInt number] mutableBytes];
+        length = [[qFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[qFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [qFGInt findNearestLargerPrime];
 
         byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
@@ -1845,10 +1893,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[pFGInt number] lastObject] digit];
+        numberArray = [[pFGInt number] mutableBytes];
+        length = [[pFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[pFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
     
         tmpFGInt = [[FGInt alloc] initWithNSData: secretKeyData];
@@ -1870,14 +1920,16 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[hFGInt number] lastObject] digit];
+        numberArray = [[hFGInt number] mutableBytes];
+        length = [[hFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[hFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         hFGInt = [FGInt longDivisionModBis: hFGInt by: pFGInt];
 
         FGInt *phi;
-        tmpFGInt = [pFGInt copy];
+        tmpFGInt = [pFGInt mutableCopy];
         [tmpFGInt decrement];
         NSDictionary *tmpDiv = [FGInt divide: tmpFGInt by: qFGInt];
         [tmpFGInt release];
@@ -2098,16 +2150,21 @@ This header may not be removed.
 
 
 -(void) dealloc {
-    if (pFGInt != nil) 
+    if (pFGInt != nil) {
         [pFGInt release];
-    if (qFGInt != nil) 
+    }
+    if (qFGInt != nil) {
         [qFGInt release];
-    if (secretKey != nil) 
+    }
+    if (secretKey != nil) {
         [secretKey release];
-    if (gFGInt != nil) 
+    }
+    if (gFGInt != nil) {
         [gFGInt release];
-    if (yFGInt != nil) 
+    }
+    if (yFGInt != nil) {
         [yFGInt release];
+    }
     [super dealloc];
 }
 
@@ -2163,10 +2220,9 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = ([qFGInt length] -  1)*4, firstBit = [[[qFGInt number] lastObject] digit], j;
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
+    FGIntOverflow byteLength = [qFGInt bitSize]/8, firstBit, j;
+    if ([qFGInt bitSize] % 8 != 0) {
+        byteLength++;
     }
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
@@ -2174,11 +2230,15 @@ This header may not be removed.
     }
 
     FGInt *kFGInt;
+    FGIntOverflow length;
+    FGIntBase* numberArray;
     kFGInt = [[FGInt alloc] initWithNSData: kData];
     firstBit = (1u << 31);
-    j = [[[kFGInt number] lastObject] digit];
+    numberArray = [[kFGInt number] mutableBytes];
+    length = [[kFGInt number] length]/4;
+    j = numberArray[length - 1];
     j = j | firstBit;
-    [[[kFGInt number] lastObject] setDigit: j];
+    numberArray[length - 1] = j;
 
     FGInt *rFGInt, *sFGInt;
     BOOL noLuck;
@@ -2233,11 +2293,7 @@ This header may not be removed.
 }
 
 -(NSData *) signNSData: (NSData *) plainText {
-    FGIntOverflow byteLength = ([secretKey length] -  1)*4, firstBit = [[[secretKey number] lastObject] digit], j;
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
-    }
+    FGIntOverflow byteLength = [[secretKey number] length], j;
     NSMutableData *kData;
     kData = [[NSMutableData alloc] initWithLength: byteLength];
     int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, kData.mutableBytes);
@@ -2408,6 +2464,13 @@ This header may not be removed.
 
 
 
+
+
+
+
+
+
+
 @implementation FGIntGOSTDSA
 @synthesize pFGInt;
 @synthesize qFGInt;
@@ -2431,11 +2494,13 @@ This header may not be removed.
 -(void) setGFGIntAndComputeY: (FGInt *) newG {
     if (secretKey) {
         if (pFGInt) {
-            if (gFGInt) 
+            if (gFGInt) {
                 [gFGInt release];
+            }
             gFGInt = newG;
-            if (yFGInt)
+            if (yFGInt) {
                 [yFGInt release];
+            }
             yFGInt = [FGInt raise: gFGInt toThePower: secretKey montgomeryMod: pFGInt];
         } else {
             NSLog(@"pFGInt is empty for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -2448,11 +2513,13 @@ This header may not be removed.
 -(void) setSecretKeyAndComputeY: (FGInt *) newSecretKey {
     if (gFGInt) {
         if (pFGInt) {
-            if (secretKey) 
+            if (secretKey) {
                 [secretKey release];
+            }
             secretKey = newSecretKey;
-            if (yFGInt)
+            if (yFGInt) {
                 [yFGInt release];
+            }
             yFGInt = [FGInt raise: gFGInt toThePower: secretKey montgomeryMod: pFGInt];
         } else {
             NSLog(@"pFGInt is empty for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -2465,26 +2532,32 @@ This header may not be removed.
 
 -(id) copyWithZone: (NSZone *) zone {
     FGIntDSA *newKeys = [[FGIntDSA allocWithZone: zone] init];
-    if (pFGInt)
-        [newKeys setPFGInt: [pFGInt copy]];
-    if (qFGInt)
-        [newKeys setQFGInt: [qFGInt copy]];
-    if (gFGInt)
-        [newKeys setGFGInt: [gFGInt copy]];
-    if (secretKey)
-        [newKeys setSecretKey: [secretKey copy]];
-    if (yFGInt)
-        [newKeys setYFGInt: [yFGInt copy]];
+    if (pFGInt) {
+        [newKeys setPFGInt: [pFGInt mutableCopy]];
+    }
+    if (qFGInt) {
+        [newKeys setQFGInt: [qFGInt mutableCopy]];
+    }
+    if (gFGInt) {
+        [newKeys setGFGInt: [gFGInt mutableCopy]];
+    }
+    if (secretKey) {
+        [newKeys setSecretKey: [secretKey mutableCopy]];
+    }
+    if (yFGInt) {
+        [newKeys setYFGInt: [yFGInt mutableCopy]];
+    }
     return newKeys;
 }
 
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength;
+        FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
         NSMutableData *tmpData;
+        FGIntBase* numberArray;
 
         if (bitLength > 7936) qBitLength = (bitLength * 512) / 15424;
         if (bitLength <= 7936) qBitLength = (bitLength * 384) / 7936;
@@ -2503,10 +2576,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[qFGInt number] lastObject] digit];
+        numberArray = [[qFGInt number] mutableBytes];
+        length = [[qFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[qFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [qFGInt findNearestLargerPrime];
 
         byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
@@ -2517,10 +2592,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[pFGInt number] lastObject] digit];
+        numberArray = [[pFGInt number] mutableBytes];
+        length = [[pFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[pFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
 
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -2534,10 +2611,12 @@ This header may not be removed.
             j = qBitLength % 32;
             firstBit = (1u << 31) >> ((32 - j) % 32);
             firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            j = [[[secretKey number] lastObject] digit];
+            numberArray = [[tmpFGInt number] mutableBytes];
+            length = [[tmpFGInt number] length]/4;
+            j = numberArray[length - 1];
             j = j & firstNumberBase;
             j = j | firstBit;
-            [[[tmpFGInt number] lastObject] setDigit: j];
+            numberArray[length - 1] = j;
             secretKey = [FGInt mod: tmpFGInt by: qFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
@@ -2551,14 +2630,16 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[gFGInt number] lastObject] digit];
+        numberArray = [[hFGInt number] mutableBytes];
+        length = [[hFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[hFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         hFGInt = [FGInt longDivisionModBis: hFGInt by: pFGInt];
 
         FGInt *phi;
-        tmpFGInt = [pFGInt copy];
+        tmpFGInt = [pFGInt mutableCopy];
         [tmpFGInt decrement];
         NSDictionary *tmpDiv = [FGInt divide: tmpFGInt by: qFGInt];
         [tmpFGInt release];
@@ -2590,10 +2671,11 @@ This header may not be removed.
         return nil;
     }
     if (self = [super init]) {
-        FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength;
+        FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
         NSMutableData *tmpData;
+        FGIntBase* numberArray;
 
         if (qBitLength > 384) bitLength = (qBitLength * 15424) / 512;
         if (qBitLength <= 384) bitLength = (qBitLength * 7936) / 384;
@@ -2612,10 +2694,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[qFGInt number] lastObject] digit];
+        numberArray = [[qFGInt number] mutableBytes];
+        length = [[qFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[qFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [qFGInt findNearestLargerPrime];
 
         byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
@@ -2626,10 +2710,12 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[pFGInt number] lastObject] digit];
+        numberArray = [[pFGInt number] mutableBytes];
+        length = [[pFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[pFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
     
         tmpFGInt = [[FGInt alloc] initWithNSData: secretKeyData];
@@ -2651,14 +2737,16 @@ This header may not be removed.
         j = bitLength % 32;
         firstBit = (1u << 31) >> ((32 - j) % 32);
         firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        j = [[[hFGInt number] lastObject] digit];
+        numberArray = [[hFGInt number] mutableBytes];
+        length = [[hFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j & firstNumberBase;
         j = j | firstBit;
-        [[[hFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         hFGInt = [FGInt longDivisionModBis: hFGInt by: pFGInt];
 
         FGInt *phi;
-        tmpFGInt = [pFGInt copy];
+        tmpFGInt = [pFGInt mutableCopy];
         [tmpFGInt decrement];
         NSDictionary *tmpDiv = [FGInt divide: tmpFGInt by: qFGInt];
         [tmpFGInt release];
@@ -2879,16 +2967,21 @@ This header may not be removed.
 
 
 -(void) dealloc {
-    if (pFGInt != nil) 
+    if (pFGInt != nil)  {
         [pFGInt release];
-    if (qFGInt != nil) 
+    }
+    if (qFGInt != nil) {
         [qFGInt release];
-    if (secretKey != nil) 
+    }
+    if (secretKey != nil) {
         [secretKey release];
-    if (gFGInt != nil) 
+    }
+    if (gFGInt != nil) {
         [gFGInt release];
-    if (yFGInt != nil) 
+    }
+    if (yFGInt != nil) {
         [yFGInt release];
+    }
     [super dealloc];
 }
 
@@ -2944,22 +3037,25 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = ([qFGInt length] -  1)*4, firstBit = [[[qFGInt number] lastObject] digit], j;
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
+    FGIntOverflow byteLength = [qFGInt bitSize]/8, firstBit, j;
+    if ([qFGInt bitSize] % 8 != 0) {
+        byteLength++;
     }
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
         return nil;
     }
 
+    FGIntOverflow length;
+    FGIntBase* numberArray;
     FGInt *kFGInt;
     kFGInt = [[FGInt alloc] initWithNSData: kData];
     firstBit = (1u << 31);
-    j = [[[kFGInt number] lastObject] digit];
+    numberArray = [[kFGInt number] mutableBytes];
+    length = [[kFGInt number] length]/4;
+    j = numberArray[length - 1];
     j = j | firstBit;
-    [[[kFGInt number] lastObject] setDigit: j];
+    numberArray[length - 1] = j;
 
     FGInt *rFGInt, *sFGInt;
     BOOL noLuck;
@@ -3016,11 +3112,7 @@ This header may not be removed.
 }
 
 -(NSData *) signNSData: (NSData *) plainText {
-    FGIntOverflow byteLength = ([secretKey length] -  1)*4, firstBit = [[[secretKey number] lastObject] digit], j;
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
-    }
+    FGIntOverflow byteLength = [[secretKey number] length];
     NSMutableData *kData;
     kData = [[NSMutableData alloc] initWithLength: byteLength];
     int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, kData.mutableBytes);
@@ -3131,14 +3223,15 @@ This header may not be removed.
     if ([FGInt compareAbsoluteValueOf: zero with: tmpFGInt] == equal) {
         [plainTextFGInt release];
         plainTextFGInt = [[FGInt alloc] initWithFGIntBase: 1];
-        vFGInt = [plainTextFGInt copy];
-    } else
+        vFGInt = [plainTextFGInt mutableCopy];
+    } else {
         vFGInt = [FGInt modularInverse: plainTextFGInt mod: qFGInt];
+    }
     [zero release];
     tmpFGInt = [FGInt multiply: vFGInt and: sFGInt];
     FGInt *u1FGInt = [FGInt mod: tmpFGInt by: qFGInt];
     [tmpFGInt release];
-    FGInt *tmpFGInt1 = [qFGInt copy];
+    FGInt *tmpFGInt1 = [qFGInt mutableCopy];
     [tmpFGInt1 subtractWith: rFGInt];
     tmpFGInt = [FGInt multiply: tmpFGInt1 and: vFGInt];
     [tmpFGInt1 release];
@@ -3216,12 +3309,15 @@ This header may not be removed.
 
 
 -(void) dealloc {
-    if (gPoint != nil) 
+    if (gPoint != nil) {
         [gPoint release];
-    if (yPoint != nil) 
+    }
+    if (yPoint != nil) {
         [yPoint release];
-    if (secretKey != nil) 
+    }
+    if (secretKey != nil) {
         [secretKey release];
+    }
     [super dealloc];
 }
 
@@ -3229,11 +3325,11 @@ This header may not be removed.
 -(id) copyWithZone: (NSZone *) zone {
     ECDSA *newKeys = [[ECDSA allocWithZone: zone] init];
     if (gPoint)
-        [newKeys setGPoint: [gPoint copy]];
+        [newKeys setGPoint: [gPoint mutableCopy]];
     if (secretKey)
-        [newKeys setSecretKey: [secretKey copy]];
+        [newKeys setSecretKey: [secretKey mutableCopy]];
     if (yPoint)
-        [newKeys setYPoint: [yPoint copy]];
+        [newKeys setYPoint: [yPoint mutableCopy]];
     return newKeys;
 }
 
@@ -3242,11 +3338,13 @@ This header may not be removed.
     if (secretKey) {
         if ([newG ellipticCurve]) {
             if ([[newG ellipticCurve] p]) {
-                if (gPoint) 
+                if (gPoint) {
                     [gPoint release];
+                }
                 gPoint = newG;
-                if (yPoint)
+                if (yPoint) {
                     [yPoint release];
+                }
                 yPoint = [ECPoint add: gPoint kTimes: secretKey];
             } else {
                 NSLog(@"No ellipticCurve prime for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -3263,11 +3361,13 @@ This header may not be removed.
     if (gPoint) {
         if ([gPoint ellipticCurve]) {
             if ([[gPoint ellipticCurve] p]) {
-                if (secretKey) 
+                if (secretKey) {
                     [secretKey release];
+                }
                 secretKey = newSecretKey;
-                if (yPoint)
+                if (yPoint) {
                     [yPoint release];
+                }
                 yPoint = [ECPoint add: gPoint kTimes: secretKey];
             } else {
                 NSLog(@"No ellipticCurve prime for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -3283,10 +3383,11 @@ This header may not be removed.
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, j, secretKeyLength;
+        FGIntOverflow byteLength, j, secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
         NSMutableData *tmpData;
+        FGIntBase* numberArray;
 
         gPoint = [ECPoint generateSecureCurveAndPointOfSize: bitLength];
         FGInt *nFGInt = [gPoint pointOrder], *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -3301,10 +3402,12 @@ This header may not be removed.
             j = bitLength % 32;
             firstBit = (1u << 31) >> ((32 - j) % 32);
             firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            j = [[[secretKey number] lastObject] digit];
+            numberArray = [[tmpFGInt number] mutableBytes];
+            length = [[tmpFGInt number] length]/4;
+            j = numberArray[length - 1];
             j = j & firstNumberBase;
             j = j | firstBit;
-            [[[tmpFGInt number] lastObject] setDigit: j];
+            numberArray[length - 1] = j;
             secretKey = [FGInt mod: tmpFGInt by: nFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
@@ -3421,10 +3524,9 @@ This header may not be removed.
     [ec setA: aFGInt];
     [ec setB: bFGInt];
 
-    FGIntOverflow byteLength = ([pFGInt length] -  1)*4, firstBit = [[[pFGInt number] lastObject] digit];
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
+    FGIntOverflow byteLength = [pFGInt bitSize]/8;
+    if ([pFGInt bitSize] % 8 != 0) {
+        byteLength++;
     }
 
     bytesRange = NSMakeRange(rangeStart, 1);
@@ -3565,18 +3667,18 @@ This header may not be removed.
     [tmpData release];
 
     tmpData = [gPoint toCompressedNSData];
+    // tmpData = [gPoint toNSData];
     [publicKeyData appendData: tmpData];
     [tmpData release];
 
     tmpData = [yPoint toCompressedNSData];
+    // tmpData = [yPoint toNSData];
     [publicKeyData appendData: tmpData];
     [tmpData release];
 
     tmpData = [[gPoint pointOrder] toMPINSData];
     [publicKeyData appendData: tmpData];
     [tmpData release];
-
-//NSLog(@"The kitty key is");
 
     NSDictionary *tmpDiv = [FGInt divide: [[gPoint ellipticCurve] curveOrder] by: [gPoint pointOrder]];
     tmpData = [[tmpDiv objectForKey: quotientKey] toMPINSData];
@@ -3713,10 +3815,9 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = ([[[gPoint ellipticCurve] p] length] -  1)*4, firstBit = [[[[[gPoint ellipticCurve] p] number] lastObject] digit], j;
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] bitSize]/8, firstBit, j;
+    if ([[[gPoint ellipticCurve] p] bitSize] % 8 != 0) {
+        byteLength++;
     }
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
@@ -3725,18 +3826,21 @@ This header may not be removed.
 
     FGInt *rFGInt, *sFGInt;
     FGInt *nFGInt = [gPoint pointOrder];
-    FGIntOverflow nBitLength = [nFGInt bitSize];
+    FGIntOverflow nBitLength = [nFGInt bitSize], length;
     FGInt *dataFGInt = [[FGInt alloc] initWithNSData: plainText];
     [dataFGInt shiftRightBy: [dataFGInt bitSize] - nBitLength];
     FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
-        
+    FGIntBase* numberArray;    
+
     BOOL noLuck;
     do {
         FGInt *tmpFGInt = [[FGInt alloc] initWithNSData: kData];
         firstBit = (1u << 31);
-        j = [[[tmpFGInt number] lastObject] digit];
+        numberArray = [[tmpFGInt number] mutableBytes];
+        length = [[tmpFGInt number] length]/4;
+        j = numberArray[length - 1];
         j = j | firstBit;
-        [[[tmpFGInt number] lastObject] setDigit: j];
+        numberArray[length - 1] = j;
         FGInt *kFGInt = [FGInt mod: tmpFGInt by: nFGInt];
         ECPoint *kGPoint = [ECPoint add: gPoint kTimes: kFGInt];
         rFGInt = [FGInt mod: [kGPoint x] by: nFGInt];
@@ -3789,10 +3893,9 @@ This header may not be removed.
 
 
 -(NSData *) signNSData: (NSData *) plainText {
-    FGIntOverflow byteLength = ([secretKey length] -  1)*4, firstBit = [[[secretKey number] lastObject] digit], j;
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
+    FGIntOverflow byteLength = [secretKey bitSize]/8;
+    if ([secretKey bitSize]%8 != 0) {
+        byteLength++;
     }
     NSMutableData *kData;
     kData = [[NSMutableData alloc] initWithLength: byteLength];
@@ -3977,24 +4080,30 @@ This header may not be removed.
 
 
 -(void) dealloc {
-    if (gPoint != nil) 
+    if (gPoint != nil) {
         [gPoint release];
-    if (yPoint != nil) 
+    }
+    if (yPoint != nil) {
         [yPoint release];
-    if (secretKey != nil) 
+    }
+    if (secretKey != nil) {
         [secretKey release];
+    }
     [super dealloc];
 }
 
 
 -(id) copyWithZone: (NSZone *) zone {
     ECDSA *newKeys = [[ECDSA allocWithZone: zone] init];
-    if (gPoint)
-        [newKeys setGPoint: [gPoint copy]];
-    if (secretKey)
-        [newKeys setSecretKey: [secretKey copy]];
-    if (yPoint)
-        [newKeys setYPoint: [yPoint copy]];
+    if (gPoint) {
+        [newKeys setGPoint: [gPoint mutableCopy]];
+    }
+    if (secretKey) {
+        [newKeys setSecretKey: [secretKey mutableCopy]];
+    }
+    if (yPoint) {
+        [newKeys setYPoint: [yPoint mutableCopy]];
+    }
     return newKeys;
 }
 
@@ -4003,11 +4112,13 @@ This header may not be removed.
     if (secretKey) {
         if ([newG ellipticCurve]) {
             if ([[newG ellipticCurve] p]) {
-                if (gPoint) 
+                if (gPoint) {
                     [gPoint release];
+                }
                 gPoint = newG;
-                if (yPoint)
+                if (yPoint) {
                     [yPoint release];
+                }
                 yPoint = [ECPoint add: gPoint kTimes: secretKey];
             } else {
                 NSLog(@"No ellipticCurve prime for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -4024,11 +4135,13 @@ This header may not be removed.
     if (gPoint) {
         if ([gPoint ellipticCurve]) {
             if ([[gPoint ellipticCurve] p]) {
-                if (secretKey) 
+                if (secretKey) {
                     [secretKey release];
+                }
                 secretKey = newSecretKey;
-                if (yPoint)
+                if (yPoint) {
                     [yPoint release];
+                }
                 yPoint = [ECPoint add: gPoint kTimes: secretKey];
             } else {
                 NSLog(@"No ellipticCurve prime for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
@@ -4044,10 +4157,11 @@ This header may not be removed.
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, j, secretKeyLength;
+        FGIntOverflow byteLength, j, secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
         NSMutableData *tmpData;
+        FGIntBase* numberArray;
 
         gPoint = [ECPoint generateSecureCurveAndPointOfSize: bitLength];
         FGInt *nFGInt = [gPoint pointOrder], *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -4062,10 +4176,12 @@ This header may not be removed.
             j = bitLength % 32;
             firstBit = (1u << 31) >> ((32 - j) % 32);
             firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            j = [[[secretKey number] lastObject] digit];
+            numberArray = [[tmpFGInt number] mutableBytes];
+            length = [[tmpFGInt number] length]/4;
+            j = numberArray[length - 1];
             j = j & firstNumberBase;
             j = j | firstBit;
-            [[[tmpFGInt number] lastObject] setDigit: j];
+            numberArray[length - 1] = j;
             secretKey = [FGInt mod: tmpFGInt by: nFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
@@ -4182,10 +4298,9 @@ This header may not be removed.
     [ec setA: aFGInt];
     [ec setB: bFGInt];
 
-    FGIntOverflow byteLength = ([pFGInt length] -  1)*4, firstBit = [[[pFGInt number] lastObject] digit];
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
+    FGIntOverflow byteLength = [pFGInt bitSize]/8;
+    if ([pFGInt bitSize]%8 != 0) {
+        byteLength++;
     }
 
     bytesRange = NSMakeRange(rangeStart, 1);
@@ -4474,10 +4589,9 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = ([[[gPoint ellipticCurve] p] length] -  1)*4, firstBit = [[[[[gPoint ellipticCurve] p] number] lastObject] digit], j;
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] bitSize]/8, j;
+    if ([[[gPoint ellipticCurve] p] bitSize]%8 != 0) {
+        byteLength++;
     }
     if ([plainText length] > byteLength - 3) {
         NSLog(@"plainText is too big for %s at line %d, make sure it contains %llu bytes or less", __PRETTY_FUNCTION__, __LINE__, byteLength - 3);
@@ -4490,10 +4604,12 @@ This header may not be removed.
     FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         
     FGInt *tmpFGInt = [[FGInt alloc] initWithNSData: kData];
-    firstBit = (1u << 31);
-    j = [[[tmpFGInt number] lastObject] digit];
+    FGIntOverflow firstBit = (1u << 31);
+    FGIntBase* numberArray = [[tmpFGInt number] mutableBytes];
+    FGIntOverflow length = [[tmpFGInt number] length]/4;
+    j = numberArray[length - 1];
     j = j | firstBit;
-    [[[tmpFGInt number] lastObject] setDigit: j];
+    numberArray[length - 1] = j;
     FGInt *kFGInt = [FGInt mod: tmpFGInt by: nFGInt];
     while (([FGInt compareAbsoluteValueOf: zero with: kFGInt] == equal) || ([FGInt compareAbsoluteValueOf: one with: kFGInt] == equal)) {
         [tmpFGInt increment];
@@ -4524,10 +4640,9 @@ This header may not be removed.
 
 
 -(NSData *) encryptNSData: (NSData *) plainText {
-    FGIntOverflow byteLength = ([secretKey length] -  1)*4, firstBit = [[[secretKey number] lastObject] digit], j;
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
+    FGIntOverflow byteLength = [secretKey bitSize]/8, j;
+    if ([secretKey bitSize]%8 != 0) {
+        byteLength++;
     }
     NSMutableData *kData;
     kData = [[NSMutableData alloc] initWithLength: byteLength];
@@ -4568,10 +4683,9 @@ This header may not be removed.
     EllipticCurve *ec = [gPoint ellipticCurve];
     FGIntBase rangeStart = 0, mpiLength, keyLength;
     ECPoint *encryptedPoint, *kGPoint;
-    FGIntOverflow byteLength = ([[[gPoint ellipticCurve] p] length] -  1)*4, firstBit = [[[[[gPoint ellipticCurve] p] number] lastObject] digit], j;
-    while (firstBit != 0) {
-        byteLength += 1;
-        firstBit >>= 8;
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] bitSize]/8, j;
+    if ([[[gPoint ellipticCurve] p] bitSize]%8 != 0) {
+        byteLength++;
     }
     if (([cipherText length] != 2*(byteLength + 1)) && ([cipherText length] != 2) && ([cipherText length] != (byteLength + 2))) {
         NSLog(@"cipherText is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);

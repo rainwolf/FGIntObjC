@@ -22,24 +22,28 @@
     return self;
 }
 
--(id) copyWithZone: (NSZone *) zone {
+-(id) mutableCopyWithZone: (NSZone *) zone {
     EllipticCurve *newEC = [[EllipticCurve allocWithZone: zone] init];
-    [newEC setA: [a copy]];
-    [newEC setB: [b copy]];
-    [newEC setP: [p copy]];
-    [newEC setCurveOrder: [curveOrder copy]];
+    [newEC setA: [a mutableCopy]];
+    [newEC setB: [b mutableCopy]];
+    [newEC setP: [p mutableCopy]];
+    [newEC setCurveOrder: [curveOrder mutableCopy]];
     return newEC;
 }
 
 -(void) dealloc {
-    if (a != nil) 
+    if (a != nil) {
         [a release];
-    if (b != nil) 
+    }
+    if (b != nil) {
         [b release];
-    if (p != nil) 
+    }
+    if (p != nil) {
         [p release];
-    if (curveOrder != nil) 
+    }
+    if (curveOrder != nil) {
         [curveOrder release];
+    }
     [super dealloc];
 }
 
@@ -103,31 +107,37 @@
     return self;
 }
 
--(id) copyWithZone: (NSZone *) zone {
+-(id) mutableCopyWithZone: (NSZone *) zone {
     ECPoint *newECPoint = [[ECPoint allocWithZone: zone] init];
-    [newECPoint setX: [x copy]];
-    [newECPoint setY: [y copy]];
-    if (pointOrder)
-        [newECPoint setPointOrder: [pointOrder copy]];
-    else
+    [newECPoint setX: [x mutableCopy]];
+    [newECPoint setY: [y mutableCopy]];
+    if (pointOrder) {
+        [newECPoint setPointOrder: [pointOrder mutableCopy]];
+    } else {
         [newECPoint setPointOrder: nil];
+    }
     [newECPoint setInfinity: infinity];
-    if (ellipticCurve)
+    if (ellipticCurve) {
         [newECPoint setEllipticCurve: ellipticCurve];
-    else
+    } else {
         [newECPoint setEllipticCurve: nil];
+    }
     return newECPoint;
 }
 
 -(void) dealloc {
-    if (x != nil) 
+    if (x != nil) {
         [x release];
-    if (y != nil) 
+    }
+    if (y != nil) {
         [y release];
-    if (pointOrder != nil)
+    }
+    if (pointOrder != nil) {
         [pointOrder release];
-    if (ellipticCurve != nil) 
+    }
+    if (ellipticCurve != nil) {
         [ellipticCurve release];
+    }
     [super dealloc];
 }
 
@@ -170,11 +180,9 @@
         return self;
     }
 
-    FGIntOverflow byteLength = ([[ellipticC p] length] - 1) * 4, i;
-    FGIntBase lastDigit = [[[[ellipticC p] number] lastObject] digit];
-    while (lastDigit != 0) {
-        ++byteLength;
-        lastDigit >>= 8;
+    FGIntOverflow byteLength = [[ellipticC p] bitSize]/8, i;
+    if ([[ellipticC p] bitSize]%8 != 0) {
+        byteLength++;
     }
 
     if ([ecPointData length] == (2 * byteLength + 1)) {
@@ -209,11 +217,14 @@
             }
             tmpFGInt = [FGInt squareRootOf: x3 mod: [ellipticC p]];
             [x3 release];
-            if ((firstByte[0] % 2) != ([[[tmpFGInt number] objectAtIndex: 0] digit] % 2)) {
-                y = [[ellipticC p] copy];
+            FGIntBase* numberArray = [[tmpFGInt number] mutableBytes];
+            if ((firstByte[0] % 2) != (numberArray[0] % 2)) {
+                y = [[ellipticC p] mutableCopy];
                 [y subtractWith: tmpFGInt];
                 [tmpFGInt release];
-            } else y = tmpFGInt;
+            } else {
+                y = tmpFGInt;
+            }
             infinity = NO;
             ellipticCurve = [ellipticC retain];
         }
@@ -244,8 +255,10 @@
     
     NSData *tmpData;
     NSMutableData *result = [[NSMutableData alloc] init];
-    FGIntOverflow byteLength = ([[ellipticCurve p] length] - 1) * 4, i;
-    FGIntBase lastDigit = [[[[ellipticCurve p] number] lastObject] digit];
+    FGIntOverflow byteLength = [[ellipticCurve p] bitSize]/8 , i;
+    if ([[ellipticCurve p] bitSize]%8 != 0) {
+        byteLength++;
+    }
     unsigned char aBuffer[1];
 
     if (infinity) {
@@ -253,24 +266,22 @@
         return result;
     }
     
-    while (lastDigit != 0) {
-        ++byteLength;
-        lastDigit >>= 8;
-    }
 
     aBuffer[0] = 4;
     [result appendBytes: aBuffer length: 1];
 
     aBuffer[0] = 0;
     tmpData = [x toNSData];
-    for ( i = 0; i < (byteLength - [tmpData length]); ++i ) 
+    for ( i = 0; i < (byteLength - [tmpData length]); ++i ) {
         [result appendBytes: aBuffer length: 1];
+    }
     [result appendData: tmpData];
     [tmpData release];
     
     tmpData = [y toNSData];
-    for ( i = 0; i < (byteLength - [tmpData length]); ++i ) 
+    for ( i = 0; i < (byteLength - [tmpData length]); ++i ) {
         [result appendBytes: aBuffer length: 1];
+    }
     [result appendData: tmpData];
     [tmpData release];
     
@@ -294,8 +305,11 @@
     
     NSData *tmpData;
     NSMutableData *result = [[NSMutableData alloc] init];
-    FGIntOverflow byteLength = ([[ellipticCurve p] length] - 1) * 4, i;
-    FGIntBase lastDigit = [[[[ellipticCurve p] number] lastObject] digit];
+    FGIntOverflow byteLength = [[ellipticCurve p] bitSize]/8, i;
+    FGIntBase* numberArray;
+    if ([[ellipticCurve p] bitSize]%8 != 0) {
+        byteLength++;
+    }
     unsigned char aBuffer[1];
     aBuffer[0] = 0;
 
@@ -304,18 +318,15 @@
         return result;
     }
     
-    while (lastDigit != 0) {
-        ++byteLength;
-        lastDigit >>= 8;
-    }
-    
-    aBuffer[0] = (2 + ([[[y number] objectAtIndex: 0] digit] % 2));
+    numberArray = [[y number] mutableBytes];
+    aBuffer[0] = (2 + (numberArray[0] % 2));
     [result appendBytes: aBuffer length: 1];
     
     aBuffer[0] = 0;
     tmpData = [x toNSData];
-    for ( i = 0; i < (byteLength - [tmpData length]); ++i ) 
+    for ( i = 0; i < (byteLength - [tmpData length]); ++i ) {
         [result appendBytes: aBuffer length: 1];
+    }
     [result appendData: tmpData];
     [tmpData release];
     
@@ -326,15 +337,15 @@
 
 +(ECPoint *) double: (ECPoint *) ecPoint {
     if ([ecPoint infinity]) {
-        ECPoint *result = [ecPoint copy];
+        ECPoint *result = [ecPoint mutableCopy];
         return result;
     }
     
     FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0];
     if ([FGInt compareAbsoluteValueOf: [ecPoint y] with: zero] == equal) {
         ECPoint *result = [[ECPoint alloc] init];
-        [result setX: [zero copy]];
-        [result setY: [zero copy]];
+        [result setX: [zero mutableCopy]];
+        [result setY: [zero mutableCopy]];
         [result setInfinity: YES];
         [result setEllipticCurve: [ecPoint ellipticCurve]];
         [zero release];
@@ -345,7 +356,7 @@
     FGInt *x = [ecPoint x], *y = [ecPoint y], *p = [[ecPoint ellipticCurve] p], *lFGInt, *tmpFGInt = [FGInt square: x];
     [tmpFGInt multiplyByInt: 3];
     [tmpFGInt addWith: [[ecPoint ellipticCurve] a]];
-    FGInt *tmpFGInt1 = [y copy];
+    FGInt *tmpFGInt1 = [y mutableCopy];
     [tmpFGInt1 shiftLeft];
     FGInt *tmpFGInt2 = [FGInt modularInverse: tmpFGInt1 mod: p];
     [tmpFGInt1 release];
@@ -376,11 +387,11 @@
 
 +(ECPoint *) add: (ECPoint *) ecPoint1 and: (ECPoint *) ecPoint2 {
     if ([ecPoint1 infinity]) {
-        ECPoint *result = [ecPoint2 copy];
+        ECPoint *result = [ecPoint2 mutableCopy];
         return result;
     }
     if ([ecPoint2 infinity]) {
-        ECPoint *result = [ecPoint1 copy];
+        ECPoint *result = [ecPoint1 mutableCopy];
         return result;
     }
     
@@ -441,17 +452,14 @@
 
 +(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt {
     ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint ellipticCurve]], *tmpECPoint, *tmpECPoint1;
-    FGIntOverflow kLength = [kFGInt length], i, j;
+    FGIntOverflow kLength = [[kFGInt number] length]/4, i, j;
     FGIntBase tmp;
-    NSMutableArray *kFGIntNumber = [kFGInt number];
+    FGIntBase* kFGIntNumber = [[kFGInt number] mutableBytes];
     
     tmpECPoint1 = [ecPoint retain];
 
-    i = 1;
-    for( id fGIntBase in kFGIntNumber ) {
-        if (i >= kLength)
-            break;
-        tmp = [fGIntBase digit];
+    for( i = 0; i < kLength - 1; i++ ) {
+        tmp = kFGIntNumber[i];
         for( j = 0; j < 32; ++j ) {
             if ((tmp % 2) == 1) {
                 tmpECPoint = [ECPoint add: result and: tmpECPoint1];
@@ -463,9 +471,8 @@
             tmpECPoint1 = tmpECPoint;
             tmp >>= 1;
         }
-        ++i;
     }
-    tmp = [[kFGIntNumber lastObject] digit];
+    tmp = kFGIntNumber[kLength - 1];
     while (tmp != 0) {
         if ((tmp % 2) == 1) {
             tmpECPoint = [ECPoint add: result and: tmpECPoint1];
@@ -487,21 +494,23 @@
 
 
 +(ECPoint *) add: (ECPoint *) ecPoint1 k1Times: (FGInt *) k1FGInt and: (ECPoint *) ecPoint2 k2Times: (FGInt *) k2FGInt {
-    if ([k2FGInt length] > [k1FGInt length])
+    if ([[k2FGInt number] length] > [[k1FGInt number] length])
         return [ECPoint add: ecPoint2 k1Times: k2FGInt and: ecPoint1 k2Times: k1FGInt];
         
     ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]], *tmpECPoint, *tmpECPoint1,
         *sum = [ECPoint add: ecPoint1 and: ecPoint2];
-    FGIntOverflow k1Length = [k1FGInt length], k2Length = [k2FGInt length], i;
-    NSMutableArray *k1FGIntNumber = [k1FGInt number], *k2FGIntNumber = [k2FGInt number];
+    FGIntOverflow k1Length = [[k1FGInt number] length]/4, k2Length = [[k2FGInt number] length]/4, i;
+    FGIntBase* k1FGIntNumber = [[k1FGInt number] mutableBytes];
+    FGIntBase* k2FGIntNumber = [[k2FGInt number] mutableBytes];
     FGIntBase k1Base, k2Base;
 
     for( i = 0; i < k1Length; ++i ) {
-        k1Base = [[k1FGIntNumber objectAtIndex: k1Length - i - 1] digit];
-        if (k2Length > k1Length - i - 1) 
-            k2Base = [[k2FGIntNumber objectAtIndex: k1Length - i - 1] digit];
-        else
+        k1Base = k1FGIntNumber[k1Length - i - 1];
+        if (k2Length > k1Length - i - 1) {
+            k2Base = k2FGIntNumber[k1Length - i - 1];
+        } else {
             k2Base = 0;
+        }
         for( int j = 31; j >= 0; --j ) {
             tmpECPoint = [ECPoint double: result];
             [result release];
@@ -528,13 +537,14 @@
 
 
 +(ECPoint *) invert: (ECPoint *) ecPoint {
-    if ([ecPoint infinity]) 
-        return [ecPoint copy];
+    if ([ecPoint infinity]) {
+        return [ecPoint mutableCopy];
+    }
     ECPoint *invertedPoint = [[ECPoint alloc] init];
     [invertedPoint setInfinity: NO];
     [invertedPoint setEllipticCurve: [ecPoint ellipticCurve]];
-    [invertedPoint setX: [[ecPoint x] copy]];
-    FGInt *invertedY = [[[ecPoint ellipticCurve] p] copy];
+    [invertedPoint setX: [[ecPoint x] mutableCopy]];
+    FGInt *invertedY = [[[ecPoint ellipticCurve] p] mutableCopy];
     [invertedY subtractWith: [ecPoint y]];
     [invertedPoint setY: invertedY];
 //    [invertedY release];
@@ -544,12 +554,11 @@
 
 
 +(ECPoint *) inbedNSData: (NSData *) data onEllipticCurve: (EllipticCurve *) ellipticC {
-    FGIntOverflow byteLength = ([[ellipticC p] length] - 1) * 4;
-    FGIntBase lastDigit = [[[[ellipticC p] number] lastObject] digit], i;
-    while (lastDigit != 0) {
-        ++byteLength;
-        lastDigit >>= 8;
+    FGIntOverflow byteLength = [[ellipticC p] bitSize]/8;
+    if ([[ellipticC p] bitSize]%8 != 0) {
+        byteLength++;
     }
+
     if (!data) {
         NSLog(@"No data available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return nil;
@@ -563,16 +572,17 @@
         return nil;
     }
 
+    NSMutableData *tmpData = [[NSMutableData alloc] init];
     unsigned char padLength = MIN(255, byteLength - 1 - [data length] - 1);
     unsigned char aBuffer[1];
-    aBuffer[0] = padLength;
-    NSMutableData *tmpData = [[NSMutableData alloc] init];
-    [tmpData appendBytes: aBuffer length: 1];
-    [tmpData appendData: data];
     aBuffer[0] = 0;
-    
-    for ( i = 0; i < padLength; ++i )
+    for ( FGIntIndex i = 0; i < padLength; ++i ) {
         [tmpData appendBytes: aBuffer length: 1];
+    }
+    [tmpData appendData: data];
+    aBuffer[0] = padLength;
+    [tmpData appendBytes: aBuffer length: 1];
+
     FGInt *x = [[FGInt alloc] initWithNSData: tmpData], *counter = [[FGInt alloc] initWithFGIntBase: 0], *MaxTries = [[FGInt alloc] initWithFGIntBase: 1], *x3;
     [MaxTries shiftLeftBy: 8 * padLength];
     [tmpData release];
@@ -622,14 +632,14 @@
 
     @autoreleasepool{
         NSData *tmpData = [x toNSData];
-        unsigned char firstByte[1]; 
-        [tmpData getBytes: firstByte range: NSMakeRange(0, 1)];
-        if ([tmpData length] < firstByte[0] + 1 ) {
+        unsigned char lastByte[1]; 
+        [tmpData getBytes: lastByte range: NSMakeRange([tmpData length] - 1, 1)];
+        if ([tmpData length] < lastByte[0] + 1 ) {
             NSLog(@"There is no inbedded data for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
             [tmpData release];
             return nil;
         }
-        NSData *result = [[NSData alloc] initWithData: [tmpData subdataWithRange: NSMakeRange(1, [tmpData length] - 1 - firstByte[0])]];
+        NSData *result = [[NSData alloc] initWithData: [tmpData subdataWithRange: NSMakeRange(lastByte[0], [tmpData length] - 1 - lastByte[0])]];
         [tmpData release];
         return result;
     }
@@ -728,25 +738,25 @@
     
     bFGInt = [FGInt squareRootOf: tmpFGInt mod: pFGInt];
     [tmpFGInt release];
-    aFGInt = [pFGInt copy];
+    aFGInt = [pFGInt mutableCopy];
     tmpFGInt = [FGInt square: bFGInt];
     [tmpFGInt addWith: dFGInt];
     NSDictionary *tmpDiv = [FGInt divide: tmpFGInt by: pFGInt];
     cFGInt = [[tmpDiv objectForKey: quotientKey] retain];
     [tmpDiv release];
     [tmpFGInt release];
-    s11 = [aFGInt copy];
-    s121 = [bFGInt copy];
-    s22 = [cFGInt copy];
+    s11 = [aFGInt mutableCopy];
+    s121 = [bFGInt mutableCopy];
+    s22 = [cFGInt mutableCopy];
     u1 = [[FGInt alloc] initWithFGIntBase: 1];
     u2 = [[FGInt alloc] initWithFGIntBase: 0];
-    tmpFGInt = [bFGInt copy];
+    tmpFGInt = [bFGInt mutableCopy];
     [tmpFGInt shiftLeft];
     
     while (([FGInt compareAbsoluteValueOf: tmpFGInt with: aFGInt] == larger) || ([FGInt compareAbsoluteValueOf: aFGInt with: cFGInt] == larger)) {
         tmpFGInt1 = [FGInt add: tmpFGInt and: cFGInt];
         [tmpFGInt release];
-        tmpFGInt2 = [cFGInt copy];
+        tmpFGInt2 = [cFGInt mutableCopy];
         [tmpFGInt2 shiftLeft];
         NSDictionary *tmpDiv = [FGInt divide: tmpFGInt1 by: tmpFGInt2];
         [tmpFGInt1 release];
@@ -761,7 +771,7 @@
         u2 = u1;
         u1 = tmpFGInt2;
         [s11 release];
-        s11 = [cFGInt copy];
+        s11 = [cFGInt mutableCopy];
         tmpFGInt1 = [FGInt multiply: tmpD and: cFGInt];
         tmpFGInt2 = [FGInt subtract: tmpFGInt1 and: bFGInt];
         [tmpFGInt1 release];
@@ -778,10 +788,10 @@
         [aFGInt release];
         [bFGInt release];
         [cFGInt release];
-        aFGInt = [s11 copy];
-        bFGInt = [s121 copy];
-        cFGInt = [s22 copy];
-        tmpFGInt = [bFGInt copy];
+        aFGInt = [s11 mutableCopy];
+        bFGInt = [s121 mutableCopy];
+        cFGInt = [s22 mutableCopy];
+        tmpFGInt = [bFGInt mutableCopy];
         [tmpFGInt shiftLeft];
         [tmpD release];
     }
@@ -846,8 +856,9 @@
     unsigned char candidates5[8] = { 1, 3, 7, 11, 19, 43, 67, 163};
     unsigned char candidates7[7] = { 3, 7, 11, 19, 43, 67, 163};
     unsigned char nextCMD = 0, i;
-    
-    switch ([[[pFGInt number] objectAtIndex: 0] digit] % 8) {
+    FGIntBase* numberArray = [[pFGInt number] mutableBytes];
+
+    switch (numberArray[0] % 8) {
         case 1:
             for ( i = 0; i < 9; ++i ) {
                 if (candidates1[i] > cmd) {
@@ -891,31 +902,34 @@
     unsigned char cmd = 0;
     while (!found) {
         cmd = [ECPoint findNextCMD: cmd mod: pFGInt];
-        if (cmd == 0) 
+        if (cmd == 0) {
             return nil;
+        }
         FGInt *dFGInt = [[FGInt alloc] initWithFGIntBase: cmd];
         [dFGInt changeSign];
         int cmdL = [dFGInt legendreSymbolMod: pFGInt];
         [dFGInt changeSign];
         if (cmdL != -1) {
-            if (cmd > 2) 
+            if (cmd > 2) {
                 cmdL = [pFGInt legendreSymbolMod: dFGInt];
-            else
+            }
+            else {
                 cmdL = 1;
+            }
             if (cmdL != -1) {
                 NSDictionary *isCMD = [ECPoint is: dFGInt aCMDmod: pFGInt];
-                if (isCMD)
+                if (isCMD) {
                     found = YES;
+                }
                 if (isCMD) {
                     FGInt *wFGInt = [isCMD objectForKey: wKey], *vFGInt;
-                    if ((cmd == 1) || (cmd == 3)) 
+                    if ((cmd == 1) || (cmd == 3)) {
                         vFGInt = [isCMD objectForKey: vKey];
-                    FGInt *tmpFGInt = [pFGInt copy], *tmpFGInt1, *tmpFGInt2;
+                    }
+                    FGInt *tmpFGInt = [pFGInt mutableCopy], *tmpFGInt1, *tmpFGInt2;
                     [tmpFGInt increment];
                     result = [[NSMutableArray alloc] init];
-                    FGIntNumberBase *cmdBase = [[FGIntNumberBase alloc] initWithFGIntBase: cmd];
-                    [result addObject: cmdBase];
-                    [cmdBase release];
+                    [result addObject: [NSNumber numberWithUnsignedChar: cmd]];
                     if (cmd == 1) {
                         tmpFGInt1 = [FGInt add: tmpFGInt and: wFGInt];
                         [result addObject: tmpFGInt1];
@@ -1056,7 +1070,7 @@
     if (!orders) {
         return nil;
     } 
-    unsigned char cmd = [[orders objectAtIndex: 0] digit];
+    unsigned char cmd = [[orders objectAtIndex: 0] unsignedCharValue];
     EllipticCurve *ec = [ECPoint constructCurveWithCMD: cmd];
     [ec setP: [pFGInt retain]];
     ECPoint *result = nil;
@@ -1133,7 +1147,7 @@
     }
     [one release];
     [tmpFGInt release];
-//    tmpFGInt = [pointOrder copy];
+//    tmpFGInt = [pointOrder mutableCopy];
 //    [tmpFGInt increment];
 //    FGInt *rFGInt = [tmpFGInt isNearlyPrimeAndAtLeast: ([pointOrder bitSize] * 19) / 20];
 //    if (!rFGInt) {
@@ -1164,10 +1178,12 @@
     j = gFpSize % 32;
     FGIntBase firstBit = (1u << 31) >> ((32 - j) % 32);
     FGIntBase firstNumberBase = 4294967295u >> ((32 - j) % 32);
-    j = [[[pFGInt number] lastObject] digit];
+    FGIntBase* numberArray = [[pFGInt number] mutableBytes];
+    FGIntOverflow length = [[pFGInt number] length]/4;
+    j = numberArray[length - 1];
     j = j & firstNumberBase;
     j = j | firstBit;
-    [[[pFGInt number] lastObject] setDigit: j];
+    numberArray[length - 1] = j;
 
     FGIntBase rmTests = 4;
     if (gFpSize < 460) rmTests = 7;

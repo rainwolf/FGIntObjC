@@ -7,7 +7,7 @@ int main (int argc, const char * argv[]) {
     @autoreleasepool{
     		NSString *plaintextString, *pkey, *skey;
     		NSData *encryptedData, *decryptedData, *signedData;
-        FGIntBase bitSize = 2048;    
+        FGIntBase bitSize = 1024;    
     
     		NSLog(@" initializing %u bit RSA.", bitSize);
     		plaintextString = @"Prediction is very difficult, especially of the future.";
@@ -119,7 +119,7 @@ int main (int argc, const char * argv[]) {
 
 
 
-        bitSize = 256;
+        bitSize = 160;
     		plaintextString = @"Physics is like sex. Sure, it may give some practical results, but that's not why we do it.";
     		NSLog(@" initializing %u bit ECDSA.", bitSize);
         ECDSA *ecDSA = [[ECDSA alloc] initWithBitLength: bitSize];
