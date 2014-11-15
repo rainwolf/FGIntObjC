@@ -26,3 +26,4 @@ ToDo
 ====
 * add support for Edwards curves
 * add support for the OpenPGP standard. Soon.
+* protection against side channel attacks.
