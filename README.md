@@ -1,16 +1,10 @@
 License, info, etc
 ------------------
 This implementation is made by me, Walied Othman, and you can contact by email at rainwolf@submanifold.be 
-This implementation is available at http://www.submanifold.be 
 
 These are my first steps in Objective-C, as I wanted to learn the language, I decided to rewrite my 
 old work (FGInt for FreePascal/Delphi) in Objective-C. FGInt stands for Fast Gigantic Integers. I 
-wrote it using native Objective-C constructions like NSMutableArray and so on, this brought its own 
-set of challenges as those things are not known for speed. I stuck with it for the simple reason that
-there already exist awesome packages out there like GMP and LibTom that do their arithmetic with 
-regular integer arrays, I didn't see the point in recreating their efforts. I compared the speed with
-my FGInt for FreePascal/Delphi and managed to bring the difference down within a factor of 1.5, not 
-bad, but I am getting convinced the slowness is inherent to Objective-C.
+wrote it using native Objective-C constructions like NSData and so on.
 
 - The libraries have to be compiled separately when using ARC, I tried using it in the libraries but
 that made it a bunch slower. It's always a good idea to compile them separately, and always using the
@@ -30,4 +24,5 @@ Enjoy.
 
 ToDo
 ====
-* find a way to iterate fast over 2 NSArrays simultaneously, addition seems to be the bottleneck and that would seem to be the solution.
+* add support for Edwards curves
+* add support for the OpenPGP standard. Soon.
