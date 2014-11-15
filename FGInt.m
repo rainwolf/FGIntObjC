@@ -421,42 +421,84 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     return [self initWithNumber: inputData];
 }
 
+-(FGInt *) initWithMPINSData: (NSData *) mpiNSData {
+    FGIntOverflow byteLength = [mpiNSData length];
+    if (byteLength < 3) {
+        return nil;
+    }
+    byteLength -= 2;
+
+    unsigned char mpiLength[2];
+    [mpiNSData getBytes: mpiLength range: NSMakeRange(0, 2)];
+    FGIntBase length = (((((FGIntBase) mpiLength[0]) << 8) + mpiLength[1]) + 7) / 8;
+    if (length != byteLength) {
+        NSLog(@"Badly formatted MPI");
+        return nil;
+    }
+
+    NSMutableData *inputData = [[NSMutableData alloc] init];
+    const unsigned char* mpiBytes = [mpiNSData bytes];
+    for ( FGIntIndex i = 0; i < byteLength; i++ ) {
+        [inputData appendBytes: &mpiBytes[byteLength + 1 - i] length: 1];
+    }
+    // [FGInt verifyAdjustNumber: inputData];
+    FGInt *mpiFGInt = [[FGInt alloc] initWithNumber: inputData];
+    [mpiFGInt verifyAdjust];
+
+    return mpiFGInt;
+}
+
+
+
 
 
 /* returns NSData of self */
 
 -(NSData *) toNSData {
-    FGIntOverflow length = [number length];
+    FGIntOverflow length = [self byteSize];
     unsigned char* bytes = [number mutableBytes];
-    while ((bytes[length - 1] == 0) && (length > 1)) {
-        length--;
-    }
     return [[NSData alloc] initWithBytes: bytes length: length];
 }
 
 
 -(NSData *) toMPINSData {
     NSMutableData *mpiData = [[NSMutableData alloc] init];
-    NSData *tmpData;
-    FGIntOverflow length = [number length]/4, keyLength = (length - 1)*32; 
-    FGIntBase* numberArray = [number mutableBytes];
+    FGIntOverflow bitLength = [self bitSize], byteLength = [self byteSize]; 
     unsigned char aBuffer[2];
-    
-    FGIntBase lastDigit = numberArray[length - 1];
-    while (lastDigit != 0) {
-        ++keyLength;
-        lastDigit >>= 1;
-    }
-    if (keyLength == 0) {
-        ++keyLength;
-    }
-    aBuffer[0] = (keyLength / 256) & 255;
-    aBuffer[1] = (keyLength) & 255;
+    aBuffer[0] = (bitLength / 256) & 255;
+    aBuffer[1] = (bitLength) & 255;
     [mpiData appendBytes: aBuffer length: 2];
-    tmpData = [self toNSData];
-    [mpiData appendData: tmpData];
-    [tmpData release];
+    unsigned char* numberBytes = [number mutableBytes];
+    for ( FGIntIndex i = 0; i < byteLength; i++ ) {
+        [mpiData appendBytes: &numberBytes[byteLength - 1 - i] length: 1];
+    }
+
     return mpiData;
+}
+
+
+-(FGInt *) initWithBigEndianNSData: (NSData *) bigEndianNSData {
+    FGIntOverflow byteLength = [bigEndianNSData length];
+    NSMutableData *inputData = [[NSMutableData alloc] init];
+    const unsigned char* bigEndianBytes = [bigEndianNSData bytes];
+    for ( FGIntIndex i = 0; i < byteLength; i++ ) {
+        [inputData appendBytes: &bigEndianBytes[byteLength - 1 - i] length: 1];
+    }
+    FGInt *fGInt = [[FGInt alloc] initWithNSData: inputData];
+    [fGInt verifyAdjust];
+
+    return fGInt;
+}
+
+-(NSData *) toBigEndianNSData {
+    NSMutableData *bigEndianNSData = [[NSMutableData alloc] init];
+    FGIntOverflow byteLength = [self byteSize]; 
+    unsigned char* numberBytes = [number mutableBytes];
+    for ( FGIntIndex i = 0; i < byteLength; i++ ) {
+        [bigEndianNSData appendBytes: &numberBytes[byteLength - 1 - i] length: 1];
+    }
+
+    return bigEndianNSData;
 }
 
 
@@ -3115,16 +3157,19 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             bytesRange = NSMakeRange(i*4, 4);
             [stringBytes getBytes: a64Buffer range: bytesRange];
             all24Bits = 0;
-            for ( j = 0; j < 4; ++j )
+            for ( j = 0; j < 4; ++j ) {
                 all24Bits = (all24Bits << 6) | [FGInt getBase64Index: a64Buffer[j]];
-            for ( j = 0; j < 3; ++j )
+            }
+            for ( j = 0; j < 3; ++j ) {
                 aBuffer[j] = (all24Bits >> ((2-j)*8)) & 255;
+            }
             [nsData appendBytes: aBuffer length: 3];
         }
         if (a64Buffer[3] == 61) {
             [nsData setLength: [nsData length] - 1];
-            if (a64Buffer[2] == 61)
+            if (a64Buffer[2] == 61) {
                 [nsData setLength: [nsData length] - 1];
+            }
         }
 
         return nsData;
@@ -3154,8 +3199,24 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         ++bits;
         lastDigit >>= 1;
     }
+    if (bits == 0) {
+        bits = 1;
+    }
     return bits;
 }
+
+-(FGIntOverflow) byteSize {
+    FGIntOverflow byteLength = [number length];
+    unsigned char* numberBytes = [number mutableBytes];
+    while ((numberBytes[byteLength - 1] == 0) && (byteLength > 1)) {
+        --byteLength;
+    }
+    if (byteLength == 0) {
+        byteLength = 1;
+    }
+    return byteLength;
+}
+
 
 
 

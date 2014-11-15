@@ -238,8 +238,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -247,7 +246,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    modulus = [[FGInt alloc] initWithNSData: tmpData];
+    modulus = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -258,8 +257,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -267,7 +265,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    publicExponent = [[FGInt alloc] initWithNSData: tmpData];
+    publicExponent = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 }
 
@@ -332,9 +330,8 @@ This header may not be removed.
     }
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    rangeStart += 2;
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8)); 
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([secretKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -342,7 +339,7 @@ This header may not be removed.
     }
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    privateKey = [[FGInt alloc] initWithNSData: tmpData];
+    privateKey = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -352,9 +349,8 @@ This header may not be removed.
         return;
     }
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    rangeStart += 2;
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8)); 
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([secretKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -362,7 +358,7 @@ This header may not be removed.
     }
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    pFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    pFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -372,9 +368,8 @@ This header may not be removed.
         return;
     }
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    rangeStart += 2;
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8)); 
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([secretKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -382,7 +377,7 @@ This header may not be removed.
     }
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    qFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    qFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -392,9 +387,8 @@ This header may not be removed.
         return;
     }
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    rangeStart += 2;
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8)); 
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([secretKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -402,7 +396,7 @@ This header may not be removed.
     }
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    pInvertedModQ = [[FGInt alloc] initWithNSData: tmpData];
+    pInvertedModQ = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 }
 
@@ -1008,8 +1002,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1017,7 +1010,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    primeFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    primeFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -1028,8 +1021,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1037,7 +1029,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    gFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    gFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -1048,8 +1040,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1057,7 +1048,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    yFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    yFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 }
 
@@ -1121,9 +1112,8 @@ This header may not be removed.
     }
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    rangeStart += 2;
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8)); 
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([secretKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1131,7 +1121,7 @@ This header may not be removed.
     }
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    secretKey = [[FGInt alloc] initWithNSData: tmpData];
+    secretKey = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 }
 
@@ -1168,14 +1158,18 @@ This header may not be removed.
 
 
 -(void) dealloc {
-    if (primeFGInt != nil) 
+    if (primeFGInt != nil) {
         [primeFGInt release];
-    if (secretKey != nil) 
+    }
+    if (secretKey != nil) {
         [secretKey release];
-    if (gFGInt != nil) 
+    }
+    if (gFGInt != nil) {
         [gFGInt release];
-    if (yFGInt != nil) 
+    }
+    if (yFGInt != nil) {
         [yFGInt release];
+    }
     [super dealloc];
 }
 
@@ -1311,8 +1305,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [cipherText getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([cipherText length] < rangeStart + keyLength) {
         NSLog(@"cipherText is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1320,7 +1313,7 @@ This header may not be removed.
     }
     [cipherText getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    gKFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    gKFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -1331,8 +1324,7 @@ This header may not be removed.
     }
     [cipherText getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([cipherText length] < rangeStart + keyLength) {
         NSLog(@"cipherText is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1340,7 +1332,7 @@ This header may not be removed.
     }
     [cipherText getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    cipherFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    cipherFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     
     tmpFGInt = [FGInt raise: gKFGInt toThePower: secretKey montgomeryMod: primeFGInt];
@@ -1545,8 +1537,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [signature getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([signature length] < rangeStart + keyLength) {
         NSLog(@"signature is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1554,7 +1545,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *rFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *rFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
     
@@ -1571,8 +1562,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([signature length] < rangeStart + keyLength) {
         NSLog(@"signature is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1580,7 +1570,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *sFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *sFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 
     BOOL signatureCheck = YES;
@@ -1962,8 +1952,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1971,7 +1960,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    pFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    pFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -1982,8 +1971,7 @@ This header may not be removed.
     bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -1991,7 +1979,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    qFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    qFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -2002,8 +1990,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -2011,7 +1998,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    gFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    gFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -2022,8 +2009,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -2031,7 +2017,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    yFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    yFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 }
 
@@ -2093,28 +2079,11 @@ This header may not be removed.
 
 
 -(void) setSecretKeyWithNSData: (NSData *) secretKeyNSData {
-    NSData *tmpData;
-    FGIntBase rangeStart = 0, mpiLength, keyLength;
-    unsigned char aBuffer[[secretKeyNSData length]];
-
-    if ([secretKeyNSData length] < rangeStart + 2) {
+    if ([secretKeyNSData length] < 2) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return;
     }
-    NSRange bytesRange = NSMakeRange(rangeStart, 2);
-    [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    rangeStart += 2;
-    mpiLength = (aBuffer[1] | (aBuffer[0] << 8)); 
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    bytesRange = NSMakeRange(rangeStart, keyLength);
-    if ([secretKeyNSData length] < rangeStart + keyLength) {
-        NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
-        return;
-    }
-    [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    secretKey = [[FGInt alloc] initWithNSData: tmpData];
-    [tmpData release];
+    secretKey = [[FGInt alloc] initWithMPINSData: secretKeyNSData];
 }
 
 
@@ -2220,10 +2189,7 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = [qFGInt bitSize]/8, firstBit, j;
-    if ([qFGInt bitSize] % 8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [qFGInt byteSize], firstBit, j;
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
         return nil;
@@ -2341,8 +2307,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [signature getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([signature length] < rangeStart + keyLength) {
         NSLog(@"signature is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -2350,7 +2315,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *rFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *rFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
     
@@ -2367,8 +2332,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([signature length] < rangeStart + keyLength) {
         [rFGInt release];
@@ -2377,7 +2341,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *sFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *sFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 
     BOOL signatureCheck = YES;
@@ -2779,8 +2743,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -2788,7 +2751,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    pFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    pFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -2799,8 +2762,7 @@ This header may not be removed.
     bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -2808,7 +2770,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    qFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    qFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -2819,8 +2781,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -2828,7 +2789,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    gFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    gFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -2839,8 +2800,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -2848,7 +2808,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    yFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    yFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 }
 
@@ -2910,7 +2870,6 @@ This header may not be removed.
 
 
 -(void) setSecretKeyWithNSData: (NSData *) secretKeyNSData {
-    NSData *tmpData;
     FGIntBase rangeStart = 0, mpiLength, keyLength;
     unsigned char aBuffer[[secretKeyNSData length]];
 
@@ -2920,18 +2879,13 @@ This header may not be removed.
     }
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    rangeStart += 2;
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8)); 
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    bytesRange = NSMakeRange(rangeStart, keyLength);
+    keyLength = (mpiLength + 7)/8 + 2;
     if ([secretKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return;
     }
-    [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    secretKey = [[FGInt alloc] initWithNSData: tmpData];
-    [tmpData release];
+    secretKey = [[FGInt alloc] initWithMPINSData: secretKeyNSData];
 }
 
 
@@ -3037,10 +2991,7 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = [qFGInt bitSize]/8, firstBit, j;
-    if ([qFGInt bitSize] % 8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [qFGInt byteSize], firstBit, j;
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
         return nil;
@@ -3160,8 +3111,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [signature getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([signature length] < rangeStart + keyLength) {
         NSLog(@"signature is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -3169,7 +3119,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *rFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *rFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
     
@@ -3186,8 +3136,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([signature length] < rangeStart + keyLength) {
         [rFGInt release];
@@ -3196,7 +3145,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *sFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *sFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 
     BOOL signatureCheck = YES;
@@ -3324,12 +3273,15 @@ This header may not be removed.
 
 -(id) copyWithZone: (NSZone *) zone {
     ECDSA *newKeys = [[ECDSA allocWithZone: zone] init];
-    if (gPoint)
+    if (gPoint) {
         [newKeys setGPoint: [gPoint mutableCopy]];
-    if (secretKey)
+    }
+    if (secretKey) {
         [newKeys setSecretKey: [secretKey mutableCopy]];
-    if (yPoint)
+    }
+    if (yPoint) {
         [newKeys setYPoint: [yPoint mutableCopy]];
+    }
     return newKeys;
 }
 
@@ -3415,6 +3367,10 @@ This header may not be removed.
         [one release];
         
         yPoint = [ECPoint add: gPoint kTimes: secretKey];
+
+        // FGIntOverflow precision = [[[gPoint ellipticCurve] p] bitSize];
+        // [[gPoint ellipticCurve] setInvertedPrecision: precision];
+        // [[gPoint ellipticCurve] setInvertedDivisorP: [FGInt newtonInversion: [[gPoint ellipticCurve] p] withPrecision: precision]];
     }
     return self;
 }
@@ -3466,8 +3422,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -3475,7 +3430,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *pFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *pFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -3486,8 +3441,7 @@ This header may not be removed.
     bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -3495,7 +3449,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *aFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *aFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -3506,8 +3460,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -3515,7 +3468,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *bFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *bFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -3523,11 +3476,8 @@ This header may not be removed.
     [ec setP: pFGInt];
     [ec setA: aFGInt];
     [ec setB: bFGInt];
+    FGIntOverflow byteLength = [pFGInt byteSize];
 
-    FGIntOverflow byteLength = [pFGInt bitSize]/8;
-    if ([pFGInt bitSize] % 8 != 0) {
-        byteLength++;
-    }
 
     bytesRange = NSMakeRange(rangeStart, 1);
     if ([publicKeyNSData length] < rangeStart + 1) {
@@ -3538,6 +3488,17 @@ This header may not be removed.
     if (aBuffer[0] == 0) {
         gPoint = [[ECPoint alloc] initInfinityWithEllpiticCurve: ec];
         rangeStart += 1;
+    } else if (aBuffer[0] == 4) {
+        bytesRange = NSMakeRange(rangeStart , 2*byteLength + 1);
+        if ([publicKeyNSData length] < rangeStart + 2*byteLength + 1) {
+            NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+            return;
+        }
+        [publicKeyNSData getBytes: aBuffer range: bytesRange];
+        tmpData = [[NSData alloc] initWithBytes: aBuffer length: 2*byteLength + 1];
+        gPoint = [[ECPoint alloc] initWithNSData: tmpData andEllipticCurve: ec];
+        [tmpData release];
+        rangeStart += (2*byteLength + 1);
     } else if ((aBuffer[0] != 2) && (aBuffer[0] != 3)) {
         NSLog(@"publicKeyNSData is corrupt, no valid gPoint data, tag is %u, for %s at line %d", aBuffer[0], __PRETTY_FUNCTION__, __LINE__);
         return;
@@ -3563,6 +3524,17 @@ This header may not be removed.
     if (aBuffer[0] == 0) {
         yPoint = [[ECPoint alloc] initInfinityWithEllpiticCurve: ec];
         rangeStart += 1;
+    } else if (aBuffer[0] == 4) {
+        bytesRange = NSMakeRange(rangeStart , 2*byteLength + 1);
+        if ([publicKeyNSData length] < rangeStart + 2*byteLength + 1) {
+            NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+            return;
+        }
+        [publicKeyNSData getBytes: aBuffer range: bytesRange];
+        tmpData = [[NSData alloc] initWithBytes: aBuffer length: 2*byteLength + 1];
+        yPoint = [[ECPoint alloc] initWithNSData: tmpData andEllipticCurve: ec];
+        [tmpData release];
+        rangeStart += (2*byteLength + 1);
     } else if ((aBuffer[0] != 2) && (aBuffer[0] != 3)) {
         NSLog(@"publicKeyNSData is corrupt, no valid yPoint data, tag is %u, for %s at line %d", aBuffer[0], __PRETTY_FUNCTION__, __LINE__);
         return;
@@ -3586,8 +3558,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -3595,7 +3566,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *oFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *oFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     [gPoint setPointOrder: oFGInt];
     [yPoint setPointOrder: [oFGInt retain]];
@@ -3608,8 +3579,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -3618,7 +3588,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *tmpFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *tmpFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     [ec setCurveOrder: [FGInt multiply: oFGInt and: tmpFGInt]];
 //    [gPoint setEllipticCurve: ec];
@@ -3627,6 +3597,9 @@ This header may not be removed.
     [[yPoint ellipticCurve] setCurveOrder: [[[gPoint ellipticCurve] curveOrder] retain]];
     [tmpFGInt release];
     
+    if (rangeStart + keyLength != [publicKeyNSData length]) {
+        NSLog(@"Public Key NSData was malformatted.");
+    }
 }
 
 
@@ -3705,9 +3678,8 @@ This header may not be removed.
 
 
 -(void) setSecretKeyWithNSData: (NSData *) secretKeyNSData {
-    NSData *tmpData;
     FGIntBase rangeStart = 0, mpiLength, keyLength;
-    unsigned char aBuffer[[secretKeyNSData length]];
+    unsigned char aBuffer[2];
 
     if ([secretKeyNSData length] < rangeStart + 2) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -3715,18 +3687,14 @@ This header may not be removed.
     }
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    rangeStart += 2;
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8)); 
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([secretKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return;
     }
-    [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    secretKey = [[FGInt alloc] initWithNSData: tmpData];
-    [tmpData release];
+    secretKey = [[FGInt alloc] initWithMPINSData: secretKeyNSData];
 }
 
 
@@ -3815,10 +3783,7 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] bitSize]/8, firstBit, j;
-    if ([[[gPoint ellipticCurve] p] bitSize] % 8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize], firstBit, j;
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
         return nil;
@@ -3893,10 +3858,7 @@ This header may not be removed.
 
 
 -(NSData *) signNSData: (NSData *) plainText {
-    FGIntOverflow byteLength = [secretKey bitSize]/8;
-    if ([secretKey bitSize]%8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [secretKey byteSize];
     NSMutableData *kData;
     kData = [[NSMutableData alloc] initWithLength: byteLength];
     int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, kData.mutableBytes);
@@ -3942,8 +3904,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [signature getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([signature length] < rangeStart + keyLength) {
         NSLog(@"signature is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -3951,7 +3912,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *rFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *rFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
     
@@ -3969,8 +3930,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([signature length] < rangeStart + keyLength) {
         [rFGInt release];
@@ -3979,7 +3939,7 @@ This header may not be removed.
     }
     [signature getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *sFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *sFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
 
     FGIntOverflow nBitLength = [nFGInt bitSize];
@@ -3992,8 +3952,9 @@ This header may not be removed.
         [sFGInt release];
         signatureCheck = NO;
     }
-    if (!signatureCheck)
+    if (!signatureCheck) {
         return signatureCheck;
+    }
 
     FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0], *tmpFGInt, *wFGInt = [FGInt modularInverse: sFGInt mod: nFGInt];
     tmpFGInt = [FGInt multiply: wFGInt and: plainTextFGInt];
@@ -4240,8 +4201,7 @@ This header may not be removed.
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -4249,7 +4209,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *pFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *pFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -4260,8 +4220,7 @@ This header may not be removed.
     bytesRange = NSMakeRange(rangeStart, 2);
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    rangeStart += 2;
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -4269,7 +4228,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *aFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *aFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -4280,8 +4239,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -4289,7 +4247,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *bFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *bFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     rangeStart += keyLength;
 
@@ -4298,10 +4256,7 @@ This header may not be removed.
     [ec setA: aFGInt];
     [ec setB: bFGInt];
 
-    FGIntOverflow byteLength = [pFGInt bitSize]/8;
-    if ([pFGInt bitSize]%8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [pFGInt byteSize];
 
     bytesRange = NSMakeRange(rangeStart, 1);
     if ([publicKeyNSData length] < rangeStart + 1) {
@@ -4312,6 +4267,17 @@ This header may not be removed.
     if (aBuffer[0] == 0) {
         gPoint = [[ECPoint alloc] initInfinityWithEllpiticCurve: ec];
         rangeStart += 1;
+    } else if (aBuffer[0] == 4) {
+        bytesRange = NSMakeRange(rangeStart , 2*byteLength + 1);
+        if ([publicKeyNSData length] < rangeStart + 2*byteLength + 1) {
+            NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+            return;
+        }
+        [publicKeyNSData getBytes: aBuffer range: bytesRange];
+        tmpData = [[NSData alloc] initWithBytes: aBuffer length: 2*byteLength + 1];
+        gPoint = [[ECPoint alloc] initWithNSData: tmpData andEllipticCurve: ec];
+        [tmpData release];
+        rangeStart += (2*byteLength + 1);
     } else if ((aBuffer[0] != 2) && (aBuffer[0] != 3)) {
         NSLog(@"publicKeyNSData is corrupt, no valid gPoint data, tag is %u, for %s at line %d", aBuffer[0], __PRETTY_FUNCTION__, __LINE__);
         return;
@@ -4337,6 +4303,17 @@ This header may not be removed.
     if (aBuffer[0] == 0) {
         yPoint = [[ECPoint alloc] initInfinityWithEllpiticCurve: ec];
         rangeStart += 1;
+    } else if (aBuffer[0] == 4) {
+        bytesRange = NSMakeRange(rangeStart , 2*byteLength + 1);
+        if ([publicKeyNSData length] < rangeStart + 2*byteLength + 1) {
+            NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+            return;
+        }
+        [publicKeyNSData getBytes: aBuffer range: bytesRange];
+        tmpData = [[NSData alloc] initWithBytes: aBuffer length: 2*byteLength + 1];
+        yPoint = [[ECPoint alloc] initWithNSData: tmpData andEllipticCurve: ec];
+        [tmpData release];
+        rangeStart += (2*byteLength + 1);
     } else if ((aBuffer[0] != 2) && (aBuffer[0] != 3)) {
         NSLog(@"publicKeyNSData is corrupt, no valid yPoint data, tag is %u, for %s at line %d", aBuffer[0], __PRETTY_FUNCTION__, __LINE__);
         return;
@@ -4360,8 +4337,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -4369,7 +4345,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *oFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *oFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     [gPoint setPointOrder: oFGInt];
     [yPoint setPointOrder: [oFGInt retain]];
@@ -4382,8 +4358,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
-    rangeStart += 2;
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
+    keyLength = (mpiLength + 7)/8 + 2;
     bytesRange = NSMakeRange(rangeStart, keyLength);
     if ([publicKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"publicKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -4392,7 +4367,7 @@ This header may not be removed.
     }
     [publicKeyNSData getBytes: aBuffer range: bytesRange];
     tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    FGInt *tmpFGInt = [[FGInt alloc] initWithNSData: tmpData];
+    FGInt *tmpFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
     [tmpData release];
     [ec setCurveOrder: [FGInt multiply: oFGInt and: tmpFGInt]];
 //    [gPoint setEllipticCurve: ec];
@@ -4479,9 +4454,8 @@ This header may not be removed.
 
 
 -(void) setSecretKeyWithNSData: (NSData *) secretKeyNSData {
-    NSData *tmpData;
     FGIntBase rangeStart = 0, mpiLength, keyLength;
-    unsigned char aBuffer[[secretKeyNSData length]];
+    unsigned char aBuffer[2];
 
     if ([secretKeyNSData length] < rangeStart + 2) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
@@ -4489,18 +4463,13 @@ This header may not be removed.
     }
     NSRange bytesRange = NSMakeRange(rangeStart, 2);
     [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    rangeStart += 2;
     mpiLength = (aBuffer[1] | (aBuffer[0] << 8)); 
-    keyLength = (mpiLength >> 3) + (((mpiLength % 8) == 0) ? 0 : 1);
-    bytesRange = NSMakeRange(rangeStart, keyLength);
+    keyLength = (mpiLength + 7)/8 + 2;
     if ([secretKeyNSData length] < rangeStart + keyLength) {
         NSLog(@"secretKeyNSData is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return;
     }
-    [secretKeyNSData getBytes: aBuffer range: bytesRange];
-    tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
-    secretKey = [[FGInt alloc] initWithNSData: tmpData];
-    [tmpData release];
+    secretKey = [[FGInt alloc] initWithMPINSData: secretKeyNSData];
 }
 
 
@@ -4589,10 +4558,7 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] bitSize]/8, j;
-    if ([[[gPoint ellipticCurve] p] bitSize]%8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize], j;
     if ([plainText length] > byteLength - 3) {
         NSLog(@"plainText is too big for %s at line %d, make sure it contains %llu bytes or less", __PRETTY_FUNCTION__, __LINE__, byteLength - 3);
         return nil;
@@ -4640,10 +4606,7 @@ This header may not be removed.
 
 
 -(NSData *) encryptNSData: (NSData *) plainText {
-    FGIntOverflow byteLength = [secretKey bitSize]/8, j;
-    if ([secretKey bitSize]%8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [secretKey byteSize], j;
     NSMutableData *kData;
     kData = [[NSMutableData alloc] initWithLength: byteLength];
     int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, kData.mutableBytes);
@@ -4683,10 +4646,7 @@ This header may not be removed.
     EllipticCurve *ec = [gPoint ellipticCurve];
     FGIntBase rangeStart = 0, mpiLength, keyLength;
     ECPoint *encryptedPoint, *kGPoint;
-    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] bitSize]/8, j;
-    if ([[[gPoint ellipticCurve] p] bitSize]%8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize], j;
     if (([cipherText length] != 2*(byteLength + 1)) && ([cipherText length] != 2) && ([cipherText length] != (byteLength + 2))) {
         NSLog(@"cipherText is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return nil;
@@ -4761,11 +4721,3 @@ This header may not be removed.
 
 
 
-
-//@implementation FGIntCryptography
-//-(void) dealloc {
-//    [super dealloc];
-//}
-//
-//
-//@end

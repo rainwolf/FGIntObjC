@@ -60,8 +60,11 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(FGInt *) initWithNegativeFGIntBase: (FGIntBase) fGIntBase;
 -(FGInt *) initWithNSString: (NSString *) string;
 -(FGInt *) initWithNSData: (NSData *) nsData;
+-(FGInt *) initWithMPINSData: (NSData *) mpiNSData;
+-(FGInt *) initWithBigEndianNSData: (NSData *) bigEndianNSData;
 -(NSData *) toNSData;
 -(NSData *) toMPINSData;
+-(NSData *) toBigEndianNSData;
 -(NSString *) toNSString;
 
 // +(FGIntBase) divideFGIntNumberByIntBis: (NSMutableArray *) FGIntNumber divideBy: (FGIntBase) divInt;
@@ -134,6 +137,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 +(NSData *) convertBase64ToNSData: (NSString *) base64String;
 +(NSString *) convertBase64ToNSString: (NSString *) base64String;
 -(FGIntOverflow) bitSize;
+-(FGIntOverflow) byteSize;
 
 
 //-(NSMutableArray *) duplicate;

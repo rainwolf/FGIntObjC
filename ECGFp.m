@@ -11,7 +11,6 @@
 @synthesize curveOrder;
 
 
-
 -(id)init {
     if ((self = [super init])) {
         a = nil;
@@ -175,24 +174,21 @@
             x = [[FGInt alloc] initWithFGIntBase: 0];
             y = [[FGInt alloc] initWithFGIntBase: 0];
             infinity = YES;
-            ellipticCurve = ellipticC;
+            ellipticCurve = [ellipticC retain];
         }
         return self;
     }
 
-    FGIntOverflow byteLength = [[ellipticC p] bitSize]/8, i;
-    if ([[ellipticC p] bitSize]%8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [[ellipticC p] byteSize], i;
 
     if ([ecPointData length] == (2 * byteLength + 1)) {
         @autoreleasepool{
             NSData *tmpData = [ecPointData subdataWithRange: NSMakeRange(1, byteLength)];
-            x = [[FGInt alloc] initWithNSData: tmpData];
+            x = [[FGInt alloc] initWithBigEndianNSData: tmpData];
             tmpData = [ecPointData subdataWithRange: NSMakeRange(byteLength + 1, byteLength)];
-            y = [[FGInt alloc] initWithNSData: tmpData];
+            y = [[FGInt alloc] initWithBigEndianNSData: tmpData];
             infinity = NO;
-            ellipticCurve = ellipticC;
+            ellipticCurve = [ellipticC retain];
         }
         return self;
     }
@@ -202,7 +198,10 @@
             NSData *tmpData = [ecPointData subdataWithRange: NSMakeRange(1, byteLength)];
             unsigned char firstByte[1]; 
             [ecPointData getBytes: firstByte range: NSMakeRange(0, 1)];
-            x = [[FGInt alloc] initWithNSData: tmpData];
+            if ((firstByte[0] < 2) || (firstByte[0] > 3)) {
+                NSLog(@"Compressed byte is not valid, it is %i", firstByte[0]);
+            }
+            x = [[FGInt alloc] initWithBigEndianNSData: tmpData];
             FGInt *tmpFGInt = [FGInt square: x], *x3 = [FGInt multiply: x and: tmpFGInt], *ax = [FGInt multiply: x and: [ellipticC a]];
             [tmpFGInt release];
             [ax addWith: x3];
@@ -210,9 +209,11 @@
             [x3 release];
             x3 = [FGInt mod: ax by: [ellipticC p]];
             [ax release];
-            if ([x3 legendreSymbolMod: [ellipticC p]] != 1) {
+            int legendre = [x3 legendreSymbolMod: [ellipticC p]];
+            if (legendre != 1) {
+                NSLog(@"ecPointData is corrupt, y does not exist, Legendre symbol is %i, for %s at line %d", legendre, __PRETTY_FUNCTION__, __LINE__);
+                // NSLog(@"x3 is %@", [x3 toBase10String]);
                 [x3 release];
-                NSLog(@"ecPointData is corrupt, y does not exist, for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
                 return nil;
             }
             tmpFGInt = [FGInt squareRootOf: x3 mod: [ellipticC p]];
@@ -255,33 +256,25 @@
     
     NSData *tmpData;
     NSMutableData *result = [[NSMutableData alloc] init];
-    FGIntOverflow byteLength = [[ellipticCurve p] bitSize]/8 , i;
-    if ([[ellipticCurve p] bitSize]%8 != 0) {
-        byteLength++;
-    }
-    unsigned char aBuffer[1];
+    FGIntOverflow byteLength = [[ellipticCurve p] byteSize], i;
 
     if (infinity) {
-        [result appendBytes: aBuffer length: 1];
+        [result setLength: 1];
         return result;
     }
     
 
+    unsigned char aBuffer[1];
     aBuffer[0] = 4;
     [result appendBytes: aBuffer length: 1];
 
-    aBuffer[0] = 0;
-    tmpData = [x toNSData];
-    for ( i = 0; i < (byteLength - [tmpData length]); ++i ) {
-        [result appendBytes: aBuffer length: 1];
-    }
+    tmpData = [x toBigEndianNSData];
+    [result increaseLengthBy: (byteLength - [tmpData length])];
     [result appendData: tmpData];
     [tmpData release];
     
-    tmpData = [y toNSData];
-    for ( i = 0; i < (byteLength - [tmpData length]); ++i ) {
-        [result appendBytes: aBuffer length: 1];
-    }
+    tmpData = [y toBigEndianNSData];
+    [result increaseLengthBy: (byteLength - [tmpData length])];
     [result appendData: tmpData];
     [tmpData release];
     
@@ -305,11 +298,8 @@
     
     NSData *tmpData;
     NSMutableData *result = [[NSMutableData alloc] init];
-    FGIntOverflow byteLength = [[ellipticCurve p] bitSize]/8, i;
+    FGIntOverflow byteLength = [[ellipticCurve p] byteSize], i;
     FGIntBase* numberArray;
-    if ([[ellipticCurve p] bitSize]%8 != 0) {
-        byteLength++;
-    }
     unsigned char aBuffer[1];
     aBuffer[0] = 0;
 
@@ -322,11 +312,8 @@
     aBuffer[0] = (2 + (numberArray[0] % 2));
     [result appendBytes: aBuffer length: 1];
     
-    aBuffer[0] = 0;
-    tmpData = [x toNSData];
-    for ( i = 0; i < (byteLength - [tmpData length]); ++i ) {
-        [result appendBytes: aBuffer length: 1];
-    }
+    tmpData = [x toBigEndianNSData];
+    [result increaseLengthBy: byteLength - [tmpData length]];
     [result appendData: tmpData];
     [tmpData release];
     
@@ -450,6 +437,7 @@
 }
 
 
+
 +(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt {
     ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint ellipticCurve]], *tmpECPoint, *tmpECPoint1;
     FGIntOverflow kLength = [[kFGInt number] length]/4, i, j;
@@ -497,6 +485,7 @@
     if ([[k2FGInt number] length] > [[k1FGInt number] length])
         return [ECPoint add: ecPoint2 k1Times: k2FGInt and: ecPoint1 k2Times: k1FGInt];
         
+
     ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]], *tmpECPoint, *tmpECPoint1,
         *sum = [ECPoint add: ecPoint1 and: ecPoint2];
     FGIntOverflow k1Length = [[k1FGInt number] length]/4, k2Length = [[k2FGInt number] length]/4, i;
@@ -554,10 +543,7 @@
 
 
 +(ECPoint *) inbedNSData: (NSData *) data onEllipticCurve: (EllipticCurve *) ellipticC {
-    FGIntOverflow byteLength = [[ellipticC p] bitSize]/8;
-    if ([[ellipticC p] bitSize]%8 != 0) {
-        byteLength++;
-    }
+    FGIntOverflow byteLength = [[ellipticC p] byteSize];
 
     if (!data) {
         NSLog(@"No data available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);

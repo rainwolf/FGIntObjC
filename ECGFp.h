@@ -2,6 +2,7 @@
 //#import "FGInt.h"
 
 #define ECGFp_version 20120629
+#define ecBarrettThreshold 128
 
 
 /*
@@ -10,7 +11,6 @@
 #define aKey @"a"
 #define bKey @"b"
 */
-
 
 
 @interface EllipticCurve : NSObject <NSMutableCopying> {
