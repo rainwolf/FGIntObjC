@@ -24,6 +24,8 @@ Enjoy.
 
 ToDo
 ====
+* add support for the NIST primes and curves
 * add support for Edwards curves
 * add support for the OpenPGP standard. Soon.
 * protection against side channel attacks.
+* a cryptographically secure PRNG
