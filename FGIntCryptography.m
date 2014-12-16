@@ -76,40 +76,12 @@ This header may not be removed.
         FGIntOverflow primeByteLength, i, j, halfBitLength = (bitLength / 2) + (bitLength % 2), length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
-        primeByteLength = (halfBitLength / 8) + (((halfBitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: primeByteLength];
-        int result = SecRandomCopyBytes(kSecRandomDefault, primeByteLength, tmpData.mutableBytes);
-        qFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = halfBitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        length = [[qFGInt number] length]/4;
-        numberArray = [[qFGInt number] mutableBytes];
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: halfBitLength];
         [qFGInt findNearestLargerPrime];
     
         halfBitLength = bitLength - halfBitLength; 
-        primeByteLength = (halfBitLength / 8) + (((halfBitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: primeByteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, primeByteLength, tmpData.mutableBytes);
-        pFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = halfBitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        length = [[pFGInt number] length]/4;
-        numberArray = [[pFGInt number] mutableBytes];
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: halfBitLength];
         [pFGInt findNearestLargerPrime];
 
 
@@ -120,7 +92,7 @@ This header may not be removed.
         }
 
         modulus = [FGInt multiply: pFGInt and: qFGInt];
-        pInvertedModQ = [FGInt modularInverse: pFGInt mod: qFGInt];        
+        pInvertedModQ = [FGInt invert: pFGInt moduloPrime: qFGInt];
             
         publicExponent = [[FGInt alloc] initWithFGIntBase: 65537];
         [pFGInt decrement];
@@ -194,7 +166,7 @@ This header may not be removed.
             pFGInt = tmpFGInt;
         }
 
-        pInvertedModQ = [FGInt modularInverse: pFGInt mod: qFGInt];        
+        pInvertedModQ = [FGInt invert: pFGInt moduloPrime: qFGInt];        
         modulus = [FGInt multiply: pFGInt and: qFGInt];
             
         publicExponent = [[FGInt alloc] initWithFGIntBase: 65537];
@@ -475,18 +447,24 @@ This header may not be removed.
 
 
 -(void) dealloc {
-    if (modulus != nil) 
+    if (modulus != nil) {
         [modulus release];
-    if (publicExponent != nil) 
+    }
+    if (publicExponent != nil) {
         [publicExponent release];
-    if (privateKey != nil) 
+    }
+    if (privateKey != nil) {
         [privateKey release];
-    if (pFGInt != nil) 
+    }
+    if (pFGInt != nil) {
         [pFGInt release];
-    if (qFGInt != nil) 
+    }
+    if (qFGInt != nil) {
         [qFGInt release];
-    if (pInvertedModQ != nil) 
+    }
+    if (pInvertedModQ != nil) {
         [pInvertedModQ release];
+    }
     [super dealloc];
 }   
 
@@ -783,73 +761,23 @@ This header may not be removed.
         if (bitLength <= 640) qBitLength = (bitLength * 112) / 640;
         if (bitLength <= 480) qBitLength = (bitLength * 96) / 480;
         byteLength = (qBitLength / 8) + (((qBitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        qFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[qFGInt number] mutableBytes];
-        length = [[qFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
         [qFGInt findNearestLargerPrime];
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        primeFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[primeFGInt number] mutableBytes];
-        length = [[primeFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        primeFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         [primeFGInt findNearestLargerDSAPrimeWith: qFGInt];
 
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         secretKeyLength = qBitLength;
         byteLength = (secretKeyLength / 8) + (((secretKeyLength % 8) == 0) ? 0 : 1);
         do {
-            tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-            int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-            tmpFGInt = [[FGInt alloc] initWithNSData: tmpData];
-            [tmpData release];
-            j = qBitLength % 32;
-            firstBit = (1u << 31) >> ((32 - j) % 32);
-            firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            numberArray = [[tmpFGInt number] mutableBytes];
-            length = [[tmpFGInt number] length]/4;
-            j = numberArray[length - 1];
-            j = j & firstNumberBase;
-            j = j | firstBit;
-            numberArray[length - 1] = j;
+            tmpFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: secretKeyLength];
             secretKey = [FGInt mod: tmpFGInt by: qFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
         [zero release]; 
             
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        gFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[gFGInt number] mutableBytes];
-        length = [[gFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        gFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         gFGInt = [FGInt longDivisionModBis: gFGInt by: primeFGInt];
 
         FGInt *phi;
@@ -909,36 +837,10 @@ This header may not be removed.
         if (qBitLength <= 128) bitLength = (qBitLength * 816) / 128;
         if (qBitLength <= 112) bitLength = (qBitLength * 640) / 112;
         if (qBitLength <= 96) bitLength = (qBitLength * 480) / 96;
-        byteLength = (qBitLength / 8) + (((qBitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        qFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[qFGInt number] mutableBytes];
-        length = [[qFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
         [qFGInt findNearestLargerPrime];
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        primeFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[primeFGInt number] mutableBytes];
-        length = [[primeFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        primeFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         [primeFGInt findNearestLargerDSAPrimeWith: qFGInt];
     
         tmpFGInt = [[FGInt alloc] initWithNSData: secretKeyData];
@@ -953,21 +855,10 @@ This header may not be removed.
         [zero release]; 
 
         byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        if (byteLength > 0) 
+        if (byteLength > 0) {
             --byteLength;
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        gFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[gFGInt number] mutableBytes];
-        length = [[gFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        }
+        gFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
 
         FGInt *phi;
         tmpFGInt = [primeFGInt mutableCopy];
@@ -1237,17 +1128,7 @@ This header may not be removed.
     if (bitLength <= 816) kLength = (bitLength * 128) / 816;
     if (bitLength <= 640) kLength = (bitLength * 112) / 640;
     if (bitLength <= 480) kLength = (bitLength * 96) / 480;
-    byteLength = (kLength / 8) + (((kLength % 8) == 0) ? 0 : 1);
-    tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-    int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-    kFGInt = [[FGInt alloc] initWithNSData: tmpData];
-    [tmpData release];
-    firstBit = (1u << 31);
-    numberArray = [[kFGInt number] mutableBytes];
-    length = [[kFGInt number] length]/4;
-    j = numberArray[length - 1];
-    j = j | firstBit;
-    numberArray[length - 1] = j;
+    kFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: kLength];
         
     hFGInt = [FGInt raise: gFGInt toThePower: kFGInt montgomeryMod: primeFGInt];
     yKFGInt = [FGInt raise: yFGInt toThePower: kFGInt montgomeryMod: primeFGInt];
@@ -1337,7 +1218,7 @@ This header may not be removed.
     
     tmpFGInt = [FGInt raise: gKFGInt toThePower: secretKey montgomeryMod: primeFGInt];
     [gKFGInt release];
-    hFGInt = [FGInt modularInverse: tmpFGInt mod: primeFGInt];
+    hFGInt = [FGInt invert: tmpFGInt moduloPrime: primeFGInt];
     [tmpFGInt release];
     tmpFGInt = [FGInt multiply: hFGInt and: cipherFGInt];
     decryptedFGInt = [FGInt mod: tmpFGInt by: primeFGInt];
@@ -1728,8 +1609,6 @@ This header may not be removed.
         FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
 
         if (bitLength > 7936) qBitLength = (bitLength * 512) / 15424;
@@ -1741,74 +1620,22 @@ This header may not be removed.
         if (bitLength <= 816) qBitLength = (bitLength * 128) / 816;
         if (bitLength <= 640) qBitLength = (bitLength * 112) / 640;
         if (bitLength <= 480) qBitLength = (bitLength * 96) / 480;
-        byteLength = (qBitLength / 8) + (((qBitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        qFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[qFGInt number] mutableBytes];
-        length = [[qFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
         [qFGInt findNearestLargerPrime];
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        pFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[pFGInt number] mutableBytes];
-        length = [[pFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
 
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         secretKeyLength = qBitLength;
-        byteLength = (secretKeyLength / 8) + (((secretKeyLength % 8) == 0) ? 0 : 1);
         do {
-            tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-            int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-            tmpFGInt = [[FGInt alloc] initWithNSData: tmpData];
-            [tmpData release];
-            j = qBitLength % 32;
-            firstBit = (1u << 31) >> ((32 - j) % 32);
-            firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            numberArray = [[tmpFGInt number] mutableBytes];
-            length = [[tmpFGInt number] length]/4;
-            j = numberArray[length - 1];
-            j = j & firstNumberBase;
-            j = j | firstBit;
-            numberArray[length - 1] = j;
+            tmpFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: secretKeyLength];
             secretKey = [FGInt mod: tmpFGInt by: qFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
         [zero release]; 
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        FGInt *hFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[hFGInt number] mutableBytes];
-        length = [[hFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        FGInt *hFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         hFGInt = [FGInt longDivisionModBis: hFGInt by: pFGInt];
 
         FGInt *phi;
@@ -1847,8 +1674,6 @@ This header may not be removed.
         FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
         if (qBitLength > 384) bitLength = (qBitLength * 15424) / 512;
         if (qBitLength <= 384) bitLength = (qBitLength * 7936) / 384;
@@ -1859,36 +1684,10 @@ This header may not be removed.
         if (qBitLength <= 128) bitLength = (qBitLength * 816) / 128;
         if (qBitLength <= 112) bitLength = (qBitLength * 640) / 112;
         if (qBitLength <= 96) bitLength = (qBitLength * 480) / 96;
-        byteLength = (qBitLength / 8) + (((qBitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        qFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[qFGInt number] mutableBytes];
-        length = [[qFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
         [qFGInt findNearestLargerPrime];
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        pFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[pFGInt number] mutableBytes];
-        length = [[pFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
     
         tmpFGInt = [[FGInt alloc] initWithNSData: secretKeyData];
@@ -1902,20 +1701,7 @@ This header may not be removed.
         [tmpFGInt release];
         [zero release]; 
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        FGInt *hFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[hFGInt number] mutableBytes];
-        length = [[hFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        FGInt *hFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         hFGInt = [FGInt longDivisionModBis: hFGInt by: pFGInt];
 
         FGInt *phi;
@@ -2223,7 +2009,7 @@ This header may not be removed.
         }
             
         FGInt *dataFGInt = [[FGInt alloc] initWithNSData: plainText];
-        kInvertedFGInt = [FGInt modularInverse: kFGInt mod: qFGInt];
+        kInvertedFGInt = [FGInt invert: kFGInt moduloPrime: qFGInt];
         [kFGInt release];
         tmpFGInt = [FGInt multiply: rFGInt and: secretKey];
         hFGInt = [FGInt add: dataFGInt and: tmpFGInt];
@@ -2363,7 +2149,7 @@ This header may not be removed.
         return signatureCheck;
 
     FGInt *plainTextFGInt = [[FGInt alloc] initWithNSData: plainText], 
-        *wFGInt = [FGInt modularInverse: sFGInt mod: qFGInt];
+        *wFGInt = [FGInt invert: sFGInt moduloPrime: qFGInt];
     [sFGInt release];
     FGInt *tmpFGInt = [FGInt multiply: wFGInt and: plainTextFGInt];
     FGInt *u1FGInt = [FGInt mod: tmpFGInt by: qFGInt];
@@ -2520,8 +2306,6 @@ This header may not be removed.
         FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength, length;
         FGIntBase firstBit, firstNumberBase;
         FGInt *tmpFGInt;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
         if (bitLength > 7936) qBitLength = (bitLength * 512) / 15424;
         if (bitLength <= 7936) qBitLength = (bitLength * 384) / 7936;
@@ -2532,74 +2316,23 @@ This header may not be removed.
         if (bitLength <= 816) qBitLength = (bitLength * 128) / 816;
         if (bitLength <= 640) qBitLength = (bitLength * 112) / 640;
         if (bitLength <= 480) qBitLength = (bitLength * 96) / 480;
-        byteLength = (qBitLength / 8) + (((qBitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        qFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[qFGInt number] mutableBytes];
-        length = [[qFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
         [qFGInt findNearestLargerPrime];
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        pFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[pFGInt number] mutableBytes];
-        length = [[pFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
 
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         secretKeyLength = qBitLength;
         byteLength = (secretKeyLength / 8) + (((secretKeyLength % 8) == 0) ? 0 : 1);
         do {
-            tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-            int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-            tmpFGInt = [[FGInt alloc] initWithNSData: tmpData];
-            [tmpData release];
-            j = qBitLength % 32;
-            firstBit = (1u << 31) >> ((32 - j) % 32);
-            firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            numberArray = [[tmpFGInt number] mutableBytes];
-            length = [[tmpFGInt number] length]/4;
-            j = numberArray[length - 1];
-            j = j & firstNumberBase;
-            j = j | firstBit;
-            numberArray[length - 1] = j;
+            tmpFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: secretKeyLength];
             secretKey = [FGInt mod: tmpFGInt by: qFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
         [zero release]; 
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        FGInt *hFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[hFGInt number] mutableBytes];
-        length = [[hFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        FGInt *hFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         hFGInt = [FGInt longDivisionModBis: hFGInt by: pFGInt];
 
         FGInt *phi;
@@ -2650,36 +2383,10 @@ This header may not be removed.
         if (qBitLength <= 128) bitLength = (qBitLength * 816) / 128;
         if (qBitLength <= 112) bitLength = (qBitLength * 640) / 112;
         if (qBitLength <= 96) bitLength = (qBitLength * 480) / 96;
-        byteLength = (qBitLength / 8) + (((qBitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        qFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[qFGInt number] mutableBytes];
-        length = [[qFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
         [qFGInt findNearestLargerPrime];
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        pFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[pFGInt number] mutableBytes];
-        length = [[pFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
     
         tmpFGInt = [[FGInt alloc] initWithNSData: secretKeyData];
@@ -2693,20 +2400,7 @@ This header may not be removed.
         [tmpFGInt release];
         [zero release]; 
 
-        byteLength = (bitLength / 8) + (((bitLength % 8) == 0) ? 0 : 1);
-        tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-        result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-        FGInt *hFGInt = [[FGInt alloc] initWithNSData: tmpData];
-        [tmpData release];
-        j = bitLength % 32;
-        firstBit = (1u << 31) >> ((32 - j) % 32);
-        firstNumberBase = 4294967295 >> ((32 - j) % 32);
-        numberArray = [[hFGInt number] mutableBytes];
-        length = [[hFGInt number] length]/4;
-        j = numberArray[length - 1];
-        j = j & firstNumberBase;
-        j = j | firstBit;
-        numberArray[length - 1] = j;
+        FGInt *hFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
         hFGInt = [FGInt longDivisionModBis: hFGInt by: pFGInt];
 
         FGInt *phi;
@@ -3174,7 +2868,7 @@ This header may not be removed.
         plainTextFGInt = [[FGInt alloc] initWithFGIntBase: 1];
         vFGInt = [plainTextFGInt mutableCopy];
     } else {
-        vFGInt = [FGInt modularInverse: plainTextFGInt mod: qFGInt];
+        vFGInt = [FGInt invert: plainTextFGInt moduloPrime: qFGInt];
     }
     [zero release];
     tmpFGInt = [FGInt multiply: vFGInt and: sFGInt];
@@ -3345,21 +3039,8 @@ This header may not be removed.
         FGInt *nFGInt = [gPoint pointOrder], *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         
         secretKeyLength = bitLength;
-        byteLength = (secretKeyLength / 8) + (((secretKeyLength % 8) == 0) ? 0 : 1);
         do {
-            tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-            int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-            tmpFGInt = [[FGInt alloc] initWithNSData: tmpData];
-            [tmpData release];
-            j = bitLength % 32;
-            firstBit = (1u << 31) >> ((32 - j) % 32);
-            firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            numberArray = [[tmpFGInt number] mutableBytes];
-            length = [[tmpFGInt number] length]/4;
-            j = numberArray[length - 1];
-            j = j & firstNumberBase;
-            j = j | firstBit;
-            numberArray[length - 1] = j;
+            tmpFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: secretKeyLength];
             secretKey = [FGInt mod: tmpFGInt by: nFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
@@ -4128,21 +3809,8 @@ This header may not be removed.
         FGInt *nFGInt = [gPoint pointOrder], *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         
         secretKeyLength = bitLength;
-        byteLength = (secretKeyLength / 8) + (((secretKeyLength % 8) == 0) ? 0 : 1);
         do {
-            tmpData = [[NSMutableData alloc] initWithLength: byteLength];
-            int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
-            tmpFGInt = [[FGInt alloc] initWithNSData: tmpData];
-            [tmpData release];
-            j = bitLength % 32;
-            firstBit = (1u << 31) >> ((32 - j) % 32);
-            firstNumberBase = 4294967295 >> ((32 - j) % 32);
-            numberArray = [[tmpFGInt number] mutableBytes];
-            length = [[tmpFGInt number] length]/4;
-            j = numberArray[length - 1];
-            j = j & firstNumberBase;
-            j = j | firstBit;
-            numberArray[length - 1] = j;
+            tmpFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: secretKeyLength];
             secretKey = [FGInt mod: tmpFGInt by: nFGInt];
             [tmpFGInt release];
         } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));

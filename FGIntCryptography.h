@@ -25,7 +25,7 @@ This header may not be removed.
 #define gostdsaKey @"GOSTDSA"
 */
 
-#define FGIntCryptography_version 20120724
+#define FGIntCryptography_version 20141115
 
 
 
