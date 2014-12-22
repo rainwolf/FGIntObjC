@@ -233,6 +233,24 @@ This header may not be removed.
 
 
 
+@interface NISTECDSA : ECDSA <NSCopying> {
+	tag nistPrime;
+}
+@property (assign, readwrite) tag nistPrime;
+
+-(id) initWithNISTcurve: (tag) nistPrimeTag;
+-(void) setGPointAndComputeYPoint: (ECPoint *) newG;
+-(void) setSecretKeyAndComputeYPoint: (FGInt *) newSecretKey;
+-(void) setPublicKeyWithNSData: (NSData *) publicKeyNSData;
+-(NSData *) signNSData: (NSData *) plainText withRandomNSData: (NSData *) kData;
+-(BOOL) verifySignature: (NSData *) signature ofPlainTextNSData: (NSData *) plainText;
+
+@end
+
+
+
+
+
 
 //@interface FGIntCryptography : NSObject {
 //}

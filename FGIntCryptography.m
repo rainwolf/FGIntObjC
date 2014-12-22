@@ -4389,3 +4389,406 @@ This header may not be removed.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@implementation NISTECDSA
+@synthesize nistPrime;
+
+
+
+-(id) initWithNISTcurve: (tag) nistPrimeTag {
+    if (self = [super init]) {
+        EllipticCurve *ec = [[EllipticCurve alloc] init];
+        gPoint = [[ECPoint alloc] init];
+        nistPrime = nistPrimeTag;
+        switch (nistPrime) {
+            case p192:
+                [ec setP: [[FGInt alloc] initWithBase10String: @"6277101735386680763835789423207666416083908700390324961279"]];
+                [ec setA: [[FGInt alloc] initWithBase10String: @"6277101735386680763835789423207666416083908700390324961276"]];
+                [ec setB: [[FGInt alloc] initWithBase10String: @"2455155546008943817740293915197451784769108058161191238065"]];
+                [ec setCurveOrder: [[FGInt alloc] initWithBase10String: @"6277101735386680763835789423176059013767194773182842284081"]];
+                break;
+            case p224:
+                [ec setP: [[FGInt alloc] initWithBase10String: @"26959946667150639794667015087019630673557916260026308143510066298881"]];
+                [ec setA: [[FGInt alloc] initWithBase10String: @"26959946667150639794667015087019630673557916260026308143510066298878"]];
+                [ec setB: [[FGInt alloc] initWithBase10String: @"18958286285566608000408668544493926415504680968679321075787234672564"]];
+                [ec setCurveOrder: [[FGInt alloc] initWithBase10String: @"26959946667150639794667015087019625940457807714424391721682722368061"]];
+                break;
+            case p256:
+                [ec setP: [[FGInt alloc] initWithBase10String: @"115792089210356248762697446949407573530086143415290314195533631308867097853951"]];
+                [ec setA: [[FGInt alloc] initWithBase10String: @"115792089210356248762697446949407573530086143415290314195533631308867097853948"]];
+                [ec setB: [[FGInt alloc] initWithBase10String: @"41058363725152142129326129780047268409114441015993725554835256314039467401291"]];
+                [ec setCurveOrder: [[FGInt alloc] initWithBase10String: @"115792089210356248762697446949407573529996955224135760342422259061068512044369"]];
+                break;
+            case p384:
+                [ec setP: [[FGInt alloc] initWithBase10String: @"39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319"]];
+                [ec setA: [[FGInt alloc] initWithBase10String: @"39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112316"]];
+                [ec setB: [[FGInt alloc] initWithBase10String: @"27580193559959705877849011840389048093056905856361568521428707301988689241309860865136260764883745107765439761230575"]];
+                [ec setCurveOrder: [[FGInt alloc] initWithBase10String: @"39402006196394479212279040100143613805079739270465446667946905279627659399113263569398956308152294913554433653942643"]];
+                break;
+            case p521:
+                [ec setP: [[FGInt alloc] initWithBase10String: @"6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151"]];
+                [ec setA: [[FGInt alloc] initWithBase10String: @"6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057148"]];
+                [ec setB: [[FGInt alloc] initWithBase10String: @"1093849038073734274511112390766805569936207598951683748994586394495953116150735016013708737573759623248592132296706313309438452531591012912142327488478985984"]];
+                [ec setCurveOrder: [[FGInt alloc] initWithBase10String: @"6864797660130609714981900799081393217269435300143305409394463459185543183397655394245057746333217197532963996371363321113864768612440380340372808892707005449"]];
+                break;
+        }
+        [gPoint setEllipticCurve: ec];
+        FGIntBase bits = [[ec p] bitSize] - 1;
+        [gPoint setX: [[FGInt alloc] initWithRandomNumberOfBitSize: bits]];
+        [gPoint setY: [[FGInt alloc] initWithFGIntBase: 0]];
+        [gPoint setPointOrder: [[ec curveOrder] mutableCopy]];
+        [gPoint findNextECPoint];
+        [self setSecretKeyAndComputeYPoint: [[FGInt alloc] initWithRandomNumberOfBitSize: bits]];
+    }
+    return self;
+}
+
+
+-(void) setPublicKeyWithNSData: (NSData *) publicKeyNSData {
+    [super setPublicKeyWithNSData: publicKeyNSData];
+    switch ([[[gPoint ellipticCurve] p] bitSize]) {
+        case 192:
+            nistPrime = p192;
+            break;
+        case 224:
+            nistPrime = p224;
+            break;
+        case 256:
+            nistPrime = p256;
+            break;
+        case 384:
+            nistPrime = p384;
+            break;
+        case 521:
+            nistPrime = p521;
+            break;
+    }
+}
+
+-(void) setGPointAndComputeYPoint: (ECPoint *) newG {
+    if (secretKey) {
+        if ([newG ellipticCurve]) {
+            if ([[newG ellipticCurve] p]) {
+                if (gPoint) {
+                    [gPoint release];
+                }
+                gPoint = newG;
+                if (yPoint) {
+                    [yPoint release];
+                }
+                yPoint = [ECPoint add: gPoint kTimes: secretKey];
+            } else {
+                NSLog(@"No ellipticCurve prime for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
+            }
+        } else {
+            NSLog(@"No ellipticCurve parameters for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
+        }
+    } else {
+        NSLog(@"secretKey is empty for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
+    }
+}
+
+-(void) setSecretKeyAndComputeYPoint: (FGInt *) newSecretKey {
+    if (gPoint) {
+        if ([gPoint ellipticCurve]) {
+            if ([[gPoint ellipticCurve] p]) {
+                if (secretKey) {
+                    [secretKey release];
+                }
+                secretKey = newSecretKey;
+                if (yPoint) {
+                    [yPoint release];
+                }
+                yPoint = [ECPoint add: gPoint kTimes: secretKey];
+            } else {
+                NSLog(@"No ellipticCurve prime for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
+            }
+        } else {
+            NSLog(@"No ellipticCurve parameters for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
+        }
+    } else {
+        NSLog(@"gPoint is empty for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
+    }
+}
+
+
+-(id) initWithBitLength: (FGIntOverflow) bitLength {
+    if (self = [super init]) {
+        FGIntOverflow byteLength, j, secretKeyLength, length;
+        FGIntBase firstBit, firstNumberBase;
+        FGInt *tmpFGInt;
+        NSMutableData *tmpData;
+        FGIntBase* numberArray;
+
+        gPoint = [ECPoint generateSecureCurveAndPointOfSize: bitLength];
+        FGInt *nFGInt = [gPoint pointOrder], *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
+        
+        secretKeyLength = bitLength;
+        do {
+            tmpFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: secretKeyLength];
+            secretKey = [FGInt mod: tmpFGInt by: nFGInt];
+            [tmpFGInt release];
+        } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
+        [zero release]; 
+        [one release];
+        
+        yPoint = [ECPoint add: gPoint kTimes: secretKey];
+
+    }
+    return self;
+}
+
+
+
+
+-(NSData *) signNSData: (NSData *) plainText withRandomNSData: (NSData *) kData {
+    if (!plainText) {
+        NSLog(@"No plainText available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return nil;
+    }
+    if (!secretKey) {
+        NSLog(@"No secretKey available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return nil;
+    }
+    if (!gPoint) {
+        NSLog(@"No gPoint available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return nil;
+    }
+    if (![gPoint ellipticCurve]) {
+        NSLog(@"No ellipticCurve available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return nil;
+    }
+    if (!yPoint) {
+        NSLog(@"No yPoint available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return nil;
+    }
+    if (!kData) {
+        NSLog(@"No kData available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return nil;
+    }
+
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize], firstBit, j;
+    if ([plainText length] < byteLength) {
+        NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
+        return nil;
+    }
+
+    FGInt *rFGInt, *sFGInt;
+    FGInt *nFGInt = [gPoint pointOrder];
+    FGIntOverflow nBitLength = [nFGInt bitSize], length;
+    FGInt *dataFGInt = [[FGInt alloc] initWithNSData: plainText];
+    [dataFGInt shiftRightBy: [dataFGInt bitSize] - nBitLength];
+    FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
+    FGIntBase* numberArray;    
+
+    BOOL noLuck;
+    do {
+        FGInt *tmpFGInt = [[FGInt alloc] initWithNSData: kData];
+        firstBit = (1u << 31);
+        numberArray = [[tmpFGInt number] mutableBytes];
+        length = [[tmpFGInt number] length]/4;
+        j = numberArray[length - 1];
+        j = j | firstBit;
+        numberArray[length - 1] = j;
+        FGInt *kFGInt = [FGInt mod: tmpFGInt by: nFGInt];
+        // ECPoint *kGPoint = [ECPoint add: gPoint kTimes: kFGInt];
+        ECPoint *kGPoint = [ECPoint add: gPoint kTimes: kFGInt withNISTprime: nistPrime];
+        rFGInt = [FGInt mod: [kGPoint x] by: nFGInt];
+        while (([FGInt compareAbsoluteValueOf: zero with: kFGInt] == equal) || ([FGInt compareAbsoluteValueOf: one with: kFGInt] == equal) || ([FGInt compareAbsoluteValueOf: zero with: rFGInt] == equal)) {
+            [tmpFGInt increment];
+            [kFGInt release];
+            kFGInt = [FGInt mod: tmpFGInt by: nFGInt];
+            [kGPoint release];
+            // kGPoint = [ECPoint add: gPoint kTimes: kFGInt];
+            NSLog(@"kitten");
+            kGPoint = [ECPoint add: gPoint kTimes: kFGInt withNISTprime: nistPrime];
+            [rFGInt release];
+            rFGInt = [FGInt mod: [kGPoint x] by: nFGInt];
+        } 
+        [tmpFGInt release];
+    
+        FGInt *kInvertedFGInt = [FGInt modularInverse: kFGInt mod: nFGInt];
+        tmpFGInt = [FGInt multiply: rFGInt and: secretKey];
+        [kFGInt release];
+        [dataFGInt addWith: tmpFGInt];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt multiply: kInvertedFGInt and: dataFGInt];
+        [dataFGInt release];
+        [kInvertedFGInt release];
+        sFGInt = [FGInt mod: tmpFGInt by: nFGInt];
+        [tmpFGInt release];
+    
+        noLuck = ([FGInt compareAbsoluteValueOf: zero with: sFGInt] == equal);
+        if (noLuck) {
+            [rFGInt release];
+            [sFGInt release];
+            [kGPoint release];
+        }
+    } while (noLuck);
+
+    [zero release]; 
+    [one release];
+
+    NSMutableData *signatureData = [[NSMutableData alloc] init];
+    NSData *mpiData = [rFGInt toMPINSData];
+    [rFGInt release];
+    [signatureData appendData: mpiData];
+    [mpiData release];
+
+    mpiData = [sFGInt toMPINSData];
+    [sFGInt release];
+    [signatureData appendData: mpiData];
+    [mpiData release];
+
+    return signatureData;
+}
+
+
+-(BOOL) verifySignature: (NSData *) signature ofPlainTextNSData: (NSData *) plainText {
+    if (!signature) {
+        NSLog(@"No signature available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return NO;
+    }
+    if (!plainText) {
+        NSLog(@"No plainText available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return NO;
+    }
+    if (!gPoint) {
+        NSLog(@"No gPoint available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return NO;
+    }
+    if (![gPoint ellipticCurve]) {
+        NSLog(@"No ellipticCurve available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return NO;
+    }
+    if (!yPoint) {
+        NSLog(@"No yPoint available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return NO;
+    }
+
+    NSData *tmpData;
+    unsigned char aBuffer[[signature length]];
+    FGIntBase rangeStart = 0, mpiLength, keyLength;
+    
+    if ([signature length] < rangeStart + 2) {
+        NSLog(@"signature is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return NO;
+    }
+    NSRange bytesRange = NSMakeRange(rangeStart, 2);
+    [signature getBytes: aBuffer range: bytesRange];
+    mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
+    keyLength = (mpiLength + 7)/8 + 2;
+    bytesRange = NSMakeRange(rangeStart, keyLength);
+    if ([signature length] < rangeStart + keyLength) {
+        NSLog(@"signature is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return NO;
+    }
+    [signature getBytes: aBuffer range: bytesRange];
+    tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
+    FGInt *rFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
+    [tmpData release];
+    rangeStart += keyLength;
+    
+    FGInt *nFGInt = [gPoint pointOrder];
+    if ([FGInt compareAbsoluteValueOf: rFGInt with: nFGInt] != smaller) {
+        [rFGInt release];
+        return NO;
+    }
+
+    bytesRange = NSMakeRange(rangeStart , 2);
+    if ([signature length] < rangeStart + 2) {
+        [rFGInt release];
+        NSLog(@"signature is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return NO;
+    }
+    [signature getBytes: aBuffer range: bytesRange];
+    mpiLength = (aBuffer[1] | (aBuffer[0] << 8));
+    keyLength = (mpiLength + 7)/8 + 2;
+    bytesRange = NSMakeRange(rangeStart, keyLength);
+    if ([signature length] < rangeStart + keyLength) {
+        [rFGInt release];
+        NSLog(@"signature is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
+        return NO;
+    }
+    [signature getBytes: aBuffer range: bytesRange];
+    tmpData = [[NSData alloc] initWithBytes: aBuffer length: keyLength];
+    FGInt *sFGInt = [[FGInt alloc] initWithMPINSData: tmpData];
+    [tmpData release];
+
+    FGIntOverflow nBitLength = [nFGInt bitSize];
+    FGInt *plainTextFGInt = [[FGInt alloc] initWithNSData: plainText];
+    [plainTextFGInt shiftRightBy: [plainTextFGInt bitSize] - nBitLength];
+
+    BOOL signatureCheck = YES;
+    if ([FGInt compareAbsoluteValueOf: sFGInt with: nFGInt] != smaller) {
+        [rFGInt release];
+        [sFGInt release];
+        signatureCheck = NO;
+    }
+    if (!signatureCheck) {
+        return signatureCheck;
+    }
+
+    FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0], *tmpFGInt, *wFGInt = [FGInt modularInverse: sFGInt mod: nFGInt];
+    tmpFGInt = [FGInt multiply: wFGInt and: plainTextFGInt];
+    FGInt *u1FGInt = [FGInt mod: tmpFGInt by: nFGInt];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: wFGInt and: rFGInt];
+    FGInt *u2FGInt = [FGInt mod: tmpFGInt by: nFGInt];
+    [tmpFGInt release];
+    [wFGInt release];
+    // ECPoint *sum = [ECPoint add: gPoint k1Times: u1FGInt and: yPoint k2Times: u2FGInt];
+    ECPoint *sum = [ECPoint add: gPoint k1Times: u1FGInt and: yPoint k2Times: u2FGInt withNISTprime: nistPrime];
+    [u1FGInt release];
+    [u2FGInt release];
+    [sFGInt release];
+    
+    tmpFGInt = [FGInt mod: [sum x] by: nFGInt];
+    signatureCheck = ([FGInt compareAbsoluteValueOf: rFGInt with: tmpFGInt] == equal);
+    [tmpFGInt release];
+
+    [rFGInt release];
+    [sum release];
+
+    return signatureCheck;
+}
+
+
+@end
+
+
+
+
+
+
+
+

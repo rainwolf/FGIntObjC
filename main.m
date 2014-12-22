@@ -200,12 +200,146 @@ int main (int argc, const char * argv[]) {
         decryptedData = [ecElGamal decryptNSData: encryptedData];
         timePassed_ms = [date timeIntervalSinceNow] * -1000.0;
         NSLog(@"Encryption/Decryption with %u bit ECElGamal keys took %fms", bitSize, timePassed_ms);
-        NSLog(@"the decrypted result is: %@",[[NSString alloc] initWithData:decryptedData encoding:NSUTF8StringEncoding]);
+        NSLog(@"the decrypted result is: %@ \n \n",[[NSString alloc] initWithData:decryptedData encoding:NSUTF8StringEncoding]);
         [ecElGamal release];
         [encryptedData release];
         [decryptedData release];
         [pkey release];
         [skey release];
+
+
+
+
+        plaintextString = @"If you must choose between two evils, pick the one you've never tried before.";
+        NSLog(@" initializing ECDSA with NIST Curve P192.");
+        NISTECDSA *nistECDSA = [[NISTECDSA alloc] initWithNISTcurve: p192];
+// The next 8 lines are an example of how to extract the keys and reuse them
+        pkey = [nistECDSA publicKeyToBase64NSString];
+        skey = [nistECDSA secretKeyToBase64NSString];
+        NSLog(@"The public key is: %@", pkey);
+        NSLog(@"The secret key is: %@", skey);
+        [nistECDSA release];
+        nistECDSA = [[NISTECDSA alloc] init];
+        [nistECDSA setSecretKeyWithBase64NSString: skey];
+        [nistECDSA setPublicKeyWithBase64NSString: pkey];
+        NSLog(@"Signing: %@", plaintextString);
+        date = [NSDate date];
+        signedData = [nistECDSA signNSString: plaintextString];
+        NSLog(@"The signature is: %@", [FGInt convertNSDataToBase64: signedData] );
+        NSLog(@"Verifying the signature...   Is it valid? %@", [nistECDSA verifySignature: signedData ofPlainTextNSString: plaintextString] ? @"YES" : @"NO");
+        timePassed_ms = [date timeIntervalSinceNow] * -1000.0;
+        NSLog(@"Signature Generation/Verification with P192 ECDSA keys took %fms \n \n ", timePassed_ms);
+        [nistECDSA release];
+        [signedData release];
+        [pkey release];
+        [skey release];
+
+
+
+        plaintextString = @"Experience is something you don't get until just after you need it.";
+        NSLog(@" initializing ECDSA with NIST Curve P224.");
+        nistECDSA = [[NISTECDSA alloc] initWithNISTcurve: p224];
+// The next 8 lines are an example of how to extract the keys and reuse them
+        pkey = [nistECDSA publicKeyToBase64NSString];
+        skey = [nistECDSA secretKeyToBase64NSString];
+        NSLog(@"The public key is: %@", pkey);
+        NSLog(@"The secret key is: %@", skey);
+        [nistECDSA release];
+        nistECDSA = [[NISTECDSA alloc] init];
+        [nistECDSA setSecretKeyWithBase64NSString: skey];
+        [nistECDSA setPublicKeyWithBase64NSString: pkey];
+        NSLog(@"Signing: %@", plaintextString);
+        date = [NSDate date];
+        signedData = [nistECDSA signNSString: plaintextString];
+        NSLog(@"The signature is: %@", [FGInt convertNSDataToBase64: signedData] );
+        NSLog(@"Verifying the signature...   Is it valid? %@", [nistECDSA verifySignature: signedData ofPlainTextNSString: plaintextString] ? @"YES" : @"NO");
+        timePassed_ms = [date timeIntervalSinceNow] * -1000.0;
+        NSLog(@"Signature Generation/Verification with P224 ECDSA keys took %fms \n \n ", timePassed_ms);
+        [nistECDSA release];
+        [signedData release];
+        [pkey release];
+        [skey release];
+
+
+
+        plaintextString = @"Money can't buy love. But it CAN rent a very close imitation.";
+        NSLog(@" initializing ECDSA with NIST Curve P256.");
+        nistECDSA = [[NISTECDSA alloc] initWithNISTcurve: p256];
+// The next 8 lines are an example of how to extract the keys and reuse them
+        pkey = [nistECDSA publicKeyToBase64NSString];
+        skey = [nistECDSA secretKeyToBase64NSString];
+        NSLog(@"The public key is: %@", pkey);
+        NSLog(@"The secret key is: %@", skey);
+        [nistECDSA release];
+        nistECDSA = [[NISTECDSA alloc] init];
+        [nistECDSA setSecretKeyWithBase64NSString: skey];
+        [nistECDSA setPublicKeyWithBase64NSString: pkey];
+        NSLog(@"Signing: %@", plaintextString);
+        date = [NSDate date];
+        signedData = [nistECDSA signNSString: plaintextString];
+        NSLog(@"The signature is: %@", [FGInt convertNSDataToBase64: signedData] );
+        NSLog(@"Verifying the signature...   Is it valid? %@", [nistECDSA verifySignature: signedData ofPlainTextNSString: plaintextString] ? @"YES" : @"NO");
+        timePassed_ms = [date timeIntervalSinceNow] * -1000.0;
+        NSLog(@"Signature Generation/Verification with P256 ECDSA keys took %fms \n \n ", timePassed_ms);
+        [nistECDSA release];
+        [signedData release];
+        [pkey release];
+        [skey release];
+
+
+
+
+        plaintextString = @"How many of you believe in telekinesis? Raise my hands....";
+        NSLog(@" initializing ECDSA with NIST Curve P384.");
+        nistECDSA = [[NISTECDSA alloc] initWithNISTcurve: p384];
+// The next 8 lines are an example of how to extract the keys and reuse them
+        pkey = [nistECDSA publicKeyToBase64NSString];
+        skey = [nistECDSA secretKeyToBase64NSString];
+        NSLog(@"The public key is: %@", pkey);
+        NSLog(@"The secret key is: %@", skey);
+        [nistECDSA release];
+        nistECDSA = [[NISTECDSA alloc] init];
+        [nistECDSA setSecretKeyWithBase64NSString: skey];
+        [nistECDSA setPublicKeyWithBase64NSString: pkey];
+        NSLog(@"Signing: %@", plaintextString);
+        date = [NSDate date];
+        signedData = [nistECDSA signNSString: plaintextString];
+        NSLog(@"The signature is: %@", [FGInt convertNSDataToBase64: signedData] );
+        NSLog(@"Verifying the signature...   Is it valid? %@", [nistECDSA verifySignature: signedData ofPlainTextNSString: plaintextString] ? @"YES" : @"NO");
+        timePassed_ms = [date timeIntervalSinceNow] * -1000.0;
+        NSLog(@"Signature Generation/Verification with P384 ECDSA keys took %fms \n \n ", timePassed_ms);
+        [nistECDSA release];
+        [signedData release];
+        [pkey release];
+        [skey release];
+
+
+
+
+        plaintextString = @"It is an infantile superstition of the human spirit that virginity would be thought a virtue and not the barrier that separates ignorance from knowledge.";
+        NSLog(@" initializing ECDSA with NIST Curve P521.");
+        nistECDSA = [[NISTECDSA alloc] initWithNISTcurve: p521];
+// The next 8 lines are an example of how to extract the keys and reuse them
+        pkey = [nistECDSA publicKeyToBase64NSString];
+        skey = [nistECDSA secretKeyToBase64NSString];
+        NSLog(@"The public key is: %@", pkey);
+        NSLog(@"The secret key is: %@", skey);
+        [nistECDSA release];
+        nistECDSA = [[NISTECDSA alloc] init];
+        [nistECDSA setSecretKeyWithBase64NSString: skey];
+        [nistECDSA setPublicKeyWithBase64NSString: pkey];
+        NSLog(@"Signing: %@", plaintextString);
+        date = [NSDate date];
+        signedData = [nistECDSA signNSString: plaintextString];
+        NSLog(@"The signature is: %@", [FGInt convertNSDataToBase64: signedData] );
+        NSLog(@"Verifying the signature...   Is it valid? %@", [nistECDSA verifySignature: signedData ofPlainTextNSString: plaintextString] ? @"YES" : @"NO");
+        timePassed_ms = [date timeIntervalSinceNow] * -1000.0;
+        NSLog(@"Signature Generation/Verification with P521 ECDSA keys took %fms \n \n ", timePassed_ms);
+        [nistECDSA release];
+        [signedData release];
+        [pkey release];
+        [skey release];
+
     }
     return 0;
 }

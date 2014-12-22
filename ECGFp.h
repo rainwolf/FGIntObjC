@@ -45,8 +45,12 @@
 +(ECPoint *) add: (ECPoint *) ecPoint1 and: (ECPoint *) ecPoint2;
 +(ECPoint *) projectiveDouble: (ECPoint *) ecPoint aEqualsMinus3: (BOOL) is3;
 +(ECPoint *) projectiveAdd: (ECPoint *) ecPoint1 and: (ECPoint *) ecPoint2 aEqualsMinus3: (BOOL) is3;
++(ECPoint *) projectiveDouble: (ECPoint *) ecPoint withNISTprime: (tag) nistPrimeTag aEqualsMinus3: (BOOL) is3;
++(ECPoint *) projectiveAdd: (ECPoint *) ecPoint1 and: (ECPoint *) ecPoint2 withNISTprime: (tag) nistPrimeTag aEqualsMinus3: (BOOL) is3;
 +(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt;
 +(ECPoint *) add: (ECPoint *) ecPoint1 k1Times: (FGInt *) k1FGInt and: (ECPoint *) ecPoint2 k2Times: (FGInt *) k2FGInt;
++(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt withNISTprime: (tag) nistPrimeTag;
++(ECPoint *) add: (ECPoint *) ecPoint1 k1Times: (FGInt *) k1FGInt and: (ECPoint *) ecPoint2 k2Times: (FGInt *) k2FGInt withNISTprime: (tag) nistPrimeTag;
 +(ECPoint *) invert: (ECPoint *) ecPoint;
 +(ECPoint *) inbedNSData: (NSData *) data onEllipticCurve: (EllipticCurve *) ellipticC;
 -(NSData *) extractInbeddedNSData;

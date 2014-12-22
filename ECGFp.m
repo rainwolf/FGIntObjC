@@ -732,8 +732,281 @@
 }
 
 
+
+
+
++(ECPoint *) projectiveDouble: (ECPoint *) ecPoint withNISTprime: (tag) nistPrimeTag aEqualsMinus3: (BOOL) is3 {
+    if ([ecPoint infinity]) {
+        ECPoint *result = [ecPoint mutableCopy];
+        return result;
+    }
+    
+    FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0];
+    if ([FGInt compareAbsoluteValueOf: [ecPoint y] with: zero] == equal) {
+        ECPoint *result = [[ECPoint alloc] init];
+        [result setX: [[FGInt alloc] initWithFGIntBase: 1]];
+        [result setY: [[FGInt alloc] initWithFGIntBase: 1]];
+        [result setProjectiveZ: zero];
+        [result setInfinity: YES];
+        [result setEllipticCurve: [ecPoint ellipticCurve]];
+        return result;
+    }
+    [zero release];
+        
+    FGInt *t1, *t2, *t3, *t4, *t5, *tmpFGInt, *nistFGInt = [[ecPoint ellipticCurve] p];
+
+    if (is3) {
+        tmpFGInt = [FGInt square: [ecPoint projectiveZ]];
+        t4 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+        t5 = [FGInt subtract: [ecPoint x] and: t4];
+        [t4 addWith: [ecPoint x]];
+        tmpFGInt = t4;
+        t4 =  [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt multiply: t4 and: t5];
+        [t5 release];
+        t5 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+        [t5 multiplyByInt: 3];
+        t4 = [t5 modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [t5 release];
+    } else {
+        tmpFGInt = [FGInt square: [ecPoint projectiveZ]];
+        t1 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+        t2 = [FGInt square: t1];
+        [t1 release];
+        t1 = [t2 modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [t2 release];
+        tmpFGInt = [FGInt multiply: t1 and: [[ecPoint ellipticCurve] a]];
+        [t1 release];
+        t5 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+        t1 = [FGInt square: [ecPoint x]];
+        t2 = [t1 modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [t1 release];
+        [t2 multiplyByInt: 3];
+        [t2 addWith: t5];
+        t4 = [t2 modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [t5 release];
+        [t2 release];
+    }
+
+    ECPoint *result = [[ECPoint alloc] init];
+    [result setEllipticCurve: [ecPoint ellipticCurve]];
+
+    t2 = [FGInt multiply: [ecPoint y] and: [ecPoint projectiveZ]];
+    tmpFGInt = [t2 modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [t2 release];
+    [tmpFGInt shiftLeft];
+    t3 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt square: [ecPoint y]];
+    t2 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t2 and: [ecPoint x]];
+    t5 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [t5 shiftLeftBy: 2];
+    while ([FGInt compareAbsoluteValueOf: t5 with: nistFGInt] != smaller) {
+        [t5 subtractWith: nistFGInt];
+    }
+    [tmpFGInt release];
+    tmpFGInt = [FGInt square: t4];
+    t1 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    [t5 shiftLeft];
+    tmpFGInt = [FGInt subtract: t1 and: t5];
+    [t1 release];
+    t1 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    [t5 shiftRight];
+    tmpFGInt = [FGInt square: t2];
+    [t2 release];
+    t2 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [t2 shiftLeftBy: 3];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt subtract: t5 and: t1];
+    [t5 release];
+    t5 = tmpFGInt;
+    tmpFGInt = [FGInt multiply: t4 and: t5];
+    t5 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt subtract: t5 and: t2];
+    [t2 release];
+    t2 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    [result setX: t1];
+    [result setY: t2];
+    [result setProjectiveZ: t3];
+
+    return result;
+}
+
+
++(ECPoint *) projectiveAdd: (ECPoint *) ecPoint1 and: (ECPoint *) ecPoint2 withNISTprime: (tag) nistPrimeTag aEqualsMinus3: (BOOL) is3 {
+    if ([ecPoint1 infinity]) {
+        ECPoint *result = [ecPoint2 mutableCopy];
+        return result;
+    }
+    if ([ecPoint2 infinity]) {
+        ECPoint *result = [ecPoint1 mutableCopy];
+        return result;
+    }
+        
+    FGInt *t1, *t2, *t3, *t4, *t5, *t6, *t7, *tmpFGInt, *nistFGInt = [[ecPoint1 ellipticCurve] p], *zerone = [[FGInt alloc] initWithFGIntBase: 1];
+    BOOL z1isOne;
+    t1 = [[ecPoint1 x] mutableCopy];
+    t2 = [[ecPoint1 y] mutableCopy];
+    t3 = [[ecPoint1 projectiveZ] mutableCopy];
+
+    z1isOne = ([FGInt compareAbsoluteValueOf: zerone with: [ecPoint2 projectiveZ]] == equal);
+    if (!z1isOne) {
+        tmpFGInt = [FGInt square: [ecPoint2 projectiveZ]];
+        t7 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt multiply: t1 and: t7];
+        [t1 release];
+        t1 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt multiply: [ecPoint2 projectiveZ] and: t7];
+        [t7 release];
+        t7 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt multiply: t2 and: t7];
+        [t2 release];
+        [t7 release];
+        t2 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+    }
+
+    tmpFGInt = [FGInt square: [ecPoint1 projectiveZ]];
+    t7 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t7 and: [ecPoint2 x]];
+    t4 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t7 and: [ecPoint1 projectiveZ]];
+    [t7 release];
+    t7 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t7 and: [ecPoint2 y]];
+    [t7 release];
+    t5 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    t4 = [FGInt subtract: t1 and: t4];
+    tmpFGInt = [FGInt subtract: t2 and: t5];
+    [t5 release];
+    t5 = tmpFGInt;
+    [zerone decrement];
+    if ([FGInt compareAbsoluteValueOf: t4 with: zerone] == equal) {
+        if ([FGInt compareAbsoluteValueOf: t5 with: zerone] == equal) {
+            [zerone release];
+            [t4 release];
+            [t5 release];
+            [t1 release];
+            [t2 release];
+            return [ECPoint projectiveDouble: ecPoint1 aEqualsMinus3: is3];
+        } else {
+            [zerone release];
+            [t4 release];
+            [t5 release];
+            [t1 release];
+            [t2 release];
+            ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]];
+            [result makeProjective];
+            return result;
+        }
+    }
+    [t1 shiftLeft];
+    tmpFGInt = [FGInt subtract: t1 and: t4];
+    [t1 release];
+    t1 =  [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    [t2 shiftLeft];
+    tmpFGInt = [FGInt subtract: t2 and: t5];
+    [t2 release];
+    t2 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    if (!z1isOne) {
+        tmpFGInt = [FGInt multiply: t3 and: [ecPoint2 projectiveZ]];
+        [t3 release];
+        t3 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+        [tmpFGInt release];
+    } 
+    tmpFGInt = [FGInt multiply: t3 and: t4];
+    [t3 release];
+    t3 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt square: t4];
+    t7 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t4 and: t7];
+    [t4 release];
+    t4 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t1 and: t7];
+    [t7 release];
+    t7 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    [t1 release];
+    t1 = [FGInt square: t5];
+    tmpFGInt = [FGInt subtract: t1 and: t7];
+    [t1 release];
+    t1 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    [t1 shiftLeft];
+    tmpFGInt = [FGInt subtract: t7 and: t1];
+    [t7 release];
+    t7 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    [t1 shiftRight];
+    tmpFGInt = [FGInt multiply: t5 and: t7];
+    [t5 release];
+    [t7 release];
+    t5 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t2 and: t4];
+    [t4 release];
+    t4 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    [t2 release];
+    tmpFGInt = [FGInt subtract: t5 and: t4];
+    [t5 release];
+    [t4 release];
+    t2 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
+    [tmpFGInt release];
+    FGIntBase* numberArray = [[t2 number] mutableBytes];
+    if ((numberArray[0] & 1) == 0) {
+        [t2 shiftRight];
+    } else {
+        [t2 addWith: nistFGInt];
+        [t2 shiftRight];
+    }
+
+
+    ECPoint *result = [[ECPoint alloc] init];
+    [result setEllipticCurve: [ecPoint1 ellipticCurve]];
+    [result setX: t1];
+    [result setY: t2];
+    [result setProjectiveZ: t3];
+    return result;
+}
+
+
+
+
+
+
 +(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt {
     ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint ellipticCurve]], *tmpECPoint, *tmpECPoint1;
+
+    FGInt *pFGInt = [[[ecPoint ellipticCurve] p] mutableCopy];
+    [pFGInt decrement];
+    [pFGInt decrement];
+    [pFGInt decrement];
+    BOOL aEqualsMinus3 = ([FGInt compareAbsoluteValueOf: [[ecPoint ellipticCurve] a] with: pFGInt] == equal);
+    [pFGInt release];
     FGIntOverflow kLength = [[kFGInt number] length]/4, i, j;
     FGIntBase tmp;
     FGIntBase* kFGIntNumber = [[kFGInt number] mutableBytes];
@@ -746,11 +1019,11 @@
         tmp = kFGIntNumber[i];
         for( j = 0; j < 32; ++j ) {
             if ((tmp % 2) == 1) {
-                tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: NO];
+                tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
                 [result release];
                 result = tmpECPoint;
             }
-            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: NO];
+            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
             [tmpECPoint1 release];
             tmpECPoint1 = tmpECPoint;
             tmp >>= 1;
@@ -759,13 +1032,13 @@
     tmp = kFGIntNumber[kLength - 1];
     while (tmp != 0) {
         if ((tmp % 2) == 1) {
-            tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: NO];
+            tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
             [result release];
             result = tmpECPoint;
         }
         tmp >>= 1;
         if (tmp != 0) {
-            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: NO];
+            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
             [tmpECPoint1 release];
             tmpECPoint1 = tmpECPoint;
         }
@@ -783,6 +1056,12 @@
     if ([[k2FGInt number] length] > [[k1FGInt number] length])
         return [ECPoint add: ecPoint2 k1Times: k2FGInt and: ecPoint1 k2Times: k1FGInt];
         
+    FGInt *pFGInt = [[[ecPoint1 ellipticCurve] p] mutableCopy];
+    [pFGInt decrement];
+    [pFGInt decrement];
+    [pFGInt decrement];
+    BOOL aEqualsMinus3 = ([FGInt compareAbsoluteValueOf: [[ecPoint1 ellipticCurve] a] with: pFGInt] == equal);
+    [pFGInt release];
 
     ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]], *tmpECPoint, *tmpECPoint1;
     FGIntOverflow k1Length = [[k1FGInt number] length]/4, k2Length = [[k2FGInt number] length]/4, i;
@@ -794,7 +1073,7 @@
     FGInt *one = [[FGInt alloc] initWithFGIntBase: 1];
     [ecPoint1 setProjectiveZ: one];
     [ecPoint2 setProjectiveZ: one];
-    ECPoint *sum = [ECPoint projectiveAdd: ecPoint1 and: ecPoint2 aEqualsMinus3: NO];
+    ECPoint *sum = [ECPoint projectiveAdd: ecPoint1 and: ecPoint2 aEqualsMinus3: aEqualsMinus3];
 
     for( i = 0; i < k1Length; ++i ) {
         k1Base = k1FGIntNumber[k1Length - i - 1];
@@ -804,19 +1083,134 @@
             k2Base = 0;
         }
         for( int j = 31; j >= 0; --j ) {
-            tmpECPoint = [ECPoint projectiveDouble: result aEqualsMinus3: NO];
+            tmpECPoint = [ECPoint projectiveDouble: result aEqualsMinus3: aEqualsMinus3];
             [result release];
             result = tmpECPoint;
             if ((((k1Base >> j) % 2) == 1) && (((k2Base >> j) % 2) == 1)) {
-                tmpECPoint = [ECPoint projectiveAdd: result and: sum aEqualsMinus3: NO];
+                tmpECPoint = [ECPoint projectiveAdd: result and: sum aEqualsMinus3: aEqualsMinus3];
                 [result release];
                 result = tmpECPoint;
             } else if (((k1Base >> j) % 2) == 1) {
-                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint1 aEqualsMinus3: NO];
+                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint1 aEqualsMinus3: aEqualsMinus3];
                 [result release];
                 result = tmpECPoint;
             } else if (((k2Base >> j) % 2) == 1) {
-                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint2 aEqualsMinus3: NO];
+                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint2 aEqualsMinus3: aEqualsMinus3];
+                [result release];
+                result = tmpECPoint;
+            }
+        }
+    }
+    [sum release];
+
+    [one release];
+    [ecPoint1 setProjectiveZ: nil];
+    [ecPoint2 setProjectiveZ: nil];
+    [result makeAffine];
+
+    return result;
+}
+
+
++(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt withNISTprime: (tag) nistPrimeTag {
+    ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint ellipticCurve]], *tmpECPoint, *tmpECPoint1;
+
+    FGInt *pFGInt = [[[ecPoint ellipticCurve] p] mutableCopy];
+    [pFGInt decrement];
+    [pFGInt decrement];
+    [pFGInt decrement];
+    BOOL aEqualsMinus3 = ([FGInt compareAbsoluteValueOf: [[ecPoint ellipticCurve] a] with: pFGInt] == equal);
+    [pFGInt release];
+    FGIntOverflow kLength = [[kFGInt number] length]/4, i, j;
+    FGIntBase tmp;
+    FGIntBase* kFGIntNumber = [[kFGInt number] mutableBytes];
+    
+    tmpECPoint1 = [ecPoint retain];
+    [tmpECPoint1 makeProjective];
+    [result makeProjective];
+
+    for( i = 0; i < kLength - 1; i++ ) {
+        tmp = kFGIntNumber[i];
+        for( j = 0; j < 32; ++j ) {
+            if ((tmp % 2) == 1) {
+                tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 withNISTprime: nistPrimeTag aEqualsMinus3: aEqualsMinus3];
+                [result release];
+                result = tmpECPoint;
+            }
+            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 withNISTprime: nistPrimeTag aEqualsMinus3: aEqualsMinus3];
+            [tmpECPoint1 release];
+            tmpECPoint1 = tmpECPoint;
+            tmp >>= 1;
+        }
+    }
+    tmp = kFGIntNumber[kLength - 1];
+    while (tmp != 0) {
+        if ((tmp % 2) == 1) {
+            tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 withNISTprime: nistPrimeTag aEqualsMinus3: aEqualsMinus3];
+            [result release];
+            result = tmpECPoint;
+        }
+        tmp >>= 1;
+        if (tmp != 0) {
+            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 withNISTprime: nistPrimeTag aEqualsMinus3: aEqualsMinus3];
+            [tmpECPoint1 release];
+            tmpECPoint1 = tmpECPoint;
+        }
+    }
+
+    [tmpECPoint1 makeAffine];
+    [tmpECPoint1 release];
+    [result makeAffine];
+
+    return result;
+}
+
+
++(ECPoint *) add: (ECPoint *) ecPoint1 k1Times: (FGInt *) k1FGInt and: (ECPoint *) ecPoint2 k2Times: (FGInt *) k2FGInt withNISTprime: (tag) nistPrimeTag {
+    if ([[k2FGInt number] length] > [[k1FGInt number] length]) {
+        return [ECPoint add: ecPoint2 k1Times: k2FGInt and: ecPoint1 k2Times: k1FGInt];
+    }
+        
+    FGInt *pFGInt = [[[ecPoint1 ellipticCurve] p] mutableCopy];
+    [pFGInt decrement];
+    [pFGInt decrement];
+    [pFGInt decrement];
+    BOOL aEqualsMinus3 = ([FGInt compareAbsoluteValueOf: [[ecPoint1 ellipticCurve] a] with: pFGInt] == equal);
+    [pFGInt release];
+
+    ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]], *tmpECPoint, *tmpECPoint1;
+    FGIntOverflow k1Length = [[k1FGInt number] length]/4, k2Length = [[k2FGInt number] length]/4, i;
+    FGIntBase* k1FGIntNumber = [[k1FGInt number] mutableBytes];
+    FGIntBase* k2FGIntNumber = [[k2FGInt number] mutableBytes];
+    FGIntBase k1Base, k2Base;
+
+    [result makeProjective];
+    FGInt *one = [[FGInt alloc] initWithFGIntBase: 1];
+    [ecPoint1 setProjectiveZ: one];
+    [ecPoint2 setProjectiveZ: one];
+    ECPoint *sum = [ECPoint projectiveAdd: ecPoint1 and: ecPoint2 withNISTprime: nistPrimeTag aEqualsMinus3: aEqualsMinus3];
+
+    for( i = 0; i < k1Length; ++i ) {
+        k1Base = k1FGIntNumber[k1Length - i - 1];
+        if (k2Length > k1Length - i - 1) {
+            k2Base = k2FGIntNumber[k1Length - i - 1];
+        } else {
+            k2Base = 0;
+        }
+        for( int j = 31; j >= 0; --j ) {
+            tmpECPoint = [ECPoint projectiveDouble: result withNISTprime: nistPrimeTag aEqualsMinus3: aEqualsMinus3];
+            [result release];
+            result = tmpECPoint;
+            if ((((k1Base >> j) % 2) == 1) && (((k2Base >> j) % 2) == 1)) {
+                tmpECPoint = [ECPoint projectiveAdd: result and: sum withNISTprime: nistPrimeTag aEqualsMinus3: aEqualsMinus3];
+                [result release];
+                result = tmpECPoint;
+            } else if (((k1Base >> j) % 2) == 1) {
+                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint1 withNISTprime: nistPrimeTag aEqualsMinus3: aEqualsMinus3];
+                [result release];
+                result = tmpECPoint;
+            } else if (((k2Base >> j) % 2) == 1) {
+                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint2 withNISTprime: nistPrimeTag aEqualsMinus3: aEqualsMinus3];
                 [result release];
                 result = tmpECPoint;
             }
