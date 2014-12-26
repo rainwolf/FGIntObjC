@@ -29,3 +29,8 @@ ToDo
 * add support for the OpenPGP standard. Soon.
 * protection against side channel attacks.
 * a cryptographically secure PRNG
+ 
+License
+=======
+I'm licensing it under the GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+until I find a better alternative. If you require a different license, contact me.
