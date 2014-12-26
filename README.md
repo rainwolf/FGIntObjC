@@ -29,6 +29,11 @@ ToDo
 * add support for the OpenPGP standard. Soon.
 * protection against side channel attacks.
 * a cryptographically secure PRNG
+
+Notes
+=====
+* the algorithms are raw, there is no blinding implemented, or use of hash algorithms. You can add those by preprocessing the data you wish to sign.
+
  
 License
 =======
