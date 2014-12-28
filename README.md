@@ -16,7 +16,7 @@ digital signatures for the 1st four, mind you that these are the raw algorithms,
 
 - Feedback is always welcome.
 
-- I have included an example for all 5 algorithms, the documentation consists of comments in the FGInt.m
+- I have included an example for all 6 algorithms, the documentation consists of comments in the FGInt.m
 and ECGFp.m files and the method names are fairly straightforward. I haven't added comments to the 
 FGIntCryptography.m file, but that will change soon, again, the method names pretty much explain what they do.
 
