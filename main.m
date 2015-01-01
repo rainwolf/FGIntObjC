@@ -200,7 +200,7 @@ int main (int argc, const char * argv[]) {
         decryptedData = [ecElGamal decryptNSData: encryptedData];
         timePassed_ms = [date timeIntervalSinceNow] * -1000.0;
         NSLog(@"Encryption/Decryption with %u bit ECElGamal keys took %fms", bitSize, timePassed_ms);
-        NSLog(@"the decrypted result is: %@ \n \n",[[NSString alloc] initWithData:decryptedData encoding:NSUTF8StringEncoding]);
+        NSLog(@"the decrypted result is: %@ \n \n ",[[NSString alloc] initWithData:decryptedData encoding:NSUTF8StringEncoding]);
         [ecElGamal release];
         [encryptedData release];
         [decryptedData release];
