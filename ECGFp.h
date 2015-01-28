@@ -2,15 +2,6 @@
 //#import "FGInt.h"
 
 #define ECGFp_version 20141216
-#define ecBarrettThreshold 128
-
-
-/*
-#define quotientKey @"quotient"
-#define remainderKey @"remainder"
-#define aKey @"a"
-#define bKey @"b"
-*/
 
 
 @interface EllipticCurve : NSObject <NSMutableCopying> {
@@ -41,6 +32,7 @@
 -(NSData *) toCompressedNSData;
 -(void) makeProjective;
 -(void) makeAffine;
+-(void) makeAffineFromCurve25519;
 +(ECPoint *) double: (ECPoint *) ecPoint;
 +(ECPoint *) add: (ECPoint *) ecPoint1 and: (ECPoint *) ecPoint2;
 +(ECPoint *) projectiveDouble: (ECPoint *) ecPoint aEqualsMinus3: (BOOL) is3;

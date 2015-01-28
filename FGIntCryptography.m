@@ -98,6 +98,7 @@ This header may not be removed.
         [pFGInt decrement];
         [qFGInt decrement];
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *two = [[FGInt alloc] initWithFGIntBase: 2];
+        // FGInt *phi = [FGInt multiply: pFGInt and: qFGInt], *gcd = [FGInt binaryGCD: publicExponent and: phi];
         FGInt *phi = [FGInt multiply: pFGInt and: qFGInt], *gcd = [FGInt gcd: publicExponent and: phi];
         while ([FGInt compareAbsoluteValueOf: gcd with: one] != equal) {
             [publicExponent addWith: two];
@@ -1300,17 +1301,23 @@ This header may not be removed.
         
         FGInt *phi = [primeFGInt mutableCopy], *gcd, *one = [[FGInt alloc] initWithFGIntBase: 1];
         [phi decrement];
-        gcd = [FGInt gcd: kFGInt and: phi];
-        while ([FGInt compareAbsoluteValueOf: gcd with: one] != equal) {
-            [gcd release];
+        // gcd = [FGInt binaryGCD: kFGInt and: phi];
+        // while ([FGInt compareAbsoluteValueOf: gcd with: one] != equal) {
+        //     [gcd release];
+        //     [kFGInt increment];
+        //     gcd = [FGInt binaryGCD: kFGInt and: phi];
+        // }
+        // [gcd release];
+        // [one release];
+        kInvertedFGInt = [FGInt shiftEuclideanInvert: kFGInt mod: phi];
+        FGInt *zero = [[FGInt alloc] initAsZero];
+        while ([FGInt compareAbsoluteValueOf: kInvertedFGInt with: zero] == equal) {
+            [kInvertedFGInt release];
             [kFGInt increment];
-            gcd = [FGInt gcd: kFGInt and: phi];
+            kInvertedFGInt = [FGInt shiftEuclideanInvert: kFGInt mod: phi];
         }
-        [gcd release];
-        [one release];
         rFGInt = [FGInt raise: gFGInt toThePower: kFGInt montgomeryMod: primeFGInt];
-            
-        kInvertedFGInt = [FGInt modularInverse: kFGInt mod: phi];
+        // kInvertedFGInt = [FGInt shiftEuclideanInvert: kFGInt mod: phi];
         [kFGInt release];
         tmpFGInt = [FGInt multiply: rFGInt and: secretKey];
         hFGInt = [FGInt subtract: dataFGInt and: tmpFGInt];
@@ -1323,7 +1330,7 @@ This header may not be removed.
         [tmpFGInt release];
         [dataFGInt release];
         
-        FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0];
+        // FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0];
         noLuck = ([FGInt compareAbsoluteValueOf: zero with: sFGInt] == equal);
         if (noLuck) {
             [rFGInt release];

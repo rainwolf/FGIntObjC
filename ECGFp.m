@@ -274,7 +274,34 @@
     [tmpFGInt1 release];
     [x release];
     x = [FGInt mod: tmpFGInt by: [ellipticCurve p]];
+    [projectiveZ release];
+    projectiveZ = nil;
 }
+-(void) makeAffineFromCurve25519 {
+    FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0];
+    if (infinity) {
+        [x release];
+        x = [zero mutableCopy];
+        [y release];
+        y = zero;
+        return;
+    }
+    [zero release];
+    FGInt *p25519 = [[FGInt alloc] initAsP25519];
+    FGInt *zInv = [FGInt invert: projectiveZ moduloPrime: p25519];
+    [p25519 release];
+    FGInt  *tmpFGInt = [FGInt multiply: x and: zInv];
+    [x release];
+    [tmpFGInt mod25519];
+    x = tmpFGInt;
+    tmpFGInt = [FGInt multiply: y and: zInv];
+    [y release];
+    [tmpFGInt mod25519];
+    y = tmpFGInt;
+    [projectiveZ release];
+    projectiveZ = nil;
+}
+
 
 
 -(NSData *) toNSData {

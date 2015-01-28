@@ -58,6 +58,8 @@ typedef enum {error, equal, smaller, larger} tCompare;
 @property (retain, readwrite) NSMutableData *number;
 
 -(FGInt *) initWithNZeroes: (FGIntOverflow) n;
+-(FGInt *) initAsP25519;
+-(FGInt *) initAsZero;
 -(id) initWithCapacity: (FGIntOverflow) capacity;
 -(id) initWithNumber: (NSMutableData *) initNumber;
 -(id) initWithoutNumber;
@@ -87,6 +89,8 @@ typedef enum {error, equal, smaller, larger} tCompare;
 // -(NSMutableArray *) duplicateNumber;
 -(NSString *) toBase10String;
 +(tCompare) compareAbsoluteValueOf: (FGInt *) fGInt1 with: (FGInt *) fGInt2;
+-(BOOL) isZero;
+-(BOOL) isOne;
 +(FGInt *) add: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
 -(void) changeSign;
 +(FGInt *) subtract: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
@@ -124,8 +128,11 @@ typedef enum {error, equal, smaller, larger} tCompare;
 +(FGInt *) mod: (FGInt *) fGInt by: (FGInt *) modFGInt;
 +(NSDictionary *) divide: (FGInt *) fGInt by: (FGInt *) divisorFGInt;
 +(FGInt *) gcd: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
++(FGInt *) binaryGCD: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
 +(FGInt *) lcm: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
 +(FGInt *) modularInverse: (FGInt *) fGInt mod: (FGInt *) modFGInt;
++(FGInt *) invert: (FGInt *) fGInt moduloPrime: (FGInt *) pFGInt;
++(FGInt *) shiftEuclideanInvert: (FGInt *) aFGInt mod: (FGInt *) nFGInt;
 +(FGInt *) raise: (FGInt *) fGInt toThePower: (FGInt *) fGIntN montgomeryMod: (FGInt *) modFGInt;
 +(FGInt *) leftShiftModularInverse: (FGInt *) fGInt mod: (FGInt *) modFGInt;
 -(FGIntBase) modFGIntByInt: (FGIntBase) divInt;
@@ -166,6 +173,14 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(FGInt *) modNISTP521: (FGInt *) p521FGInt;
 -(FGInt *) modNISTprime: (FGInt *) nistFGInt andTag: (tag) nistTag;
 
-+(FGInt *) invert: (FGInt *) fGInt moduloPrime: (FGInt *) pFGInt;
++(FGInt *) addModulo25638: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
++(FGInt *) subtractModulo25638: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
++(FGInt *) multiplyModulo25638: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
++(FGInt *) squareModulo25638: (FGInt *) fGInt;
+-(void) mod25519;
+
++(FGInt *) addBasePointOnCurve25519: (FGInt *) x0 kTimes: (FGInt *) kTimes;
++(FGInt *) generateCurve25519SecretKey;
+
 
 @end
