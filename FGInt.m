@@ -151,6 +151,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 
+-(FGInt *) initWithCurve25519SecretKey {
+    FGInt *secretKeyFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: 252];
+    [secretKeyFGInt shiftRightBy: 3];
+    return secretKeyFGInt;
+}
+
+
 -(FGInt *) initWithNZeroes: (FGIntOverflow) n {
     if (self = [super init]) {
         number = [[NSMutableData alloc] initWithLength: n * 4];
@@ -4236,195 +4243,82 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 
-// /* add fGInt1 with fGInt2 and return a FGInt modulo (2^256 - 38) */
+// /* add fGInt1 with fGInt2, they're both expected to be 256 bit or less */
 
 
 +(FGInt *) addModulo25638: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntOverflow length1 = [[fGInt1 number] length] / 4, length2 = [[fGInt2 number] length] / 4, sumLength;
+    FGIntOverflow length1 = MIN(9 ,[[fGInt1 number] length] / 4), length2 = MIN(9, [[fGInt2 number] length] / 4), sumLength;
     FGIntIndex i;
 
-    if (length1 < length2) {
-        return [FGInt addModulo25638: fGInt2 and: fGInt1];
-    }
-
-    FGInt *sum = [[FGInt alloc] initWithNZeroes: 8], *tmpFGInt = [fGInt1 mutableCopy];
+    FGInt *sum = [[FGInt alloc] initWithNZeroes: 9];
     FGIntBase* sumNumber = [[sum number] mutableBytes];
-    FGIntBase* tmpNumber = [[tmpFGInt number] mutableBytes];
+    FGIntBase* fGInt1Number = [[fGInt1 number] mutableBytes];
     FGIntBase* fGInt2Number = [[fGInt2 number] mutableBytes];
     FGIntOverflow tmpMod, mod = 0;
 
-    for ( i = 0; i < length2; i++ ) {
-        tmpMod = (FGIntOverflow) tmpNumber[i] + fGInt2Number[i] + mod;
-        tmpNumber[i] = tmpMod;
+    for ( i = 0; i < MIN(length1, length2); i++ ) {
+        tmpMod = (FGIntOverflow) fGInt1Number[i] + fGInt2Number[i] + mod;
+        sumNumber[i] = tmpMod;
         mod = tmpMod >> 32;
     }
     for ( i = length2; i < length1; ++i ) {
-        if (mod == 0) {
-            break;
-        }
-        tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
-        tmpNumber[i] = tmpMod;
+        tmpMod = (FGIntOverflow) fGInt1Number[i] + mod;
+        sumNumber[i] = tmpMod;
         mod = tmpMod >> 32;
     }
-    if (mod != 0) {
-        [[tmpFGInt number] setLength: 4*(length1 + 1)];
-        tmpNumber = [[tmpFGInt number] mutableBytes];
-        tmpNumber[length1] = mod;
+    for ( i = length1; i < length2; ++i ) {
+        tmpMod = (FGIntOverflow) fGInt2Number[i] + mod;
+        sumNumber[i] = tmpMod;
+        mod = tmpMod >> 32;
     }
+    sumNumber[MAX(length1, length2)] = mod;
 
-    FGIntOverflow tmpLength = ([[tmpFGInt number] length] / 4), maxLen;
-    while (![tmpFGInt isZero]) {
-        if (tmpLength < 8) {
-            maxLen = tmpLength;
-        } else {
-            maxLen = 8;
-        }
-        mod = 0;
-        for ( i = 0; i < maxLen; i++ ) {
-            tmpMod = (FGIntOverflow) sumNumber[i] + tmpNumber[i] + mod;
-            sumNumber[i] = tmpMod;
-            mod = tmpMod >> 32;
-        }
-        i = maxLen & 7;
-        while (mod != 0) {
-            if ((i & 7) == 0) {
-                i = 0;
-                mod *= 38;
-            }
-            tmpMod = (FGIntOverflow) sumNumber[i] + mod;
-            sumNumber[i] = tmpMod;
-            mod = tmpMod >> 32;
-            ++i;
-        }
-        [tmpFGInt shiftRightBy: 256];
-        [tmpFGInt multiplyByInt: 38];
-        tmpLength = ([[tmpFGInt number] length] >> 2);
-        tmpNumber = [[tmpFGInt number] mutableBytes];
-    }
-
-    [tmpFGInt release];
-
-    sumLength = 8;
+    sumLength = 9;
     while ((sumLength > 1) && (sumNumber[sumLength - 1] == 0)) {
         sumLength -= 1;
     }
-    if (sumLength < 8) {
+    if (sumLength < 9) {
         [[sum number] setLength: sumLength*4];
     }
 
     return sum;
 }
-
-
 
 +(FGInt *) subtractModulo25638: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntOverflow length1, length2, sumLength;
+    FGIntOverflow length1 = MIN(8 ,[[fGInt1 number] length] / 4), length2 = MIN(8, [[fGInt2 number] length] / 4), sumLength;
     FGIntIndex tmpMod, mod = 0, i = 0;
-    BOOL swapped = NO;
 
-    FGInt *sum = [[FGInt alloc] initWithNZeroes: 8];
-    FGInt *tmpFGInt;
+    FGInt *sum = [[FGInt alloc] initWithNZeroes: 9];
     FGIntBase* sumNumber = [[sum number] mutableBytes];
-    FGIntBase* fGInt2Number;
+    FGIntBase* fGInt1Number = [[fGInt1 number] mutableBytes];
+    FGIntBase* fGInt2Number = [[fGInt2 number] mutableBytes];
 
-    if ([FGInt compareAbsoluteValueOf: fGInt2 with: fGInt1] == larger) {
-        length2 = [[fGInt1 number] length] / 4;
-        length1 = [[fGInt2 number] length] / 4;
-        tmpFGInt = [fGInt2 mutableCopy];
-        fGInt2Number = [[fGInt1 number] mutableBytes];
-        swapped = YES;
-    } else {
-        length1 = [[fGInt1 number] length] / 4;
-        length2 = [[fGInt2 number] length] / 4;
-        tmpFGInt = [fGInt1 mutableCopy];
-        fGInt2Number = [[fGInt2 number] mutableBytes];
-    }
-    FGIntBase* tmpNumber = [[tmpFGInt number] mutableBytes];
-
-    for ( i = 0; i < length2; i++ ) {
-        tmpMod = (FGIntIndex) tmpNumber[i] - fGInt2Number[i] + mod;
-        tmpNumber[i] = tmpMod;
+    tmpMod = (FGIntIndex) fGInt1Number[0] - fGInt2Number[0] + (4294967295u - 37);
+    sumNumber[0] = tmpMod;
+    mod = tmpMod >> 32;
+    for ( i = 1; i < MIN(length1, length2); i++ ) {
+        tmpMod = (FGIntIndex) fGInt1Number[i] - fGInt2Number[i] + 4294967295u + mod;
+        sumNumber[i] = tmpMod;
         mod = tmpMod >> 32;
     }
     for ( i = length2; i < length1; ++i ) {
-        if (mod == 0) {
-            break;
-        }
-        tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
-        tmpNumber[i] = tmpMod;
+        tmpMod = (FGIntIndex) 4294967295u + fGInt1Number[i] + mod;
+        sumNumber[i] = tmpMod;
         mod = tmpMod >> 32;
     }
-
-    sumLength = length1;
-    while ((sumLength > 1) && (tmpNumber[sumLength - 1] == 0)) {
-        sumLength -= 1;
+    for ( i = length1; i < length2; ++i ) {
+        tmpMod = (FGIntIndex) 4294967295u - fGInt2Number[i] + mod;
+        sumNumber[i] = tmpMod;
+        mod = tmpMod >> 32;
     }
-    if (sumLength < length1) {
-        [[tmpFGInt number] setLength: sumLength*4];
+    for ( i = MAX(length1, length2); i < 8; ++i ) {
+        tmpMod = (FGIntIndex) 4294967295u + mod;
+        sumNumber[i] = tmpMod;
+        mod = tmpMod >> 32;
     }
+    sumNumber[8] = mod;
 
-    FGIntOverflow tmpLength = ([[tmpFGInt number] length] >> 2), maxLen;
-    while ((tmpNumber[0] != 0) || (tmpLength > 1)) {
-        if (tmpLength < 8) {
-            maxLen = tmpLength;
-        } else {
-            maxLen = 8;
-        }
-        mod = 0;
-        for ( i = 0; i < maxLen; i++ ) {
-            tmpMod = (FGIntOverflow) sumNumber[i] + tmpNumber[i] + mod;
-            sumNumber[i] = tmpMod;
-            mod = tmpMod >> 32;
-        }
-        i = maxLen & 7;
-        while (mod != 0) {
-            if ((i & 7) == 0) {
-                i = 0;
-                mod *= 38;
-            }
-            tmpMod = (FGIntOverflow) sumNumber[i] + mod;
-            sumNumber[i] = tmpMod;
-            mod = tmpMod >> 32;
-            ++i;
-        }
-        [tmpFGInt shiftRightBy: 256];
-        [tmpFGInt multiplyByInt: 38];
-        tmpLength = ([[tmpFGInt number] length] >> 2);
-        tmpNumber = [[tmpFGInt number] mutableBytes];
-    }
-
-    [tmpFGInt release];
-
-    if (swapped) {
-        BOOL lessThan25638 = NO;
-        for ( i = 7; i > 0; i-- ) {
-            lessThan25638 = sumNumber[i] < 4294967295u;
-            if (lessThan25638) {
-                break;
-            }
-        }
-        if (!lessThan25638) {
-            lessThan25638 = sumNumber[0] < (4294967295u - 37);
-        }
-
-        if (lessThan25638) {
-            tmpMod = (FGIntIndex) (4294967295u - 37) - sumNumber[0];
-            sumNumber[0] = tmpMod;
-            mod = tmpMod >> 32;
-            for ( i = 1; i < 8; i++ ) {
-                tmpMod = (FGIntIndex) 4294967295u - sumNumber[i] + mod;
-                sumNumber[i] = tmpMod;
-                mod = tmpMod >> 32;
-            }
-        } else {
-            for ( i = 1; i < 8; i++ ) {
-                sumNumber[i] = 4294967295u;
-            }
-            sumNumber[0] = (4294967295u - 37) - (sumNumber[0] - (4294967295u - 37));
-        }
-    }
-
-    sumLength = 8;
+    sumLength = 9;
     while ((sumLength > 1) && (sumNumber[sumLength - 1] == 0)) {
         sumLength -= 1;
     }
@@ -4434,6 +4328,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     return sum;
 }
+
 
 
 
@@ -4494,6 +4389,23 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         tmpLength = ([[tmpFGInt number] length] >> 2);
         tmpNumber = [[tmpFGInt number] mutableBytes];
     }
+
+    // BOOL lessThan25519;
+    // for ( i = 7; i > 0; i-- ) {
+    //     lessThan25519 = productNumber[i] < 4294967295u;
+    //     if (lessThan25519) {
+    //         break;
+    //     }
+    // }
+    // if (!lessThan25519) {
+    //     lessThan25519 = productNumber[0] < (4294967295u - 37);
+    // }
+    // if (!lessThan25519) {
+    //     productNumber[0] = (productNumber[0] - (4294967295u - 37));
+    //     for ( i = 1; i < 8; i++ ) {
+    //         productNumber[i] = 0;
+    //     }
+    // }
 
     [tmpFGInt release];
 
@@ -4573,6 +4485,23 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         tmpLength = ([[tmpFGInt number] length] >> 2);
         tmpNumber = [[tmpFGInt number] mutableBytes];
     }
+
+    // BOOL lessThan25519;
+    // for ( i = 7; i > 0; i-- ) {
+    //     lessThan25519 = squareNumber[i] < 4294967295u;
+    //     if (lessThan25519) {
+    //         break;
+    //     }
+    // }
+    // if (!lessThan25519) {
+    //     lessThan25519 = squareNumber[0] < (4294967295u - 37);
+    // }
+    // if (!lessThan25519) {
+    //     squareNumber[0] = (squareNumber[0] - (4294967295u - 37));
+    //     for ( i = 1; i < 8; i++ ) {
+    //         squareNumber[i] = 0;
+    //     }
+    // }
 
     [tmpFGInt release];
 
@@ -4851,11 +4780,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 
-+(FGInt *) generateCurve25519SecretKey {
-    FGInt *secretKeyFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: 252];
-    [secretKeyFGInt shiftRightBy: 3];
-    return secretKeyFGInt;
-}
 
 
 

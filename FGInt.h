@@ -79,6 +79,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(FGInt *) initWithMPINSData: (NSData *) mpiNSData;
 -(FGInt *) initWithBigEndianNSData: (NSData *) bigEndianNSData;
 -(id) initWithRandomNumberOfBitSize: (FGIntOverflow) bitSize;
+-(FGInt *) initWithCurve25519SecretKey;
 -(NSData *) toNSData;
 -(NSData *) toMPINSData;
 -(NSData *) toBigEndianNSData;
@@ -180,7 +181,6 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(void) mod25519;
 
 +(FGInt *) addBasePointOnCurve25519: (FGInt *) x0 kTimes: (FGInt *) kTimes;
-+(FGInt *) generateCurve25519SecretKey;
 
 
 @end
