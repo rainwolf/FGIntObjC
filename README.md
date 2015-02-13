@@ -12,11 +12,15 @@ that made it a bunch slower. It's always a good idea to compile them separately,
 
 - I have implemented RSA, ElGamal, DSA, GOSTDSA, ECDSA and ECElGamal. Encryption for the 1st two and 
 digital signatures for the 1st four, mind you that these are the raw algorithms, no hashing, checksums, 
-... are included.
+... are included. 
 
+- I've added support for the NIST curves and twisted Edwards curves. Ed25519-SHA-512 is fully implemented, there is no need to hash what you want to sign before signing.
+
+- There is some support for Curve25519 computations, but no pretty framework yet, I have to think that over.
+- 
 - Feedback is always welcome.
 
-- I have included an example for all 6 algorithms, the documentation consists of comments in the FGInt.m
+- I have included an example for all algorithms, the documentation consists of comments in the FGInt.m
 and ECGFp.m files and the method names are fairly straightforward. I haven't added comments to the 
 FGIntCryptography.m file, but that will change soon, again, the method names pretty much explain what they do.
 
@@ -24,8 +28,6 @@ Enjoy.
 
 ToDo
 ====
-* add support for the NIST primes and curves
-* add support for Edwards curves
 * add support for the OpenPGP standard. Soon.
 * protection against side channel attacks.
 * a cryptographically secure PRNG
