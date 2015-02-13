@@ -17,7 +17,7 @@ digital signatures for the 1st four, mind you that these are the raw algorithms,
 - I've added support for the NIST curves and twisted Edwards curves. Ed25519-SHA-512 is fully implemented, there is no need to hash what you want to sign before signing.
 
 - There is some support for Curve25519 computations, but no pretty framework yet, I have to think that over.
-- 
+
 - Feedback is always welcome.
 
 - I have included an example for all algorithms, the documentation consists of comments in the FGInt.m
