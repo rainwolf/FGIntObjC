@@ -1,6 +1,4 @@
 #import <Foundation/Foundation.h>
-#import "FGInt.h"
-#import "ECGFp.h"
 #import "FGIntCryptography.h"
 
 int main (int argc, const char * argv[]) {
@@ -339,6 +337,38 @@ int main (int argc, const char * argv[]) {
         [signedData release];
         [pkey release];
         [skey release];
+
+
+
+
+        plaintextString = @"Religion is a culture of faith; science is a culture of doubt.";
+        NSLog(@" initializing bit Ed25519-SHA-512.");
+        date = [NSDate date];
+        Ed25519SHA512 *edKeys = [[Ed25519SHA512 alloc] init];
+        [edKeys generateNewSecretAndPublicKey];
+        timePassed_ms = [date timeIntervalSinceNow] * -1000.0;
+        NSLog(@"Generating Ed25519-SHA-512 keys took %fms", timePassed_ms);
+// The next 8 lines are an example of how to extract the keys and reuse them
+        pkey = [edKeys publicKeyToBase64NSString];
+        skey = [edKeys secretKeyToBase64NSString];
+        NSLog(@"The public key is: %@", pkey);
+        NSLog(@"The secret key is: %@", skey);
+        [edKeys release];
+        edKeys = [[Ed25519SHA512 alloc] init];
+        [edKeys setSecretKeyWithBase64NSString: skey];
+        [edKeys setPublicKeyWithBase64NSString: pkey];
+        NSLog(@"Signing: %@", plaintextString);
+        date = [NSDate date];
+        signedData = [edKeys signNSString: plaintextString];
+        NSLog(@"The signature is: %@", [FGInt convertNSDataToBase64: signedData] );
+        NSLog(@"Verifying the signature...   Is it valid? %@", [edKeys verifySignature: signedData ofPlainTextNSString: plaintextString] ? @"YES" : @"NO");
+        timePassed_ms = [date timeIntervalSinceNow] * -1000.0;
+        NSLog(@"Signature Generation/Verification with Ed25519-SHA-512 took %fms \n \n ", timePassed_ms);
+        [edKeys release];
+        [signedData release];
+        [pkey release];
+        [skey release];
+
 
     }
     return 0;

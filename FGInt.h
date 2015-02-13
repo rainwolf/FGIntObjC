@@ -64,6 +64,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(id) initWithNumber: (NSMutableData *) initNumber;
 -(id) initWithoutNumber;
 -(void) dealloc;
+-(void) eraseAndRelease;
 // -(id) shallowCopy;
 -(void) verifyAdjust;
 +(void) verifyAdjustNumber: (NSMutableData *) numberData;
@@ -80,6 +81,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(FGInt *) initWithBigEndianNSData: (NSData *) bigEndianNSData;
 -(id) initWithRandomNumberOfBitSize: (FGIntOverflow) bitSize;
 -(FGInt *) initWithCurve25519SecretKey;
+-(FGInt *) initWithNSDataToEd25519FGInt: (NSData *) nsData;
 -(NSData *) toNSData;
 -(NSData *) toMPINSData;
 -(NSData *) toBigEndianNSData;
@@ -181,6 +183,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(void) mod25519;
 
 +(FGInt *) addBasePointOnCurve25519: (FGInt *) x0 kTimes: (FGInt *) kTimes;
++(FGInt *) raise: (FGInt *) fGInt  toThePowerMod25519: (FGInt *) fGIntN;
 
 
 @end

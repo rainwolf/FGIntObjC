@@ -25,7 +25,11 @@ This header may not be removed.
 #define gostdsaKey @"GOSTDSA"
 */
 
-#define FGIntCryptography_version 20141115
+#import "FGInt.h"
+#import "ECGFp.h"
+#import "TwistedEdwardsCurve.h"
+
+#define FGIntCryptography_version 20150209
 
 
 
@@ -248,6 +252,29 @@ This header may not be removed.
 @end
 
 
+
+@interface Ed25519SHA512 : NSObject <NSCopying> {
+    NSData *secretKey;
+    TECPoint *publicKey;
+}
+@property (assign, readwrite) NSData *secretKey;
+@property (assign, readwrite) TECPoint *publicKey;
+
+-(void) generateNewSecretAndPublicKey;
+-(NSData *) secretKeyToNSData;
+-(NSString *) secretKeyToBase64NSString;
+-(NSData *) publicKeyToNSData;
+-(NSString *) publicKeyToBase64NSString;
+-(void) setSecretKeyWithNSData: (NSData *) secretKeyNSData;
+-(void) setSecretKeyWithBase64NSString: (NSString *) secretKeyBase64NSString;
+-(void) setPublicKeyWithNSData: (NSData *) publicKeyNSData;
+-(void) setPublicKeyWithBase64NSString: (NSString *) publicKeyBase64NSString;
+-(NSData *) signNSData: (NSData *) plainText;
+-(BOOL) verifySignature: (NSData *) signatureData ofPlainTextNSData: (NSData *) plainText;
+-(NSData *) signNSString: (NSString *) plainText;
+-(BOOL) verifySignature: (NSData *) signature ofPlainTextNSString: (NSString *) plainText;
+
+@end
 
 
 

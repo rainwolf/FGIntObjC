@@ -1,4 +1,3 @@
-#import "FGInt.h"
 #import "ECGFp.h"
 #import <Security/SecRandom.h>
 
@@ -274,30 +273,6 @@
     [tmpFGInt1 release];
     [x release];
     x = [FGInt mod: tmpFGInt by: [ellipticCurve p]];
-    [projectiveZ release];
-    projectiveZ = nil;
-}
--(void) makeAffineFromCurve25519 {
-    FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0];
-    if (infinity) {
-        [x release];
-        x = [zero mutableCopy];
-        [y release];
-        y = zero;
-        return;
-    }
-    [zero release];
-    FGInt *p25519 = [[FGInt alloc] initAsP25519];
-    FGInt *zInv = [FGInt invert: projectiveZ moduloPrime: p25519];
-    [p25519 release];
-    FGInt  *tmpFGInt = [FGInt multiply: x and: zInv];
-    [x release];
-    [tmpFGInt mod25519];
-    x = tmpFGInt;
-    tmpFGInt = [FGInt multiply: y and: zInv];
-    [y release];
-    [tmpFGInt mod25519];
-    y = tmpFGInt;
     [projectiveZ release];
     projectiveZ = nil;
 }
@@ -1080,8 +1055,9 @@
 
 
 +(ECPoint *) add: (ECPoint *) ecPoint1 k1Times: (FGInt *) k1FGInt and: (ECPoint *) ecPoint2 k2Times: (FGInt *) k2FGInt {
-    if ([[k2FGInt number] length] > [[k1FGInt number] length])
+    if ([[k2FGInt number] length] > [[k1FGInt number] length]) {
         return [ECPoint add: ecPoint2 k1Times: k2FGInt and: ecPoint1 k2Times: k1FGInt];
+    }
         
     FGInt *pFGInt = [[[ecPoint1 ellipticCurve] p] mutableCopy];
     [pFGInt decrement];

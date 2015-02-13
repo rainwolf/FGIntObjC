@@ -1,6 +1,8 @@
 //#import <Foundation/Foundation.h>
 //#import "FGInt.h"
 
+#import "FGInt.h"
+
 #define ECGFp_version 20141216
 
 
@@ -32,7 +34,6 @@
 -(NSData *) toCompressedNSData;
 -(void) makeProjective;
 -(void) makeAffine;
--(void) makeAffineFromCurve25519;
 +(ECPoint *) double: (ECPoint *) ecPoint;
 +(ECPoint *) add: (ECPoint *) ecPoint1 and: (ECPoint *) ecPoint2;
 +(ECPoint *) projectiveDouble: (ECPoint *) ecPoint aEqualsMinus3: (BOOL) is3;
