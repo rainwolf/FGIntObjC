@@ -19,6 +19,7 @@ This header may not be removed.
 */
 
 #import <Foundation/Foundation.h>
+#import <Security/SecRandom.h>
 
 typedef unsigned int FGIntBase;
 typedef unsigned long long FGIntOverflow;
@@ -158,7 +159,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 
 +(NSString *) convertNSDataToBase64: (NSData *) nsData;
 +(NSString *) convertNSStringToBase64: (NSString *) nsString;
-+(int) getBase64Index: (char) base64Char;
+// +(int) getBase64Index: (char) base64Char;
 +(NSData *) convertBase64ToNSData: (NSString *) base64String;
 +(NSString *) convertBase64ToNSString: (NSString *) base64String;
 -(FGIntOverflow) bitSize;
@@ -185,5 +186,8 @@ typedef enum {error, equal, smaller, larger} tCompare;
 +(FGInt *) addBasePointOnCurve25519: (FGInt *) x0 kTimes: (FGInt *) kTimes;
 +(FGInt *) raise: (FGInt *) fGInt  toThePowerMod25519: (FGInt *) fGIntN;
 
+// -(void) shiftRightBy136;
+-(void) mod1305;
++(FGInt *) multiplyModulo1305ish: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
 
 @end

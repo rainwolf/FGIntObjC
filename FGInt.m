@@ -19,7 +19,6 @@ This header may not be removed.
 */
 
 #import "FGInt.h"
-#import <Security/SecRandom.h>
 /* ToDo
    - divide and conquer division too?
 */
@@ -4237,7 +4236,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 -(FGInt *) modNISTprime: (FGInt *) nistFGInt andTag: (tag) nistTag {
-    NSAssert(nistTag <= p521, @"Tag for NIST prime not recognized, received tag %i", nistTag);
+    NSAssert((nistTag == p192) || ( nistTag == p224) || ( nistTag == p256) || ( nistTag == p384) || ( nistTag == p521), @"Tag for NIST prime not recognized, received tag %i", nistTag);
     switch (nistTag) {
         case p192: 
             return [self modNISTP192: nistFGInt];
@@ -4881,6 +4880,212 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 
+
+-(void) shiftRightBy136 {
+    FGIntBase length = [number length];
+    if (length > 17) {
+        NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: (length - 17) + 1];
+         memcpy([tmpNumber mutableBytes], &[number mutableBytes][17], length - 17);
+         [number release];
+         number = tmpNumber;
+    } else {
+        [number release];
+        number = [[NSMutableData alloc] initWithLength: 4];
+    }
+}
+
+-(void) mod1305 {
+    FGIntBase* numberArray = [number mutableBytes];
+    FGIntOverflow length = [number length]/4, maxLen, tmpMod, mod;
+    FGInt *tmpFGInt = [[FGInt alloc] initWithNZeroes: 5];
+    FGIntBase* tmpNumber = [[tmpFGInt number] mutableBytes];
+    FGIntIndex i;
+    FGIntBase head;
+
+    while ((numberArray[0] != 0) || (length > 1)) {
+        if (length < 5) {
+            maxLen = length;
+            head = 0;
+        } else {
+            maxLen = 5;
+            head = numberArray[4];
+            numberArray[4] = head & 255;
+        }
+        mod = 0;
+        for ( i = 0; i < maxLen; i++ ) {
+            tmpMod = (FGIntOverflow) numberArray[i] + tmpNumber[i] + mod;
+            tmpNumber[i] = tmpMod;
+            mod = tmpMod >> 32;
+        }
+        i = maxLen % 5;
+        while (mod != 0) {
+            tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
+            tmpNumber[i] = tmpMod;
+            mod = tmpMod >> 32;
+            ++i;
+        }
+        if (maxLen == 5) {
+            mod = (tmpNumber[4] >> 8) * 320;
+            tmpNumber[4] = tmpNumber[4] & 255;
+            i = 0;
+            while (mod != 0) {
+                tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
+                tmpNumber[i] = tmpMod;
+                mod = tmpMod >> 32;
+                ++i;
+            }
+        }
+
+        if (head > 0) {
+            numberArray[4] = head;
+        }        
+        [self shiftRightBy136];
+        [self multiplyByInt: 320];
+        length = ([number length] >> 2);
+        numberArray = [number mutableBytes];
+    }
+
+    while ((tmpNumber[4] >> 2) > 0) {
+        mod = (tmpNumber[4] >> 2) * 5;
+        tmpNumber[4] = tmpNumber[4] & 3;
+        i = 0;
+        while (mod != 0) {
+            tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
+            tmpNumber[i] = tmpMod;
+            mod = tmpMod >> 32;
+            ++i;
+        }
+    }
+
+    BOOL lessThan1305 = (tmpNumber[4] < 3u);
+    if (!lessThan1305) {
+        for ( i = 3; i > 0; i-- ) {
+            lessThan1305 = tmpNumber[i] < 4294967295u;
+            if (lessThan1305) {
+                break;
+            }
+        }
+    }
+    if (!lessThan1305) {
+        lessThan1305 = tmpNumber[0] < (4294967295u - 4);
+    }
+
+    if (!lessThan1305) {
+        tmpNumber[0] = (tmpNumber[0] - (4294967295u - 4));
+        for ( i = 1; i < 5; i++ ) {
+            tmpNumber[i] = 0;
+        }
+    }
+
+    FGIntIndex tmp, rem;
+    if (!sign) {
+        tmp = (FGIntIndex) (4294967295u - 4) - tmpNumber[0];
+        tmpNumber[0] = tmp;
+        rem = tmp >> 32;
+        for ( i = 1; i < 4; i++ ) {
+            tmp = (FGIntIndex) 4294967295u - tmpNumber[i] + rem;
+            tmpNumber[i] = tmp;
+            rem = tmp >> 32;
+        }
+        tmp = (FGIntIndex) 3u - tmpNumber[4] + rem;
+        tmpNumber[4] = tmp;
+        sign = YES;
+    }
+
+    [number release];
+    length = 5;
+    while ((tmpNumber[length - 1] == 0) && (length > 1)) {
+        length--;
+    }
+    if (length < 5) {
+        [[tmpFGInt number] setLength: length*4];
+    }
+
+    number = [[tmpFGInt number] retain];
+    [tmpFGInt release];
+}
+
+
+
+/* Multiply 2 FGInts, and return fGInt1 * fGInt2 modulo (2^256 - 38) */
+
++(FGInt *) multiplyModulo1305ish: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
+    FGIntBase length1 = [[fGInt1 number] length] / 4,
+              length2 = [[fGInt2 number] length] / 4,
+              productLength = length1 + length2, length, head;
+    FGIntOverflow tmpMod, mod;
+    FGIntBase* fGInt1Number = [[fGInt1 number] mutableBytes];
+    FGIntBase* fGInt2Number = [[fGInt2 number] mutableBytes];
+
+    FGInt *product = [[FGInt alloc] initWithNZeroes: 5];
+    FGIntBase* productNumber = [[product number] mutableBytes];
+    FGInt *tmpFGInt = [[FGInt alloc] initWithNZeroes: productLength];
+    FGIntBase* tmpNumber = [[tmpFGInt number] mutableBytes];
+
+
+    FGIntIndex i, j;
+    for( j = 0; j < length2; j++ ) {
+        mod = 0;
+        for( i = 0; i < length1; i++ ) {
+            tmpMod = (FGIntOverflow) fGInt1Number[i] * fGInt2Number[j] + tmpNumber[j + i] + mod;
+            tmpNumber[j + i] = tmpMod;
+            mod = tmpMod >> 32;
+        }
+        tmpNumber[j + length1] = mod;
+    }
+
+    FGIntOverflow tmpLength = ([[tmpFGInt number] length] >> 2), maxLen;
+    length = 5;
+    while ((tmpNumber[0] != 0) || (tmpLength > 1)) {
+        if (tmpLength < 5) {
+            maxLen = tmpLength;
+            head = 0;
+        } else {
+            maxLen = 5;
+            head = tmpNumber[4];
+            tmpNumber[4] = head & 255;
+        }
+        mod = 0;
+        for ( i = 0; i < maxLen; i++ ) {
+            tmpMod = (FGIntOverflow) productNumber[i] + tmpNumber[i] + mod;
+            productNumber[i] = tmpMod;
+            mod = tmpMod >> 32;
+        }
+        i = maxLen;
+        while (mod != 0) {
+            if (i > length - 1) {
+                ++length;
+                [[product number] setLength: 4*length];
+                productNumber = [[product number] mutableBytes];
+            }
+            tmpMod = (FGIntOverflow) productNumber[i] + mod;
+            productNumber[i] = tmpMod;
+            mod = tmpMod >> 32;
+            ++i;
+        }
+
+        if (head > 0) {
+            tmpNumber[4] = head;
+        }        
+        [tmpFGInt shiftRightBy136];
+        [tmpFGInt multiplyByInt: 320];
+        tmpLength = ([[tmpFGInt number] length] >> 2);
+        tmpNumber = [[tmpFGInt number] mutableBytes];
+    }
+
+    [tmpFGInt release];
+
+    while ((length > 1) && (productNumber[length - 1] == 0)) {
+        --length;
+    }
+    if (length < 8) {
+        [[product number] setLength: length * 4];
+    }
+
+    // [product setSign: [fGInt1 sign] == [fGInt2 sign]];
+    
+    return product;
+}
 
 
 
