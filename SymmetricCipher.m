@@ -1,6 +1,7 @@
 #import "SymmetricCipher.h"
 #import <CommonCrypto/CommonCryptor.h>
 #import "FGInt.h"
+#import "NSMutableData+FGInt.h"
 
 
 
@@ -8,6 +9,20 @@
 @synthesize inputData;
 @synthesize nonce;
 @synthesize key;
+
+
+-(void) dealloc {
+    if (inputData != nil) {
+        [inputData release];
+    }
+    if (nonce != nil) {
+        [nonce release];
+    }
+    if (key != nil) {
+        [key release];
+    }
+    [super dealloc];
+}   
 
 /* some test vectors here https://github.com/alexwebr/salsa20/blob/master/test_vectors.128 */
 
@@ -105,6 +120,30 @@ static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, un
 }
 
 
+static void hsalsa20(unsigned char* const outputBytes, unsigned char* const keyBytes, unsigned char* const nonceBytes) {
+	unsigned char tmpBytes[64] = {101,120,112,97, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 110,100,32,51, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 50,45,98,121, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 116,101,32,107};
+	memcpy(&tmpBytes[4], keyBytes, 16);
+	memcpy(&tmpBytes[24], nonceBytes, 16);
+	memcpy(&tmpBytes[44], &keyBytes[16], 16);
+
+	word outputWords[16];
+	word* const inputWords = (word*) tmpBytes;
+
+	for ( int i = 0; i < 5; i++ ) {
+		doubleRound(outputWords, inputWords);
+		doubleRound(inputWords, outputWords);
+	}
+	memcpy(outputBytes, inputWords, 4);
+	memcpy(&outputBytes[4], &inputWords[5], 4);
+	memcpy(&outputBytes[8], &inputWords[10], 4);
+	memcpy(&outputBytes[12], &inputWords[15], 4);
+	memcpy(&outputBytes[16], &inputWords[6], 16);
+}
+
+
+
+
+
 
 -(id) init {
     if (self = [super init]) {
@@ -163,10 +202,18 @@ static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, un
 
 
 
+
+
+
+
+
+
+
+
 @implementation Poly1305
-@synthesize inputData;
-@synthesize nonce;
-@synthesize key;
+@synthesize message;
+@synthesize r;
+@synthesize s;
 @synthesize hmac;
 
 
@@ -174,19 +221,35 @@ static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, un
 
 -(id) init {
     if (self = [super init]) {
-    	inputData = nil;
-    	nonce = nil;
-    	key = nil;
+    	message = nil;
+    	r = nil;
+    	s = nil;
     	hmac = nil;
     }
     return self;
 }
 
+
+-(void) dealloc {
+    if (message != nil) {
+        [message release];
+    }
+    if (r != nil) {
+        [r release];
+    }
+    if (s != nil) {
+        [s release];
+    }
+    [super dealloc];
+}   
+
+
+
 -(id) copyWithZone: (NSZone *) zone {
 	Poly1305 *new = [[Poly1305 alloc] init];
-	[new setInputData: [inputData copy]];
-	[new setNonce: [nonce copy]];
-	[new setKey: [key copy]];
+	[new setMessage: [message copy]];
+	[new setR: [r copy]];
+	[new setS: [s copy]];
 	[new setHmac: [hmac copy]];
 	return new;
 }
@@ -202,12 +265,11 @@ static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, un
 
 
 -(NSData *) clamp {
-	if (!key || ([key length] != 32)) {
+	if (!r || ([r length] != 16)) {
 		return nil;
 	}
-	NSMutableData *result = [[NSMutableData alloc] initWithLength: 16];
+	NSMutableData *result = [r mutableCopy];
 	unsigned char* resultBytes = [result mutableBytes];
-	[[self key] getBytes: resultBytes range: NSMakeRange(16, 16)];
 	resultBytes[3] = resultBytes[3] & 15;
 	resultBytes[7] = resultBytes[7] & 15;
 	resultBytes[11] = resultBytes[11] & 15;
@@ -219,20 +281,20 @@ static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, un
 	return result;
 }
 
--(NSData *) encrypt {
-	NSLog(@" Poly1305 was not overrided with the proper encryption function!");
-	NSAssert(NO, @" Poly1305 was not overrided with the proper encryption function!");
-	return nil;	
+-(void) setRandS {
+	NSLog(@" setRandS method of Poly1305 was not overridden!");
+	NSAssert(NO, @" setRandS method of Poly1305 was not overridden!");
 }
 
 
 -(NSData *) computeHMAC {
+	[self setRandS];
 	FGInt *messageBlockFGInt = [[FGInt alloc] initWithNZeroes: 5];
 	FGInt *rFGInt = [[FGInt alloc] initWithNSData: [self clamp]];
 	unsigned char* messageBlockArray = [[messageBlockFGInt number] mutableBytes];
-	const unsigned char* inputDataArray = [inputData bytes];
+	const unsigned char* inputDataArray = [message bytes];
 	messageBlockArray[16] = 1;
-	FGIntBase length = [inputData length];
+	FGIntBase length = [message length];
 
 	FGInt *hmacFGInt = [[FGInt alloc] initAsZero], *tmpFGInt;
 	for ( FGIntIndex i = 0; i < (length >> 4); i++ ) {
@@ -256,11 +318,9 @@ static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, un
 	[rFGInt release];
 	[messageBlockFGInt release];
 
-	NSData *encryptedNonce = [self encrypt];
-	FGInt *encryptedNonceFGInt = [[FGInt alloc] initWithNSData: encryptedNonce];
-	[encryptedNonce release];
-	[hmacFGInt addWith: encryptedNonceFGInt];
-	[encryptedNonceFGInt release];
+	FGInt *xorPadFGInt = [[FGInt alloc] initWithNSData: s];
+	[hmacFGInt addWith: xorPadFGInt];
+	[xorPadFGInt release];
 
 	NSMutableData *result = [[hmacFGInt number] retain];
 	[result setLength: 16];
@@ -294,13 +354,28 @@ static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, un
 
 
 @implementation Poly1305AES
+@synthesize key;
+@synthesize nonce;
 
 /* some test vectors that passed
 http://www.inconteam.com/software-development/41-encryption/55-aes-test-vectors#aes-ecb-128
 http://cr.yp.to/mac/poly1305aes.py
 */
 
--(NSData *) encrypt {
+
+-(void) dealloc {
+    if (key != nil) {
+        [key release];
+    }
+    if (nonce != nil) {
+        [nonce release];
+    }
+    [super dealloc];
+}   
+
+
+
+-(void) setRandS {
     NSAssert([self key], @"No key available for Poly1305AES");
     NSAssert([self nonce], @"No nonce available for Poly1305AES");
     NSAssert([[self nonce] length] == 16, @"The nonce needs to be 8 bytes long, Poly1305AES received %lu bytes", [[self nonce] length]);
@@ -308,21 +383,25 @@ http://cr.yp.to/mac/poly1305aes.py
 
     NSMutableData *cipherData = [[NSMutableData alloc] initWithLength: [nonce length]];
     size_t numBytesCrypted = 0;
-    CCCryptorStatus cryptStatus = CCCrypt(kCCEncrypt, kCCAlgorithmAES128,
-    0x00, //No padding
-    [key bytes], kCCKeySizeAES128,
-    nil,
-    [nonce bytes], [nonce length], [cipherData mutableBytes], [nonce length],
-    &numBytesCrypted);
+    CCCryptorStatus cryptStatus = CCCrypt(kCCEncrypt, kCCAlgorithmAES128, 0x00, //No padding
+    [key bytes], kCCKeySizeAES128, nil, [nonce bytes], [nonce length], [cipherData mutableBytes], [nonce length], &numBytesCrypted);
 
     if(cryptStatus == kCCSuccess) {
-        return cipherData;
+    	NSMutableData *mutableR = [[NSMutableData alloc] initWithLength: 16];
+    	[key getBytes: [mutableR mutableBytes] range: NSMakeRange(16, 16)];
+    	r = mutableR;
+        [self setS: cipherData];
     }
-    return nil; 
 }
 
 
 @end
+
+
+
+
+
+
 
 
 
