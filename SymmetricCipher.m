@@ -163,7 +163,7 @@ static void hsalsa20(unsigned char* const outputBytes, unsigned char* const keyB
 }
 
 
--(NSData *) encrypt {
+-(NSData *) salsa20Encrypt {
 	NSAssert([self inputData], @"No input data available for Salsa20");
 	NSAssert([self key], @"No key available for Salsa20");
 	NSAssert([self nonce], @"No nonce available for Salsa20");
@@ -182,8 +182,37 @@ static void hsalsa20(unsigned char* const outputBytes, unsigned char* const keyB
 	return cipherText;
 }
 
--(NSData *) decrypt {
-	return [self encrypt];
+-(NSData *) salsa20Decrypt {
+	return [self salsa20Encrypt];
+}
+
+
+
+-(NSData *) xsalsa20Encrypt {
+	NSAssert([self inputData], @"No input data available for XSalsa20");
+	NSAssert([self key], @"No key available for XSalsa20");
+	NSAssert([self nonce], @"No nonce available for XSalsa20");
+    NSAssert([[self nonce] length] == 24, @"The nonce needs to be 8 bytes long, XSalsa20 received %lu bytes", [[self nonce] length]);
+    NSAssert([[self key] length] == 32, @"The key needs to be 32 bytes long, XSalsa20 received %lu bytes", [[self key] length]);
+
+	unsigned char* keyBytes = (unsigned char*) [[self key] bytes];
+	unsigned char* nonceBytes = (unsigned char*) [[self nonce] bytes];
+    NSMutableData *key1 = [[NSMutableData alloc] initWithLength: 32];
+    hsalsa20([key1 mutableBytes], keyBytes, nonceBytes);
+
+	NSMutableData *cipherText = [[NSMutableData alloc] initWithLength: [[self inputData] length]];
+	unsigned char* plainTextBytes = (unsigned char*) [[self inputData] bytes];
+	unsigned char* cipherTextBytes = [cipherText mutableBytes];
+	keyBytes = (unsigned char*) [key1 bytes];
+	nonceBytes = (unsigned char*) (&[[self nonce] bytes][16]);
+
+	salsa20EncryptDecryptOrWhatever(cipherTextBytes, plainTextBytes, [inputData length], keyBytes, [key1 length], nonceBytes);
+
+	return cipherText;
+}
+
+-(NSData *) xsalsa20Decrypt {
+	return [self xsalsa20Encrypt];
 }
 
 @end

@@ -11,8 +11,10 @@ typedef unsigned int word;
 @property (assign, readwrite) NSData *nonce;
 @property (assign, readwrite) NSData *key;
 
--(NSData *) encrypt;
--(NSData *) decrypt;
+-(NSData *) salsa20Encrypt;
+-(NSData *) salsa20Decrypt;
+-(NSData *) xsalsa20Encrypt;
+-(NSData *) xsalsa20Decrypt;
 
 @end
 
