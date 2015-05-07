@@ -16,7 +16,7 @@ digital signatures for the 1st four, mind you that these are the raw algorithms,
 
 - I've added support for the NIST curves and twisted Edwards curves. Ed25519-SHA-512 is fully implemented, there is no need to hash what you want to sign before signing.
 
-- There is some support for Curve25519 computations, but no pretty framework yet, I have to think that over.
+- ~~There is some support for Curve25519 computations, but no pretty framework yet, I have to think that over.~~ I have implemented Salsa20, XSalsa20, Poly1305, Poly1305-AES, XSalsa20Poly1305, and added support for NaCl-like boxed packets.
 
 - Feedback is always welcome.
 
@@ -32,11 +32,7 @@ ToDo
 * protection against side channel attacks.
 * a cryptographically secure PRNG
 
-Notes
-=====
-* the algorithms are raw, there is no blinding implemented, or use of hash algorithms. You can add those by preprocessing the data you wish to sign.
 
- 
 License
 =======
 I'm licensing it under the GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
