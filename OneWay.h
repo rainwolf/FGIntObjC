@@ -2,13 +2,13 @@
 
 
 
-@interface Poly1305 : NSObject <NSCopying> {
+@interface Poly1305 : NSObject {
 	NSData *message, *r, *s, *hmac;
 }
-@property (assign, readwrite) NSData *message;
-@property (assign, readwrite) NSData *r;
-@property (assign, readwrite) NSData *s;
-@property (nonatomic, assign, readwrite) NSData *hmac;
+@property (retain, readwrite) NSData *message;
+@property (retain, readwrite) NSData *r;
+@property (retain, readwrite) NSData *s;
+@property (nonatomic, retain, readwrite) NSData *hmac;
 -(NSData *) computeHMAC;
 -(BOOL) verifyHmac;
 
@@ -16,11 +16,23 @@
 @end
 
 
-@interface Poly1305AES : Poly1305 <NSCopying> {
+
+@interface Poly1305XSalsa20 : Poly1305 {
+	NSData *boxedMessage;
+}
+@property (retain, readwrite) NSData *boxedMessage;
+
+@end
+
+
+
+
+
+@interface Poly1305AES : Poly1305 {
 	NSData *key, *nonce;
 }
-@property (assign, readwrite) NSData *key;
-@property (assign, readwrite) NSData *nonce;
+@property (retain, readwrite) NSData *key;
+@property (retain, readwrite) NSData *nonce;
 
 @end
 

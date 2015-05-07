@@ -522,9 +522,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* returns NSData of self */
 
 -(NSData *) toNSData {
-    FGIntOverflow length = [self byteSize];
-    unsigned char* bytes = [number mutableBytes];
-    return [[NSData alloc] initWithBytes: bytes length: length];
+    return [number mutableCopy];
 }
 
 
@@ -4820,6 +4818,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     } else {
         zInv = [z1 mutableCopy];
     }
+
     // FGInt *zInv = [FGInt shiftEuclideanInvert: z1 mod: p25519];
     [p25519 release];
 

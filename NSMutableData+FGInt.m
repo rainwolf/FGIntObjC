@@ -5,7 +5,7 @@
 
 
 
--(NSData *) initWithHexString: (NSString *) hexString {
+-(NSMutableData *) initWithHexString: (NSString *) hexString {
     if (self = [super init]) {
 
 	    hexString = [hexString lowercaseString];

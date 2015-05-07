@@ -3,14 +3,14 @@
 
 
 @implementation Salsa20
-@synthesize inputData;
+@synthesize message;
 @synthesize nonce;
 @synthesize key;
 
 
 -(void) dealloc {
-    if (inputData != nil) {
-        [inputData release];
+    if (message != nil) {
+        [message release];
     }
     if (nonce != nil) {
         [nonce release];
@@ -144,37 +144,30 @@ static void hsalsa20(unsigned char* const outputBytes, unsigned char* const keyB
 
 -(id) init {
     if (self = [super init]) {
-    	inputData = nil;
+    	message = nil;
     	nonce = nil;
     	key = nil;
     }
     return self;
 }
 
--(id) copyWithZone: (NSZone *) zone {
-	Salsa20 *new = [[Salsa20 alloc] init];
-	[new setInputData: [inputData copy]];
-	[new setNonce: [nonce copy]];
-	[new setKey: [key copy]];
-	return new;
-}
 
 
 -(NSData *) salsa20Encrypt {
-	NSAssert([self inputData], @"No input data available for Salsa20");
+	NSAssert([self message], @"No input data available for Salsa20");
 	NSAssert([self key], @"No key available for Salsa20");
 	NSAssert([self nonce], @"No nonce available for Salsa20");
     NSAssert([[self nonce] length] == 8, @"The nonce needs to be 8 bytes long, Salsa20 received %lu bytes", [[self nonce] length]);
     NSAssert((([[self key] length] == 16) || ([[self key] length] == 32)), @"The key needs to be 16 or 32 bytes long, Salsa20 received %lu bytes", [[self key] length]);
 
 
-	NSMutableData *cipherText = [[NSMutableData alloc] initWithLength: [[self inputData] length]];
-	unsigned char* plainTextBytes = (unsigned char*) [[self inputData] bytes];
+	NSMutableData *cipherText = [[NSMutableData alloc] initWithLength: [[self message] length]];
+	unsigned char* plainTextBytes = (unsigned char*) [[self message] bytes];
 	unsigned char* cipherTextBytes = [cipherText mutableBytes];
 	unsigned char* keyBytes = (unsigned char*) [[self key] bytes];
 	unsigned char* nonceBytes = (unsigned char*) [[self nonce] bytes];
 
-	salsa20EncryptDecryptOrWhatever(cipherTextBytes, plainTextBytes, [inputData length], keyBytes, [[self key] length], nonceBytes);
+	salsa20EncryptDecryptOrWhatever(cipherTextBytes, plainTextBytes, [message length], keyBytes, [[self key] length], nonceBytes);
 
 	return cipherText;
 }
@@ -186,7 +179,7 @@ static void hsalsa20(unsigned char* const outputBytes, unsigned char* const keyB
 
 
 -(NSData *) xsalsa20Encrypt {
-	NSAssert([self inputData], @"No input data available for XSalsa20");
+	NSAssert([self message], @"No input data available for XSalsa20");
 	NSAssert([self key], @"No key available for XSalsa20");
 	NSAssert([self nonce], @"No nonce available for XSalsa20");
     NSAssert([[self nonce] length] == 24, @"The nonce needs to be 24 bytes long, XSalsa20 received %lu bytes", [[self nonce] length]);
@@ -197,13 +190,13 @@ static void hsalsa20(unsigned char* const outputBytes, unsigned char* const keyB
     NSMutableData *key1 = [[NSMutableData alloc] initWithLength: 32];
     hsalsa20([key1 mutableBytes], keyBytes, nonceBytes);
 
-	NSMutableData *cipherText = [[NSMutableData alloc] initWithLength: [[self inputData] length]];
-	unsigned char* plainTextBytes = (unsigned char*) [[self inputData] bytes];
+	NSMutableData *cipherText = [[NSMutableData alloc] initWithLength: [[self message] length]];
+	unsigned char* plainTextBytes = (unsigned char*) [[self message] bytes];
 	unsigned char* cipherTextBytes = [cipherText mutableBytes];
 	keyBytes = (unsigned char*) [key1 bytes];
 	nonceBytes = (unsigned char*) (&[[self nonce] bytes][16]);
 
-	salsa20EncryptDecryptOrWhatever(cipherTextBytes, plainTextBytes, [inputData length], keyBytes, [key1 length], nonceBytes);
+	salsa20EncryptDecryptOrWhatever(cipherTextBytes, plainTextBytes, [message length], keyBytes, [key1 length], nonceBytes);
 
 	return cipherText;
 }
@@ -212,11 +205,37 @@ static void hsalsa20(unsigned char* const outputBytes, unsigned char* const keyB
 	return [self xsalsa20Encrypt];
 }
 
+
++(NSData *) createKeyFromSharedSecret: (NSData *) sharedSecret {
+	NSMutableData *nonce = [[NSMutableData alloc] initWithLength: 16];
+	NSMutableData *key = [[NSMutableData alloc] initWithLength: 32];
+	hsalsa20([key mutableBytes], (unsigned char*) [sharedSecret bytes], [nonce mutableBytes]);
+	[nonce release];
+	return key;
+}
+	
 @end
 
 
 
 
+
+
+
+
+
+
+
+@implementation Rijndael256
+@synthesize message;
+@synthesize iv;
+@synthesize key;
+
+
+
+
+
+@end
 
 
 

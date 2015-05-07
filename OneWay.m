@@ -39,16 +39,6 @@
 }   
 
 
-
--(id) copyWithZone: (NSZone *) zone {
-	Poly1305 *new = [[Poly1305 alloc] init];
-	[new setMessage: [message copy]];
-	[new setR: [r copy]];
-	[new setS: [s copy]];
-	[new setHmac: [hmac copy]];
-	return new;
-}
-
 -(NSData *) hmac {
 	if (hmac) {
 		return hmac;
@@ -143,6 +133,17 @@
 
 
 
+
+@implementation Poly1305XSalsa20
+@synthesize boxedMessage;
+
+-(void) setRandS {
+	r = [[NSData alloc] initWithBytesNoCopy: (unsigned char*) [boxedMessage bytes] length: 16 freeWhenDone: NO];
+	s = [[NSData alloc] initWithBytesNoCopy: &(((unsigned char*) [boxedMessage bytes])[16]) length: 16 freeWhenDone: NO];
+	message = [[NSData alloc] initWithBytesNoCopy: &(((unsigned char*) [boxedMessage bytes])[32]) length: ([boxedMessage length] - 32) freeWhenDone: NO];
+}
+
+@end
 
 
 
