@@ -617,7 +617,16 @@ This header may not be removed.
     }
 
     NSData *verificationData = [self encryptNSData: signature];
-    BOOL signatureCheck = [verificationData isEqualToData: plainText];
+    BOOL signatureCheck;
+    int difference = [verificationData length] - [plainText length];
+    if (([plainText length] < [verificationData length]) && (difference < 4)) {
+        NSMutableData *plainTextMutableData = [plainText mutableCopy];
+        [plainTextMutableData increaseLengthBy: difference];
+        signatureCheck = [verificationData isEqualToData: plainTextMutableData];
+        [plainTextMutableData release];
+    } else {
+        signatureCheck = [verificationData isEqualToData: plainText];
+    }
     [verificationData release];
     return signatureCheck;
 }
@@ -633,10 +642,8 @@ This header may not be removed.
     }
 
     @autoreleasepool{
-        NSData *verificationData = [self encryptNSData: signature], *plainTextData = [plainText dataUsingEncoding:NSUTF8StringEncoding];
-        BOOL signatureCheck = [verificationData isEqualToData: plainTextData];
-        [verificationData release];
-        return signatureCheck;
+        NSData *plainTextData = [plainText dataUsingEncoding:NSUTF8StringEncoding];
+        return [self verifySignature: signature ofPlainTextNSData: plainTextData];
     }
 }
 
