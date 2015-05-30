@@ -1410,14 +1410,21 @@
 
     @autoreleasepool{
         NSData *tmpData = [x toNSData];
-        unsigned char lastByte[1]; 
-        [tmpData getBytes: lastByte range: NSMakeRange([tmpData length] - 1, 1)];
-        if ([tmpData length] < lastByte[0] + 1 ) {
+        unsigned char lastByte = 0; 
+        FGIntBase idx = [tmpData length];
+        while ((idx > 0) && (lastByte == 0)) {
+            --idx;
+            [tmpData getBytes: &lastByte range: NSMakeRange(idx, 1)];
+        }
+        if (idx == 0) {
+            return nil;
+        }
+        if ([tmpData length] < lastByte + 1 ) {
             NSLog(@"There is no inbedded data for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
             [tmpData release];
             return nil;
         }
-        NSData *result = [[NSData alloc] initWithData: [tmpData subdataWithRange: NSMakeRange(lastByte[0], [tmpData length] - 1 - lastByte[0])]];
+        NSData *result = [[NSData alloc] initWithData: [tmpData subdataWithRange: NSMakeRange(lastByte, [tmpData length] - 1 - lastByte)]];
         [tmpData release];
         return result;
     }
