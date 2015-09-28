@@ -681,7 +681,7 @@
         return [TECPoint add: tecPoint2 k1Times: k2FGInt and: tecPoint1 k2Times: k1FGInt];
     }
 
-    TECPoint *result = [[TECPoint alloc] initAsInfinityWithTEC: [tecPoint1 tec]], *tmpECPoint, *tmpECPoint1;
+    TECPoint *result = [[TECPoint alloc] initAsInfinityWithTEC: [tecPoint1 tec]], *tmpECPoint;
     FGIntOverflow k1Length = [[k1FGInt number] length]/4, k2Length = [[k2FGInt number] length]/4, i;
     FGIntBase* k1FGIntNumber = [[k1FGInt number] mutableBytes];
     FGIntBase* k2FGIntNumber = [[k2FGInt number] mutableBytes];
@@ -744,7 +744,7 @@
     numberArray[0] = 324630691u; numberArray[1] = 1978355146u; numberArray[2] = 1094834347u; numberArray[3] = 7342669u; 
     numberArray[4] = 2004478104u; numberArray[5] = 2361868409u; numberArray[6] = 728759923u; numberArray[7] = 1375956206u; 
 
-    TECPoint *result = [[TECPoint alloc] initAsInfinity], *tmpECPoint, *tmpECPoint1;
+    TECPoint *result = [[TECPoint alloc] initAsInfinity], *tmpECPoint;
     FGIntOverflow k1Length = [[k1FGInt number] length]/4, k2Length = [[k2FGInt number] length]/4, i;
     FGIntBase* k1FGIntNumber = [[k1FGInt number] mutableBytes];
     FGIntBase* k2FGIntNumber = [[k2FGInt number] mutableBytes];

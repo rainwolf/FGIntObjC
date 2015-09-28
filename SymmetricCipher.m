@@ -83,7 +83,7 @@ static void salsa20Expand128bit(unsigned char* const outputBytes, unsigned char*
 	salsa20Hash((word*) outputBytes, (word*) tmpBytes);
 }
 
-static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, unsigned char* const inputBytes, unsigned long long const length , unsigned char* const keyBytes, int const keyLength, unsigned char* const nonceBytes) {
+static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, unsigned char* const inputBytes, unsigned long long const length , unsigned char* const keyBytes, unsigned long const keyLength, unsigned char* const nonceBytes) {
 	unsigned char nonceBytesCounter[16];
 	memcpy(nonceBytesCounter, nonceBytes, 8);
 	unsigned long long nonceCounter = 0;

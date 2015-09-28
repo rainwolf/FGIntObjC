@@ -79,7 +79,7 @@
 	unsigned char* messageBlockArray = [[messageBlockFGInt number] mutableBytes];
 	const unsigned char* inputDataArray = [message bytes];
 	messageBlockArray[16] = 1;
-	FGIntBase length = [message length];
+	FGIntOverflow length = [message length];
 
 	FGInt *hmacFGInt = [[FGInt alloc] initAsZero], *tmpFGInt;
 	for ( FGIntIndex i = 0; i < (length >> 4); i++ ) {

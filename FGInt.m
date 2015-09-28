@@ -273,7 +273,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     for( FGIntIndex i = length - 1; i >= 0; i-- ) {
         tempMod =  (((FGIntOverflow) mod << 32) | (FGIntOverflow) fGIntNumberArray[i]);
-        fGIntNumberArray[i] = (FGIntOverflow) (tempMod / divInt);
+        fGIntNumberArray[i] = (FGIntBase) (tempMod / divInt);
         mod = (FGIntOverflow) tempMod % divInt;
     }
 
@@ -341,7 +341,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 [tmpString insertString: zeroStr atIndex:0];
             }
             [base10StringResult appendString: tmpString];
-            mod = tempMod;
+            mod = (FGIntBase) tempMod;
         }
 
         while (([base10StringResult length] > 1) && ([base10StringResult characterAtIndex: 0] == '0')) {
@@ -353,12 +353,12 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         
         for( FGIntOverflow i = 1; i <= (nlength/9); ++i ) {
             tmpStr = [base10StringResult substringWithRange: NSMakeRange(nlength - i*9, 9)];
-            FGIntBase tmpBase = [tmpStr longLongValue];
+            FGIntBase tmpBase = (FGIntBase) [tmpStr longLongValue];
             [base10Number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
         if ((nlength % 9) != 0) {
             tmpStr = [base10StringResult substringWithRange: NSMakeRange(0, nlength % 9)];
-            FGIntBase tmpBase = [tmpStr longLongValue];
+            FGIntBase tmpBase = (FGIntBase) [tmpStr longLongValue];
             [base10Number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
     
@@ -377,7 +377,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
         self = [self init];
     
-        FGIntBase nlength = [base10String length];
+        FGIntOverflow nlength = [base10String length];
         FGIntBase tmpBase;
     
         if ([base10String characterAtIndex: 0] == '-') {
@@ -386,19 +386,19 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         } else {
             sign = YES;
         }
-        FGIntBase lengthInt = 1 + nlength / 9 + (((nlength % 9)==0) ? 0 : 1);
+//        FGIntBase lengthInt = 1 + nlength / 9 + (((nlength % 9)==0) ? 0 : 1);
     
         NSMutableData *base10Number = [[NSMutableData alloc] init];
         NSString *tmpStr;
     
         for(FGIntBase i = 1; i <= (nlength/9); ++i) {
             tmpStr = [base10String substringWithRange: NSMakeRange(nlength + (sign ? 0 : 1) - i*9, 9)];
-            tmpBase = [tmpStr longLongValue];
+            tmpBase = (FGIntBase) [tmpStr longLongValue];
             [base10Number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
         if ((nlength % 9) != 0) {
             tmpStr = [base10String substringWithRange: NSMakeRange(sign ? 0 : 1, nlength % 9)];
-            tmpBase = [tmpStr longLongValue];
+            tmpBase = (FGIntBase) [tmpStr longLongValue];
             [base10Number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
         }
 
@@ -448,7 +448,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(FGInt *) initWithNSString: (NSString *) string {
     @autoreleasepool{
-        FGIntOverflow i;
         self = [self init];
 
         NSData *stringBytes = [string dataUsingEncoding:NSUTF8StringEncoding];
@@ -685,7 +684,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
         for ( FGIntIndex i = 0; i < length2; i++ ) {
             tmpMod = (FGIntOverflow) sumNumber[i] + fGInt2Number[i] + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         for ( FGIntIndex i = length2; i < length1; ++i ) {
@@ -693,13 +692,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 break;
             }
             tmpMod = (FGIntOverflow) sumNumber[i] + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         if (mod != 0) {
             [[sum number] setLength: 4*(length1 + 1)];
             sumNumber = [[sum number] mutableBytes];
-            sumNumber[length1] = mod;
+            sumNumber[length1] = (FGIntBase) mod;
         }
         [sum setSign: [fGInt1 sign]];
         return sum;
@@ -707,14 +706,14 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         if ([FGInt compareAbsoluteValueOf: fGInt2 with: fGInt1] == larger) {
             return [FGInt add: fGInt2 and: fGInt1];
         }
-        FGIntIndex tmpMod, mod = 0, i = 0;
+        FGIntIndex tmpMod, mod = 0;
         FGInt *sum = [fGInt1 mutableCopy];
         FGIntBase* sumNumber = [[sum number] mutableBytes];
         FGIntBase* fGInt2Number = [[fGInt2 number] mutableBytes];
 
         for ( FGIntIndex i = 0; i < length2; i++ ) {
             tmpMod = (FGIntIndex) sumNumber[i] - fGInt2Number[i] + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] =  (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         for ( FGIntIndex i = length2; i < length1; ++i ) {
@@ -722,7 +721,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 break;
             }
             tmpMod = (FGIntOverflow) sumNumber[i] + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
 
@@ -766,7 +765,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* Multiply 2 FGInts, and return fGInt1 * fGInt2 */
 
 +(FGInt *) pencilPaperMultiply: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntBase length1 = [[fGInt1 number] length] / 4,
+    FGIntOverflow length1 = [[fGInt1 number] length] / 4,
               length2 = [[fGInt2 number] length] / 4,
               productLength = length1 + length2, length;
     FGIntOverflow tempMod, mod;
@@ -783,10 +782,10 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         mod = 0;
         for( i = 0; i < length1; i++ ) {
             tempMod = (FGIntOverflow) fGInt1Number[i] * fGInt2Number[j] + productNumber[j + i] + mod;
-            productNumber[j + i] = tempMod;
+            productNumber[j + i] = (FGIntBase) tempMod;
             mod = tempMod >> 32;
         }
-        productNumber[j + i] = mod;
+        productNumber[j + i] = (FGIntBase) mod;
     }
 
     length = productLength;
@@ -807,7 +806,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 +(FGInt *) karatsubaMultiply: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntBase length1 = [[fGInt1 number] length]/4,
+    FGIntOverflow length1 = [[fGInt1 number] length]/4,
               length2 = [[fGInt2 number] length]/4,
               karatsubaLength = MAX(length1, length2);
 
@@ -815,7 +814,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     if (length1 != karatsubaLength) return [FGInt karatsubaMultiply: fGInt2 and: fGInt1];
 
-    FGIntOverflow halfLength = (karatsubaLength / 2) + (karatsubaLength % 2), i;
+    FGIntOverflow halfLength = (karatsubaLength / 2) + (karatsubaLength % 2);
 
     FGInt *f1a = [[FGInt alloc] initWithoutNumber], *f1b = [[FGInt alloc] initWithoutNumber],
     *f2a, *f2b,
@@ -888,7 +887,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 +(FGInt *) multiply: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntBase length1 = [[fGInt1 number] length]/4,
+    FGIntOverflow length1 = [[fGInt1 number] length]/4,
               length2 = [[fGInt2 number] length]/4,
               length = MAX(length1,length2);
     if (length >= karatsubaThreshold) {
@@ -903,7 +902,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) pencilPaperSquare: (FGInt *) fGInt {
     FGIntOverflow length1 = [[fGInt number] length]/4, tempMod, mod, overflow,
-              squareLength = 2 * length1, i, j, k, tempInt;
+              squareLength = 2 * length1, j, k, tempInt;
     FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
 
     FGInt *square = [[FGInt alloc] initWithNZeroes: squareLength];
@@ -912,20 +911,20 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     for( FGIntIndex i = 0; i < length1; i++ ) {
         tempInt = fGIntNumber[i];
         tempMod = (FGIntOverflow) tempInt*tempInt + squareNumber[2*i];
-        squareNumber[2*i] = tempMod;
+        squareNumber[2*i] = (FGIntBase) tempMod;
         mod = (tempMod >> 32);
         j = 0;
         for( FGIntIndex j = i + 1; j < length1; j++ ) {
             tempMod = (FGIntOverflow) tempInt * fGIntNumber[j];
             overflow = tempMod >> 63;
             tempMod = (tempMod << 1) + squareNumber[i + j] + mod;
-            squareNumber[i + j] = tempMod;
+            squareNumber[i + j] = (FGIntBase) tempMod;
             mod = (overflow << 32) | (tempMod >> 32);
         }
         k = 0;
         while (mod != 0) {
             tempMod = (FGIntOverflow) squareNumber[i + length1 + k] + mod;
-            squareNumber[i + length1 + k] = tempMod;
+            squareNumber[i + length1 + k] = (FGIntBase) tempMod;
             mod = tempMod >> 32;
             ++k;
         }
@@ -944,7 +943,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) karatsubaSquare: (FGInt *) fGInt {
     FGIntOverflow karatsubaLength = [[fGInt number] length]/4;
-    FGIntOverflow halfLength = (karatsubaLength / 2) + (karatsubaLength % 2), i;
+    FGIntOverflow halfLength = (karatsubaLength / 2) + (karatsubaLength % 2);
 
     if (karatsubaLength <= karatsubaThreshold) {
         return [FGInt pencilPaperSquare: fGInt];
@@ -983,7 +982,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 +(FGInt *) square: (FGInt *) fGInt {
-    FGIntBase length = [[fGInt number] length];
+    FGIntOverflow length = [[fGInt number] length];
 
     if (length >= karatsubaThreshold) {
         return [FGInt karatsubaSquare: fGInt];
@@ -999,7 +998,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 +(FGInt *) raise: (FGInt *) fGInt toThePower: (FGInt *) fGIntN {
     FGIntOverflow nLength = [[fGIntN number] length]/4;
     FGIntBase tmp;
-    FGInt *tmpFGInt1, *tmpFGInt2, *tmpFGInt;
+    FGInt *tmpFGInt1, *tmpFGInt;
     int j;
 
     FGInt *power = [[FGInt alloc] initWithFGIntBase: 1];
@@ -1095,13 +1094,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     for( FGIntIndex i = 0; i < length; i++ ) {
         tmpInt = numberArray[i];
-        numberArray[i] = mod | (tmpInt << 1);
+        numberArray[i] = (FGIntBase) (mod | (tmpInt << 1));
         mod = tmpInt >> 31;
     }
     if (mod != 0) {
         [number setLength: (length + 1)*4];
         numberArray = [number mutableBytes];
-        numberArray[length] = mod;
+        numberArray[length] = (FGIntBase) mod;
     }
 }
 
@@ -1112,7 +1111,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     for( FGIntIndex i = length - 1; i >= 0; i-- ) {
         tmpInt = numberArray[i];
-        numberArray[i] = mod | (tmpInt >> 1);
+        numberArray[i] = (FGIntBase) (mod | (tmpInt >> 1));
         mod = tmpInt << 31;
     }
     if ((numberArray[length - 1] == 0) && (length > 1)) {
@@ -1123,8 +1122,8 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 /* by can be any positive integer */
 
--(void) shiftRightBy: (FGIntBase) by {
-    FGIntOverflow tmpInt, mod = 0, by32Times = by / 32, byMod32 = by % 32, length = [number length]/4;
+-(void) shiftRightBy: (FGIntOverflow) by {
+    FGIntOverflow by32Times = by / 32, byMod32 = by % 32;
 
     if (by32Times != 0) {
         FGIntOverflow length = [number length]/4;
@@ -1145,7 +1144,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
         for( FGIntIndex i = length - 1; i >= 0; i-- ) {
             tmpInt = numberArray[i];
-            numberArray[i] = mod | (tmpInt >> byMod32);
+            numberArray[i] = (FGIntBase) (mod | (tmpInt >> byMod32));
             mod = tmpInt << (32 - byMod32);
         }
         if ((numberArray[length - 1] == 0) && (length > 1)) {
@@ -1155,8 +1154,8 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 
--(void) shiftLeftBy: (FGIntBase) by {
-    FGIntOverflow by32Times = by / 32, byMod32 = by % 32, i;
+-(void) shiftLeftBy: (FGIntOverflow) by {
+    FGIntOverflow by32Times = by / 32, byMod32 = by % 32;
 
     if (byMod32 != 0) {
         FGIntOverflow tmpInt, mod = 0, length = [number length]/4;
@@ -1164,13 +1163,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
         for( FGIntIndex i = 0; i < length; i++ ) {
             tmpInt = numberArray[i];
-            numberArray[i] = mod | (tmpInt << byMod32);
+            numberArray[i] = (FGIntBase) (mod | (tmpInt << byMod32));
             mod = tmpInt >> (32 - byMod32);
         }
         if (mod != 0) {
             [number setLength: (length + 1)*4];
             numberArray = [number mutableBytes];
-            numberArray[length] = mod;
+            numberArray[length] = (FGIntBase) mod;
         }
     }
 
@@ -1191,7 +1190,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     for( FGIntIndex i = 0; i < length; i++ ) {
         tmpMod = (FGIntOverflow) fGIntNumber[i] + mod;
-        fGIntNumber[i] = tmpMod;
+        fGIntNumber[i] = (FGIntBase) tmpMod;
         mod = tmpMod >> 32;
         if (mod == 0) {
             break;
@@ -1201,7 +1200,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     if (mod != 0) {
         [number setLength: 4*length + 4];
         fGIntNumber = [number mutableBytes];
-        fGIntNumber[length] = mod;
+        fGIntNumber[length] = (FGIntBase) mod;
     }
 }
 
@@ -1213,7 +1212,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     if ((length > 1) || (numberArray[0] != 0)) {
         for ( FGIntIndex i = 0; i < length; i++ ) {
             tmpMod = (FGIntIndex) numberArray[i] + mod;
-            numberArray[i] = tmpMod;
+            numberArray[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
             if (mod == 0)
                 break;
@@ -1238,13 +1237,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     for( FGIntIndex i = 0; i < length; i++ ) {
         tmpInt = (FGIntOverflow) numberArray[i] * multInt + mod;
-        numberArray[i] = tmpInt;
+        numberArray[i] = (FGIntBase) tmpInt;
         mod = tmpInt >> 32;
     }
     if (mod != 0) {
         [number setLength: 4*(length + 1)];
         numberArray = [number mutableBytes];
-        numberArray[length] = mod;
+        numberArray[length] = (FGIntBase) mod;
     }
 }
 
@@ -1261,7 +1260,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     for( i = 0; i < length2; ++i ) {
         tmpMod = (FGIntIndex) numberArray[i] - fGIntNumberArray[i] + mod;
         mod = tmpMod >>  32;
-        numberArray[i] = tmpMod;
+        numberArray[i] = (FGIntBase) tmpMod;
     }
     for( i = length2; i < length1; ++i ) {
         if (mod == 0) {
@@ -1269,7 +1268,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         }
         tmpMod = (FGIntIndex) numberArray[i] + mod;
         mod = tmpMod >>  32;
-        numberArray[i] = tmpMod;
+        numberArray[i] = (FGIntBase) tmpMod;
     }
     while ((length1 > 1) && (numberArray[length1 - 1] == 0)) {
         --length1;
@@ -1293,7 +1292,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     for( i = 0; i < minLength; ++i ) {
         tmpMod = (FGIntOverflow) numberArray[i] + fGIntNumberArray[i] + mod;
-        numberArray[i] = tmpMod;
+        numberArray[i] = (FGIntBase) tmpMod;
         mod = tmpMod >> 32;
     }
     for( i = minLength; i < length1; ++i ) {
@@ -1302,18 +1301,18 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         }
         tmpMod = (FGIntOverflow) numberArray[i] + mod;
         mod = tmpMod >> 32;
-        numberArray[i] = tmpMod;
+        numberArray[i] = (FGIntBase) tmpMod;
     }
     for( i = minLength; i < length2; ++i ) {
         tmpMod = (FGIntOverflow) fGIntNumberArray[i] + mod;
-        numberArray[i] = tmpMod;
+        numberArray[i] = (FGIntBase) tmpMod;
         mod = tmpMod >> 32;
     }
     
     if (mod != 0) {
         [number setLength: (MAX(length1, length2) + 1)*4];
         numberArray = [number mutableBytes];
-        numberArray[MAX(length1, length2)] = mod;
+        numberArray[MAX(length1, length2)] = (FGIntBase) mod;
     }
 }
 
@@ -1332,7 +1331,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     
     FGInt *modFGInt, *resFGInt, *tmpFGInt;
     FGIntBase divInt;
-    FGIntOverflow tmpInt, i, j, k, divisorLength = [[divisorFGInt number] length]/4, tmpFGIntHead1, tmpFGIntHead2, modFGIntLength, 
+    FGIntOverflow j, divisorLength = [[divisorFGInt number] length]/4, tmpFGIntHead1, tmpFGIntHead2, modFGIntLength,
                 length = [[fGInt number] length]/4, tmpFGIntLength;
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
@@ -1364,14 +1363,14 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         while ([FGInt compareAbsoluteValueOf: modFGInt with: divisorFGInt] != smaller) {
             while ([FGInt compareAbsoluteValueOf: modFGInt with: tmpFGInt] != smaller) {
                 if (modFGIntLength > [[tmpFGInt number] length]/4) {
-                    divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
-                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead1;
+                    divInt = (FGIntBase) ((((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead1);
                 } else {
                     if ((modFGIntLength > 1) && (tmpFGIntHead2 != 0)) {
-                        divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
-                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead2;
+                        divInt = (FGIntBase) ((((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead2);
                     } else {
-                        divInt = (FGIntOverflow) (modFGIntNumber[modFGIntLength - 1]) / tmpFGIntHead1;
+                        divInt = (FGIntBase) ((modFGIntNumber[modFGIntLength - 1]) / tmpFGIntHead1);
                     }
                 }
                 if (divInt != 0) {
@@ -1447,7 +1446,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) newtonInitialValue: (FGInt *) fGInt precision: (FGIntBase) kZero {
     FGInt *resFGInt, *tmpFGInt, *bFGInt;
-    FGIntOverflow tmpInt, i, j, k, l, isTwo = 0, divisorLength = [[fGInt number] length]/4, 
+    FGIntOverflow i, j, k, l, isTwo = 0, divisorLength = [[fGInt number] length]/4,
                     tmpFGIntHead1, tmpFGIntHead2, bFGIntLength, tmpFGIntLength, divInt;
     
     k = divisorLength;
@@ -1559,9 +1558,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) newtonInversion: (FGInt *) fGInt withPrecision: (FGIntOverflow) precision {
     FGInt *z, *zSquare, *vFGInt, *tFGInt, *uFGInt;
-    FGIntOverflow h, i, j, k = precision, baseCaseLength = 128, vLength, uRadix,
-              vRadix, zRadix, zSquareRadix, tRadix, sRadix, vIndex, correction = 0;
-    NSMutableArray *kValues = [[NSMutableArray alloc] init];      
+    FGIntOverflow h, i, k = precision, baseCaseLength = 128, vLength, uRadix,
+    zRadix, zSquareRadix, tRadix, vIndex;
+    NSMutableArray *kValues = [[NSMutableArray alloc] init];
 
     vFGInt = [fGInt mutableCopy];
     vLength = [[vFGInt number] length]/4;
@@ -1634,8 +1633,8 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 +(NSDictionary *) barrettDivision: (FGInt *) fGInt by: (FGInt *) divisorFGInt {
     NSMutableDictionary *quotientAndRemainder = [[NSMutableDictionary alloc] init];
     FGInt *modFGInt = [[FGInt alloc] init], *resFGInt = [[FGInt alloc] init], *tmpFGInt = [[FGInt alloc] init], 
-          *fGIntCopy, *divisorCopy;
-    FGIntOverflow i, j, k, m = ([[fGInt number] length] - 4) * 8, n = ([[divisorFGInt number] length] - 4) * 8;
+          *fGIntCopy = nil, *divisorCopy = nil;
+    FGIntOverflow i, m = ([[fGInt number] length] - 4) * 8, n = ([[divisorFGInt number] length] - 4) * 8;
     BOOL mnCorrect = NO, fGIntSign = [fGInt sign], divisorSign = [divisorFGInt sign];
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
@@ -1756,10 +1755,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 +(FGInt *) barrettMod: (FGInt *) fGInt by: (FGInt *) divisorFGInt {
-    NSMutableDictionary *quotientAndRemainder = [[NSMutableDictionary alloc] init];
-    FGInt *modFGInt = [[FGInt alloc] init], *resFGInt = [[FGInt alloc] init], *tmpFGInt = [[FGInt alloc] init], 
-          *fGIntCopy, *divisorCopy;
-    FGIntOverflow i, j, k, m = ([[fGInt number] length] - 4) * 8, n = ([[divisorFGInt number] length] - 4) * 8;
+    FGInt *modFGInt = [[FGInt alloc] init], *resFGInt = [[FGInt alloc] init], *tmpFGInt = [[FGInt alloc] init],
+          *fGIntCopy = nil, *divisorCopy = nil;
+    FGIntOverflow i, m = ([[fGInt number] length] - 4) * 8, n = ([[divisorFGInt number] length] - 4) * 8;
     BOOL mnCorrect = NO, fGIntSign = [fGInt sign], divisorSign = [divisorFGInt sign];
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
@@ -1882,7 +1880,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         mMod = mTmpMod >> 32;
         tmpMod = (FGIntIndex) numberArray[i] - (mTmpMod & 4294967295u) + mod;
         mod = tmpMod >> 32;
-        numberArray[i] = tmpMod;
+        numberArray[i] = (FGIntBase) tmpMod;
     }
     for( FGIntIndex i = length2; i < length1; i++ ) {
         if ((mod == 0) && (mMod == 0)) {
@@ -1891,7 +1889,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         tmpMod = (FGIntIndex) numberArray[i] - mMod + mod;
         mMod >>= 32;
         mod = tmpMod >> 32;
-        numberArray[i] = tmpMod;
+        numberArray[i] = (FGIntBase) tmpMod;
     }
     while ((length1 > 1) && (numberArray[length1 - 1] == 0)) {
         --length1;
@@ -1946,7 +1944,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 +(FGInt *) longDivisionMod: (FGInt *) fGInt by: (FGInt *) divisorFGInt {
     FGInt *modFGInt, *tmpFGInt;
     FGIntBase divInt;
-    FGIntOverflow tmpInt, i, j, k, divisorLength = [[divisorFGInt number] length]/4, tmpFGIntHead1, tmpFGIntHead2, modFGIntLength, 
+    FGIntOverflow j, divisorLength = [[divisorFGInt number] length]/4, tmpFGIntHead1, tmpFGIntHead2, modFGIntLength,
                 length = [[fGInt number] length]/4, tmpFGIntLength;
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
@@ -2030,7 +2028,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 +(FGInt *) longDivisionModBis: (FGInt *) fGInt by: (FGInt *) divisorFGInt {
     FGInt *modFGInt, *tmpFGInt;
     FGIntBase divInt;
-    FGIntOverflow tmpInt, i, j, k, divisorLength = [[divisorFGInt number] length]/4, tmpFGIntHead1, tmpFGIntHead2, modFGIntLength, 
+    FGIntOverflow i, j, divisorLength = [[divisorFGInt number] length]/4, tmpFGIntHead1, tmpFGIntHead2, modFGIntLength,
                 length = [[fGInt number] length]/4, tmpFGIntLength;
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
@@ -2282,7 +2280,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) raise: (FGInt *) fGInt toThePower: (FGInt *) fGIntN longDivisionMod: (FGInt *) modFGInt {
     FGInt *power = [[FGInt alloc] initWithFGIntBase: 1];
-    FGIntOverflow nLength = [[fGIntN number] length]/4, j;
+    FGIntOverflow nLength = [[fGIntN number] length]/4;
     FGIntBase tmp;
     FGInt *tmpFGInt1, *tmpFGInt;
     FGIntBase* nFGIntNumber = [[fGIntN number] mutableBytes];
@@ -2358,7 +2356,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             if ([FGInt compareAbsoluteValueOf: fGInt1 with: fGInt2] == smaller)
                 return [FGInt gcd: fGInt2 and: fGInt1];
             else {
-                FGInt *tmpFGInt1, *tmpFGInt2, *tmpFGInt3, *tmpFGInt, *zero = [[FGInt alloc] initWithFGIntBase: 0];
+                FGInt *tmpFGInt1, *tmpFGInt2, *tmpFGInt, *zero = [[FGInt alloc] initWithFGIntBase: 0];
                 tmpFGInt1 = [fGInt1 mutableCopy];
                 tmpFGInt2 = [fGInt2 mutableCopy];
                 while ([FGInt compareAbsoluteValueOf: tmpFGInt2 with: zero] != equal) {
@@ -2456,7 +2454,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* returns the modular inverse of fGInt mod modFGInt*/
 
 +(FGInt *) modularInverse: (FGInt *) fGInt mod: (FGInt *) modFGInt {
-    FGInt *r1, *r2, *r3, *zero, *one, *tmpB, *tmpFGInt, *tmpFGInt1, 
+    FGInt *r1, *r2, *zero, *one, *tmpB, *tmpFGInt, *tmpFGInt1,
             *tmpFGInt2, *inverse, *gcd;
     NSDictionary *tmpDivMod;
 
@@ -2666,9 +2664,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 +(FGInt *) montgomeryMod: (FGInt *) fGInt withBase: (FGInt *) baseFGInt andInverseBase: (FGInt *) inverseBaseFGInt withLength: (FGIntOverflow) bLength andHead: (FGIntBase) head {
-    FGInt *tmpFGInt, *tmpFGInt1, *mFGInt;
+    FGInt *tmpFGInt, *mFGInt;
     FGIntOverflow length = [[fGInt number] length]/4, length1 = MIN(length, bLength), length2 = [[inverseBaseFGInt number] length]/4, resLength = MIN(bLength, length1 + length2), 
-                    i, j, t, mod, tmpMod = 0, tmpInt;
+                    i, j, t, mod, tmpMod = 0;
     FGInt *product = [[FGInt alloc] initWithNZeroes: resLength];
     FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
     FGIntBase* inverseNumber = [[inverseBaseFGInt number] mutableBytes]; 
@@ -2684,18 +2682,18 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 } else {
                     tmpMod = (FGIntOverflow) inverseNumber[i]*(fGIntNumber[j] & head) + productNumber[j + i] + mod;
                 }
-                productNumber[j + i] = tmpMod;
+                productNumber[j + i] = (FGIntBase) tmpMod;
                 mod = tmpMod >> 32;    
             }
         } else {
             for ( j = 0; j < t; j++ ) {
                 tmpMod = (FGIntOverflow) inverseNumber[i]*fGIntNumber[j] + productNumber[j + i] + mod;
-                productNumber[j + i] = tmpMod;
+                productNumber[j + i] = (FGIntBase) tmpMod;
                 mod = tmpMod >> 32;    
             }
         }
         if (i + length1 <= bLength - 1) {
-            productNumber[i + length1] = mod;
+            productNumber[i + length1] = (FGIntBase) mod;
         }
     }
     if (resLength == bLength) {
@@ -2728,7 +2726,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     }
     [mFGInt setSign: YES];
     if (head < 2147483648) {
-        FGIntBase tmp = [FGInt divideFGIntNumberByIntBis: [mFGInt number] divideBy: head + 1];
+        [FGInt divideFGIntNumberByIntBis: [mFGInt number] divideBy: head + 1];
     } else {
         [mFGInt shiftRightBy32];
     }
@@ -2958,7 +2956,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     
     for( FGIntIndex i = length - 1; i >= 0; i-- ) {
         tempMod =  (((FGIntOverflow) mod << 32) | (FGIntOverflow) numberArray[i]);
-        numberArray[i] = (FGIntOverflow) (tempMod / divInt);
+        numberArray[i] = (FGIntBase) (tempMod / divInt);
         mod = (FGIntOverflow) tempMod % divInt;
     }
 
@@ -2996,7 +2994,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* Compute the coefficients from the Bezout-Bachet theorem, fGInt1 * aFGInt + fGInt2 * bFGInt = gcd(fGInt1, fGInt2) */
 
 +(NSDictionary *) bezoutBachet: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGInt *r1, *r2, *r3, *zero, *one, *tmpA, *aFGInt, *bFGInt, *tmpFGInt1, *tmpFGInt2 = [[FGInt alloc] init], *gcd;
+    FGInt *r1, *r2, *zero, *one, *tmpA, *aFGInt, *bFGInt, *tmpFGInt1, *tmpFGInt2 = [[FGInt alloc] init], *gcd;
     NSMutableDictionary *bezoutBachetCoefficients = [[NSMutableDictionary alloc] init];
     NSDictionary *tmpDivMod;
     
@@ -3129,7 +3127,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     
     for ( FGIntIndex i = length - 1; i >= 0; i-- ) {
         tmpMod = (mod << 32) | fGIntNumber[i];
-        resultNumber[i] = (tmpMod / divInt);
+        resultNumber[i] = (FGIntBase) (tmpMod / divInt);
         mod = tmpMod % divInt;
     }
     resultLength = length;
@@ -3378,7 +3376,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(FGInt *) isNearlyPrimeAndAtLeast: (FGIntOverflow) leastSize {
     FGInt *rFGInt = [self mutableCopy];
-    FGIntBase i, mod;
     FGIntBase* rNumber = [[rFGInt number] mutableBytes];
     while ((rNumber[0] % 2) == 0) {
         if (rNumber[0] == 0) {
@@ -3388,7 +3385,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         }
         rNumber = [[rFGInt number] mutableBytes];
     }
-    for ( i = 0; i < 1228; ++i ) {
+    for ( FGIntBase i = 0; i < 1228; ++i ) {
         while ([rFGInt modFGIntByInt: primes[i]] == 0) {
             [rFGInt divideByInt: primes[i]];
         }
@@ -3615,22 +3612,22 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     FGIntBase* tmpNumber = [[result number] mutableBytes];
     tmpMod = (FGIntOverflow) numberArray[0] + numberArray[6] + numberArray[10];
     mod = tmpMod >> 32;
-    tmpNumber[0] = tmpMod;
+    tmpNumber[0] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[1] + numberArray[7] + numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[1] = tmpMod;
+    tmpNumber[1] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[2] + numberArray[6] + numberArray[8] + numberArray[10] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[2] = tmpMod;
+    tmpNumber[2] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[3] + numberArray[7] + numberArray[9] + numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[3] = tmpMod;
+    tmpNumber[3] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[4] + numberArray[8] + numberArray[10] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[4] = tmpMod;
+    tmpNumber[4] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[5] + numberArray[9] + numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[5] = tmpMod;
+    tmpNumber[5] = (FGIntBase) tmpMod;
     if (mod != 0) {
         tmpNumber[6] = mod;
     } else {
@@ -3669,22 +3666,22 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     FGIntBase* tmpNumber = [[result number] mutableBytes];
     tmpMod = (FGIntOverflow) numberArray[0] + numberArray[6] + numberArray[10];
     mod = tmpMod >> 32;
-    tmpNumber[0] = tmpMod;
+    tmpNumber[0] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[1] + numberArray[7] + numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[1] = tmpMod;
+    tmpNumber[1] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[2] + numberArray[6] + numberArray[8] + numberArray[10] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[2] = tmpMod;
+    tmpNumber[2] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[3] + numberArray[7] + numberArray[9] + numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[3] = tmpMod;
+    tmpNumber[3] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[4] + numberArray[8] + numberArray[10] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[4] = tmpMod;
+    tmpNumber[4] = (FGIntBase) tmpMod;
     tmpMod = (FGIntOverflow) numberArray[5] + numberArray[9] + numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[5] = tmpMod;
+    tmpNumber[5] = (FGIntBase) tmpMod;
     if (mod != 0) {
         tmpNumber[6] = mod;
     } else {
@@ -3724,27 +3721,27 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     tmpMod = (FGIntIndex) numberArray[0] + p224NumberArray[0] - numberArray[7] - numberArray[11];
     mod = tmpMod >> 32;
-    tmpNumber[0] = tmpMod;
+    tmpNumber[0] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[1] + p224NumberArray[1] - numberArray[8] - numberArray[12] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[1] = tmpMod;
+    tmpNumber[1] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[2] + p224NumberArray[2] - numberArray[9] - numberArray[13] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[2] = tmpMod;
+    tmpNumber[2] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[3] + numberArray[7] + numberArray[11] + p224NumberArray[3] - numberArray[10] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[3] = tmpMod;
+    tmpNumber[3] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[4] + numberArray[8] + numberArray[12] + p224NumberArray[4] - numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[4] = tmpMod;
+    tmpNumber[4] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[5] + numberArray[9] + numberArray[13] + p224NumberArray[5] - numberArray[12] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[5] = tmpMod;
+    tmpNumber[5] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[6] + numberArray[10] + p224NumberArray[6] - numberArray[13] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[6] = tmpMod;
+    tmpNumber[6] = (FGIntBase) tmpMod;
     if (mod != 0) {
-        tmpNumber[7] = mod;
+        tmpNumber[7] = (FGIntBase) mod;
     } else {
         [[result number] setLength: 28];
     }
@@ -3780,27 +3777,27 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     tmpMod = (FGIntIndex) numberArray[0] + p224NumberArray[0] - numberArray[7] - numberArray[11];
     mod = tmpMod >> 32;
-    tmpNumber[0] = tmpMod;
+    tmpNumber[0] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[1] + p224NumberArray[1] - numberArray[8] - numberArray[12] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[1] = tmpMod;
+    tmpNumber[1] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[2] + p224NumberArray[2] - numberArray[9] - numberArray[13] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[2] = tmpMod;
+    tmpNumber[2] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[3] + numberArray[7] + numberArray[11] + p224NumberArray[3] - numberArray[10] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[3] = tmpMod;
+    tmpNumber[3] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[4] + numberArray[8] + numberArray[12] + p224NumberArray[4] - numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[4] = tmpMod;
+    tmpNumber[4] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[5] + numberArray[9] + numberArray[13] + p224NumberArray[5] - numberArray[12] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[5] = tmpMod;
+    tmpNumber[5] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) numberArray[6] + numberArray[10] + p224NumberArray[6] - numberArray[13] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[6] = tmpMod;
+    tmpNumber[6] = (FGIntBase) tmpMod;
     if (mod != 0) {
-        tmpNumber[7] = mod;
+        tmpNumber[7] = (FGIntBase) mod;
     } else {
         [[result number] setLength: 28];
     }
@@ -3839,30 +3836,30 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     tmpMod = (FGIntIndex) 6*p256NumberArray[0] + numberArray[0] + numberArray[8] + numberArray[9] - numberArray[11] - numberArray[12] - numberArray[13] - numberArray[14];
     mod = tmpMod >> 32;
-    tmpNumber[0] = tmpMod;
+    tmpNumber[0] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[1] + numberArray[1] + numberArray[9] + numberArray[10] - numberArray[12] - numberArray[13] - numberArray[14] - numberArray[15] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[1] = tmpMod;
+    tmpNumber[1] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[2] + numberArray[2] + numberArray[10] + numberArray[11] - numberArray[13] - numberArray[14] - numberArray[15] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[2] = tmpMod;
+    tmpNumber[2] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[3] + numberArray[3] + numberArray[11] + numberArray[11] + numberArray[12] + numberArray[12] + numberArray[13] - numberArray[15] - numberArray[8] - numberArray[9] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[3] = tmpMod;
+    tmpNumber[3] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[4] + numberArray[4] + numberArray[12] + numberArray[12] + numberArray[13] + numberArray[13] + numberArray[14] - numberArray[9] - numberArray[10] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[4] = tmpMod;
+    tmpNumber[4] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[5] + numberArray[5] + numberArray[13] + numberArray[13] + numberArray[14] + numberArray[14] + numberArray[15] - numberArray[10] - numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[5] = tmpMod;
+    tmpNumber[5] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[6] + numberArray[6] + numberArray[14] + numberArray[14] + numberArray[15] + numberArray[15] + numberArray[14] + numberArray[13] - numberArray[8] - numberArray[9] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[6] = tmpMod;
+    tmpNumber[6] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[7] + numberArray[7] + numberArray[15] + numberArray[15] + numberArray[15] + numberArray[8] - numberArray[10] - numberArray[11] - numberArray[12] - numberArray[13] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[7] = tmpMod;
+    tmpNumber[7] = (FGIntBase) tmpMod;
 
-    tmpNumber[8] = mod;
+    tmpNumber[8] = (FGIntBase) mod;
     FGIntBase t = 9;
     while ((t > 1) && (tmpNumber[t - 1] == 0)) {
         --t;
@@ -3904,30 +3901,30 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     tmpMod = (FGIntIndex) 6*p256NumberArray[0] + numberArray[0] + numberArray[8] + numberArray[9] - numberArray[11] - numberArray[12] - numberArray[13] - numberArray[14];
     mod = tmpMod >> 32;
-    tmpNumber[0] = tmpMod;
+    tmpNumber[0] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[1] + numberArray[1] + numberArray[9] + numberArray[10] - numberArray[12] - numberArray[13] - numberArray[14] - numberArray[15] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[1] = tmpMod;
+    tmpNumber[1] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[2] + numberArray[2] + numberArray[10] + numberArray[11] - numberArray[13] - numberArray[14] - numberArray[15] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[2] = tmpMod;
+    tmpNumber[2] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[3] + numberArray[3] + numberArray[11] + numberArray[11] + numberArray[12] + numberArray[12] + numberArray[13] - numberArray[15] - numberArray[8] - numberArray[9] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[3] = tmpMod;
+    tmpNumber[3] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[4] + numberArray[4] + numberArray[12] + numberArray[12] + numberArray[13] + numberArray[13] + numberArray[14] - numberArray[9] - numberArray[10] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[4] = tmpMod;
+    tmpNumber[4] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[5] + numberArray[5] + numberArray[13] + numberArray[13] + numberArray[14] + numberArray[14] + numberArray[15] - numberArray[10] - numberArray[11] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[5] = tmpMod;
+    tmpNumber[5] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[6] + numberArray[6] + numberArray[14] + numberArray[14] + numberArray[15] + numberArray[15] + numberArray[14] + numberArray[13] - numberArray[8] - numberArray[9] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[6] = tmpMod;
+    tmpNumber[6] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) 6*p256NumberArray[7] + numberArray[7] + numberArray[15] + numberArray[15] + numberArray[15] + numberArray[8] - numberArray[10] - numberArray[11] - numberArray[12] - numberArray[13] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[7] = tmpMod;
+    tmpNumber[7] = (FGIntBase) tmpMod;
 
-    tmpNumber[8] = mod;
+    tmpNumber[8] = (FGIntBase) mod;
     FGIntBase t = 9;
     while ((t > 1) && (tmpNumber[t - 1] == 0)) {
         --t;
@@ -3972,41 +3969,41 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     tmpMod = (FGIntIndex) p384NumberArray[0] + numberArray[0] + numberArray[12] + numberArray[21] + numberArray[20] - numberArray[23];
     mod = tmpMod >> 32;
-    tmpNumber[0] = tmpMod;
+    tmpNumber[0] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[1] + numberArray[1] + numberArray[13] + numberArray[22] + numberArray[23] - numberArray[12] - numberArray[20] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[1] = tmpMod;
+    tmpNumber[1] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[2] + numberArray[2] + numberArray[14] + numberArray[23] - numberArray[13] - numberArray[21] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[2] = tmpMod;
+    tmpNumber[2] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[3] + numberArray[3] + numberArray[15] + numberArray[12] + numberArray[20] + numberArray[21] - numberArray[14] - numberArray[22] - numberArray[23] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[3] = tmpMod;
+    tmpNumber[3] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[4] + numberArray[4] + numberArray[21] + numberArray[21] + numberArray[16] + numberArray[13] + numberArray[12] + numberArray[20] + numberArray[22] - numberArray[15] - numberArray[23] - numberArray[23] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[4] = tmpMod;
+    tmpNumber[4] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[5] + numberArray[5] + numberArray[22] +numberArray[22] + numberArray[17] + numberArray[14] + numberArray[13] + numberArray[21] + numberArray[23] - numberArray[16] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[5] = tmpMod;
+    tmpNumber[5] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[6] + numberArray[6] + numberArray[23] +numberArray[23] + numberArray[18] + numberArray[15] + numberArray[14] + numberArray[22] - numberArray[17] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[6] = tmpMod;
+    tmpNumber[6] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[7] + numberArray[7] + numberArray[19] + numberArray[16] + numberArray[15] + numberArray[23] - numberArray[18] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[7] = tmpMod;
+    tmpNumber[7] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[8] + numberArray[8] + numberArray[20] +numberArray[17] + numberArray[16] - numberArray[19] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[8] = tmpMod;
+    tmpNumber[8] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[9] + numberArray[9] + numberArray[21] +numberArray[18] + numberArray[17] - numberArray[20] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[9] = tmpMod;
+    tmpNumber[9] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[10] + numberArray[10] + numberArray[22] +numberArray[19] + numberArray[18] - numberArray[21] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[10] = tmpMod;
+    tmpNumber[10] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[11] + numberArray[11] + numberArray[23] +numberArray[20] + numberArray[19] - numberArray[22] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[11] = tmpMod;
-    tmpNumber[12] = mod;
+    tmpNumber[11] = (FGIntBase) tmpMod;
+    tmpNumber[12] = (FGIntBase) mod;
     FGIntBase t = 13;
     while ((t > 1) && (tmpNumber[t - 1] == 0)) {
         --t;
@@ -4047,41 +4044,41 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     tmpMod = (FGIntIndex) p384NumberArray[0] + numberArray[0] + numberArray[12] + numberArray[21] + numberArray[20] - numberArray[23];
     mod = tmpMod >> 32;
-    tmpNumber[0] = tmpMod;
+    tmpNumber[0] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[1] + numberArray[1] + numberArray[13] + numberArray[22] + numberArray[23] - numberArray[12] - numberArray[20] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[1] = tmpMod;
+    tmpNumber[1] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[2] + numberArray[2] + numberArray[14] + numberArray[23] - numberArray[13] - numberArray[21] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[2] = tmpMod;
+    tmpNumber[2] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[3] + numberArray[3] + numberArray[15] + numberArray[12] + numberArray[20] + numberArray[21] - numberArray[14] - numberArray[22] - numberArray[23] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[3] = tmpMod;
+    tmpNumber[3] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[4] + numberArray[4] + numberArray[21] + numberArray[21] + numberArray[16] + numberArray[13] + numberArray[12] + numberArray[20] + numberArray[22] - numberArray[15] - numberArray[23] - numberArray[23] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[4] = tmpMod;
+    tmpNumber[4] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[5] + numberArray[5] + numberArray[22] +numberArray[22] + numberArray[17] + numberArray[14] + numberArray[13] + numberArray[21] + numberArray[23] - numberArray[16] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[5] = tmpMod;
+    tmpNumber[5] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[6] + numberArray[6] + numberArray[23] +numberArray[23] + numberArray[18] + numberArray[15] + numberArray[14] + numberArray[22] - numberArray[17] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[6] = tmpMod;
+    tmpNumber[6] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[7] + numberArray[7] + numberArray[19] + numberArray[16] + numberArray[15] + numberArray[23] - numberArray[18] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[7] = tmpMod;
+    tmpNumber[7] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[8] + numberArray[8] + numberArray[20] +numberArray[17] + numberArray[16] - numberArray[19] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[8] = tmpMod;
+    tmpNumber[8] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[9] + numberArray[9] + numberArray[21] +numberArray[18] + numberArray[17] - numberArray[20] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[9] = tmpMod;
+    tmpNumber[9] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[10] + numberArray[10] + numberArray[22] +numberArray[19] + numberArray[18] - numberArray[21] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[10] = tmpMod;
+    tmpNumber[10] = (FGIntBase) tmpMod;
     tmpMod = (FGIntIndex) p384NumberArray[11] + numberArray[11] + numberArray[23] +numberArray[20] + numberArray[19] - numberArray[22] + mod;
     mod = tmpMod >> 32;
-    tmpNumber[11] = tmpMod;
-    tmpNumber[12] = mod;
+    tmpNumber[11] = (FGIntBase) tmpMod;
+    tmpNumber[12] = (FGIntBase) mod;
     FGIntBase t = 13;
     while ((t > 1) && (tmpNumber[t - 1] == 0)) {
         --t;
@@ -4274,20 +4271,20 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     for ( i = 0; i < MIN(length1, length2); i++ ) {
         tmpMod = (FGIntOverflow) fGInt1Number[i] + fGInt2Number[i] + mod;
-        sumNumber[i] = tmpMod;
+        sumNumber[i] = (FGIntBase) tmpMod;
         mod = tmpMod >> 32;
     }
     for ( i = length2; i < length1; ++i ) {
         tmpMod = (FGIntOverflow) fGInt1Number[i] + mod;
-        sumNumber[i] = tmpMod;
+        sumNumber[i] = (FGIntBase) tmpMod;
         mod = tmpMod >> 32;
     }
     for ( i = length1; i < length2; ++i ) {
         tmpMod = (FGIntOverflow) fGInt2Number[i] + mod;
-        sumNumber[i] = tmpMod;
+        sumNumber[i] = (FGIntBase) tmpMod;
         mod = tmpMod >> 32;
     }
-    sumNumber[MAX(length1, length2)] = mod;
+    sumNumber[MAX(length1, length2)] = (FGIntBase) mod;
 
     sumLength = 9;
     while ((sumLength > 1) && (sumNumber[sumLength - 1] == 0)) {
@@ -4313,43 +4310,43 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     if ([FGInt compareAbsoluteValueOf: fGInt1 with: fGInt2] == smaller) {
         tmpMod = (FGIntIndex) fGInt1Number[0] - fGInt2Number[0] + (4294967295u - 37);
-        sumNumber[0] = tmpMod;
+        sumNumber[0] = (FGIntBase) tmpMod;
         mod = tmpMod >> 32;
         for ( i = 1; i < MIN(length1, length2); i++ ) {
             tmpMod = (FGIntIndex) fGInt1Number[i] - fGInt2Number[i] + 4294967295u + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         for ( i = length2; i < length1; ++i ) {
             tmpMod = (FGIntIndex) 4294967295u + fGInt1Number[i] + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         for ( i = length1; i < length2; ++i ) {
             tmpMod = (FGIntIndex) 4294967295u - fGInt2Number[i] + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         for ( i = MAX(length1, length2); i < 8; ++i ) {
             tmpMod = (FGIntIndex) 4294967295u + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
-        sumNumber[8] = mod;
+        sumNumber[8] = (FGIntBase) mod;
     } else {
         for ( i = 0; i < MIN(length1, length2); i++ ) {
             tmpMod = (FGIntIndex) fGInt1Number[i] - fGInt2Number[i] + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         for ( i = length2; i < length1; ++i ) {
             tmpMod = (FGIntIndex) fGInt1Number[i] + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         for ( i = length1; i < length2; ++i ) {
             tmpMod = (FGIntIndex) fGInt2Number[i] + mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         for ( i = MAX(length1, length2); i < 9; ++i ) {
@@ -4357,7 +4354,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 break;
             }
             tmpMod = (FGIntIndex) mod;
-            sumNumber[i] = tmpMod;
+            sumNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         // sumNumber[8] = mod;
@@ -4381,7 +4378,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* Multiply 2 FGInts, and return fGInt1 * fGInt2 modulo (2^256 - 38) */
 
 +(FGInt *) multiplyModulo25638: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntBase length1 = [[fGInt1 number] length] / 4,
+    FGIntOverflow length1 = [[fGInt1 number] length] / 4,
               length2 = [[fGInt2 number] length] / 4,
               productLength = length1 + length2, length;
     FGIntOverflow tmpMod, mod;
@@ -4399,10 +4396,10 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         mod = 0;
         for( i = 0; i < length1; i++ ) {
             tmpMod = (FGIntOverflow) fGInt1Number[i] * fGInt2Number[j] + tmpNumber[j + i] + mod;
-            tmpNumber[j + i] = tmpMod;
+            tmpNumber[j + i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
-        tmpNumber[j + length1] = mod;
+        tmpNumber[j + length1] = (FGIntBase) mod;
     }
 
     FGIntOverflow tmpLength = ([[tmpFGInt number] length] >> 2), maxLen;
@@ -4415,7 +4412,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         mod = 0;
         for ( i = 0; i < maxLen; i++ ) {
             tmpMod = (FGIntOverflow) productNumber[i] + tmpNumber[i] + mod;
-            productNumber[i] = tmpMod;
+            productNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         i = maxLen & 7;
@@ -4425,7 +4422,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 mod *= 38;
             }
             tmpMod = (FGIntOverflow) productNumber[i] + mod;
-            productNumber[i] = tmpMod;
+            productNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
             ++i;
         }
@@ -4484,20 +4481,20 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     for( FGIntIndex i = 0; i < length1; i++ ) {
         tempInt = fGIntNumber[i];
         tmpMod = (FGIntOverflow) tempInt*tempInt + tmpNumber[2*i];
-        tmpNumber[2*i] = tmpMod;
+        tmpNumber[2*i] = (FGIntBase) tmpMod;
         mod = (tmpMod >> 32);
         j = 0;
         for( FGIntIndex j = i + 1; j < length1; j++ ) {
             tmpMod = (FGIntOverflow) tempInt * fGIntNumber[j];
             overflow = tmpMod >> 63;
             tmpMod = (tmpMod << 1) + tmpNumber[i + j] + mod;
-            tmpNumber[i + j] = tmpMod;
+            tmpNumber[i + j] = (FGIntBase) tmpMod;
             mod = (overflow << 32) | (tmpMod >> 32);
         }
         k = 0;
         while (mod != 0) {
             tmpMod = (FGIntOverflow) tmpNumber[i + length1 + k] + mod;
-            tmpNumber[i + length1 + k] = tmpMod;
+            tmpNumber[i + length1 + k] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
             ++k;
         }
@@ -4513,7 +4510,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         mod = 0;
         for ( i = 0; i < maxLen; i++ ) {
             tmpMod = (FGIntOverflow) squareNumber[i] + tmpNumber[i] + mod;
-            squareNumber[i] = tmpMod;
+            squareNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         i = maxLen & 7;
@@ -4523,7 +4520,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 mod *= 38;
             }
             tmpMod = (FGIntOverflow) squareNumber[i] + mod;
-            squareNumber[i] = tmpMod;
+            squareNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
             ++i;
         }
@@ -4583,7 +4580,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         mod = 0;
         for ( i = 0; i < maxLen; i++ ) {
             tmpMod = (FGIntOverflow) numberArray[i] + tmpNumber[i] + mod;
-            tmpNumber[i] = tmpMod;
+            tmpNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         i = maxLen & 7;
@@ -4593,7 +4590,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 mod *= 38;
             }
             tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
-            tmpNumber[i] = tmpMod;
+            tmpNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
             ++i;
         }
@@ -4613,7 +4610,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 mod *= 19;
             }
             tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
-            tmpNumber[i] = tmpMod;
+            tmpNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
             ++i;
         }
@@ -4642,15 +4639,15 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     FGIntIndex tmp, rem;
     if (!sign) {
         tmp = (FGIntIndex) (4294967295u - 18) - tmpNumber[0];
-        tmpNumber[0] = tmp;
+        tmpNumber[0] = (FGIntBase) tmp;
         rem = tmp >> 32;
         for ( i = 1; i < 7; i++ ) {
             tmp = (FGIntIndex) 4294967295u - tmpNumber[i] + rem;
-            tmpNumber[i] = tmp;
+            tmpNumber[i] = (FGIntBase) tmp;
             rem = tmp >> 32;
         }
         tmp = (FGIntIndex) 2147483647u - tmpNumber[7] + rem;
-        tmpNumber[7] = tmp;
+        tmpNumber[7] = (FGIntBase) tmp;
         sign = YES;
     }
 
@@ -4837,7 +4834,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 +(FGInt *) raise: (FGInt *) fGInt  toThePowerMod25519: (FGInt *) fGIntN {
     FGIntOverflow nLength = [[fGIntN number] length]/4;
     FGIntBase tmp;
-    FGInt *tmpFGInt1, *tmpFGInt2, *tmpFGInt;
+    FGInt *tmpFGInt1, *tmpFGInt;
     int j;
 
     FGInt *power = [[FGInt alloc] initWithFGIntBase: 1];
@@ -4881,7 +4878,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 -(void) shiftRightBy136 {
-    FGIntBase length = [number length];
+    FGIntOverflow length = [number length];
     if (length > 17) {
         NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: (length - 17) + 1];
          memcpy([tmpNumber mutableBytes], &[number mutableBytes][17], length - 17);
@@ -4913,13 +4910,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         mod = 0;
         for ( i = 0; i < maxLen; i++ ) {
             tmpMod = (FGIntOverflow) numberArray[i] + tmpNumber[i] + mod;
-            tmpNumber[i] = tmpMod;
+            tmpNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         i = maxLen % 5;
         while (mod != 0) {
             tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
-            tmpNumber[i] = tmpMod;
+            tmpNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
             ++i;
         }
@@ -4929,7 +4926,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             i = 0;
             while (mod != 0) {
                 tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
-                tmpNumber[i] = tmpMod;
+                tmpNumber[i] = (FGIntBase) tmpMod;
                 mod = tmpMod >> 32;
                 ++i;
             }
@@ -4950,7 +4947,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         i = 0;
         while (mod != 0) {
             tmpMod = (FGIntOverflow) tmpNumber[i] + mod;
-            tmpNumber[i] = tmpMod;
+            tmpNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
             ++i;
         }
@@ -4979,15 +4976,15 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     FGIntIndex tmp, rem;
     if (!sign) {
         tmp = (FGIntIndex) (4294967295u - 4) - tmpNumber[0];
-        tmpNumber[0] = tmp;
+        tmpNumber[0] = (FGIntBase) tmp;
         rem = tmp >> 32;
         for ( i = 1; i < 4; i++ ) {
             tmp = (FGIntIndex) 4294967295u - tmpNumber[i] + rem;
-            tmpNumber[i] = tmp;
+            tmpNumber[i] = (FGIntBase) tmp;
             rem = tmp >> 32;
         }
         tmp = (FGIntIndex) 3u - tmpNumber[4] + rem;
-        tmpNumber[4] = tmp;
+        tmpNumber[4] = (FGIntBase) tmp;
         sign = YES;
     }
 
@@ -5009,7 +5006,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* Multiply 2 FGInts, and return fGInt1 * fGInt2 modulo (2^256 - 38) */
 
 +(FGInt *) multiplyModulo1305ish: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGIntBase length1 = [[fGInt1 number] length] / 4,
+    FGIntOverflow length1 = [[fGInt1 number] length] / 4,
               length2 = [[fGInt2 number] length] / 4,
               productLength = length1 + length2, length, head;
     FGIntOverflow tmpMod, mod;
@@ -5027,10 +5024,10 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         mod = 0;
         for( i = 0; i < length1; i++ ) {
             tmpMod = (FGIntOverflow) fGInt1Number[i] * fGInt2Number[j] + tmpNumber[j + i] + mod;
-            tmpNumber[j + i] = tmpMod;
+            tmpNumber[j + i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
-        tmpNumber[j + length1] = mod;
+        tmpNumber[j + length1] = (FGIntBase) mod;
     }
 
     FGIntOverflow tmpLength = ([[tmpFGInt number] length] >> 2), maxLen;
@@ -5047,7 +5044,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         mod = 0;
         for ( i = 0; i < maxLen; i++ ) {
             tmpMod = (FGIntOverflow) productNumber[i] + tmpNumber[i] + mod;
-            productNumber[i] = tmpMod;
+            productNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
         }
         i = maxLen;
@@ -5058,13 +5055,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 productNumber = [[product number] mutableBytes];
             }
             tmpMod = (FGIntOverflow) productNumber[i] + mod;
-            productNumber[i] = tmpMod;
+            productNumber[i] = (FGIntBase) tmpMod;
             mod = tmpMod >> 32;
             ++i;
         }
 
         if (head > 0) {
-            tmpNumber[4] = head;
+            tmpNumber[4] = (FGIntBase) head;
         }        
         [tmpFGInt shiftRightBy136];
         [tmpFGInt multiplyByInt: 320];

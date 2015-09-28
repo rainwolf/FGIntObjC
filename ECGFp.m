@@ -189,7 +189,7 @@
         return self;
     }
 
-    FGIntOverflow byteLength = [[ellipticC p] byteSize], i;
+    FGIntOverflow byteLength = [[ellipticC p] byteSize];
 
     if ([ecPointData length] == (2 * byteLength + 1)) {
         @autoreleasepool{
@@ -295,7 +295,7 @@
     
     NSData *tmpData;
     NSMutableData *result = [[NSMutableData alloc] init];
-    FGIntOverflow byteLength = [[ellipticCurve p] byteSize], i;
+    FGIntOverflow byteLength = [[ellipticCurve p] byteSize];
 
     if (infinity) {
         [result setLength: 1];
@@ -337,7 +337,7 @@
     
     NSData *tmpData;
     NSMutableData *result = [[NSMutableData alloc] init];
-    FGIntOverflow byteLength = [[ellipticCurve p] byteSize], i;
+    FGIntOverflow byteLength = [[ellipticCurve p] byteSize];
     FGIntBase* numberArray;
     unsigned char aBuffer[1];
     aBuffer[0] = 0;
@@ -594,7 +594,7 @@
         return result;
     }
         
-    FGInt *t1, *t2, *t3, *t4, *t5, *t6, *t7, *tmpFGInt, *pFGInt = [[ecPoint1 ellipticCurve] p], *zerone = [[FGInt alloc] initWithFGIntBase: 1];
+    FGInt *t1, *t2, *t3, *t4, *t5, *t7, *tmpFGInt, *pFGInt = [[ecPoint1 ellipticCurve] p], *zerone = [[FGInt alloc] initWithFGIntBase: 1];
     BOOL z1isOne;
     t1 = [[ecPoint1 x] mutableCopy];
     t2 = [[ecPoint1 y] mutableCopy];
@@ -856,7 +856,7 @@
         return result;
     }
         
-    FGInt *t1, *t2, *t3, *t4, *t5, *t6, *t7, *tmpFGInt, *nistFGInt = [[ecPoint1 ellipticCurve] p], *zerone = [[FGInt alloc] initWithFGIntBase: 1];
+    FGInt *t1, *t2, *t3, *t4, *t5, *t7, *tmpFGInt, *nistFGInt = [[ecPoint1 ellipticCurve] p], *zerone = [[FGInt alloc] initWithFGIntBase: 1];
     BOOL z1isOne;
     t1 = [[ecPoint1 x] mutableCopy];
     t2 = [[ecPoint1 y] mutableCopy];
@@ -1066,7 +1066,7 @@
     BOOL aEqualsMinus3 = ([FGInt compareAbsoluteValueOf: [[ecPoint1 ellipticCurve] a] with: pFGInt] == equal);
     [pFGInt release];
 
-    ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]], *tmpECPoint, *tmpECPoint1;
+    ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]], *tmpECPoint;
     FGIntOverflow k1Length = [[k1FGInt number] length]/4, k2Length = [[k2FGInt number] length]/4, i;
     FGIntBase* k1FGIntNumber = [[k1FGInt number] mutableBytes];
     FGIntBase* k2FGIntNumber = [[k2FGInt number] mutableBytes];
@@ -1181,7 +1181,7 @@
     BOOL aEqualsMinus3 = ([FGInt compareAbsoluteValueOf: [[ecPoint1 ellipticCurve] a] with: pFGInt] == equal);
     [pFGInt release];
 
-    ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]], *tmpECPoint, *tmpECPoint1;
+    ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]], *tmpECPoint;
     FGIntOverflow k1Length = [[k1FGInt number] length]/4, k2Length = [[k2FGInt number] length]/4, i;
     FGIntBase* k1FGIntNumber = [[k1FGInt number] mutableBytes];
     FGIntBase* k2FGIntNumber = [[k2FGInt number] mutableBytes];
@@ -1411,7 +1411,7 @@
     @autoreleasepool{
         NSData *tmpData = [x toNSData];
         unsigned char lastByte = 0; 
-        FGIntBase idx = [tmpData length];
+        FGIntOverflow idx = [tmpData length];
         while ((idx > 0) && (lastByte == 0)) {
             --idx;
             [tmpData getBytes: &lastByte range: NSMakeRange(idx, 1)];
@@ -1513,7 +1513,7 @@
 
 
 +(NSDictionary *) is: (FGInt *) dFGInt aCMDmod: (FGInt *) pFGInt {
-    FGInt *tmpFGInt, *tmpD, *tmpFGInt1, *tmpFGInt2, *aFGInt, *bFGInt, *cFGInt, *u1, *u2, *s11, *s121, *s22, *vFGInt, *wFGInt;
+    FGInt *tmpFGInt, *tmpD, *tmpFGInt1, *tmpFGInt2, *aFGInt, *bFGInt, *cFGInt, *u1, *u2, *s11, *s121, *s22, *vFGInt = nil, *wFGInt = nil;
     tmpFGInt = [FGInt subtract: pFGInt and: dFGInt];
 
     if ([tmpFGInt legendreSymbolMod: pFGInt] == -1) {
@@ -1707,7 +1707,7 @@
                     found = YES;
                 }
                 if (isCMD) {
-                    FGInt *wFGInt = [isCMD objectForKey: wKey], *vFGInt;
+                    FGInt *wFGInt = [isCMD objectForKey: wKey], *vFGInt = nil;
                     if ((cmd == 1) || (cmd == 3)) {
                         vFGInt = [isCMD objectForKey: vKey];
                     }
@@ -1850,7 +1850,6 @@
 
 
 +(ECPoint *) constructCurveAndPointMod: (FGInt *) pFGInt ofLeastOrder: (FGIntOverflow) leastBitSize {
-    BOOL constructed = NO;
     NSArray *orders = [ECPoint possibleCurveOrderMod: pFGInt];
     if (!orders) {
         return nil;
@@ -1939,7 +1938,7 @@
 }
 
 +(ECPoint *) generateSecureCurveAndPointOfSize: (FGIntOverflow) gFpSize {
-    FGIntOverflow primeByteLength, i, j, leastOrder;
+    FGIntOverflow leastOrder;
 
     FGInt *pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: gFpSize];
 

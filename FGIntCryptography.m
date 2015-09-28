@@ -71,8 +71,7 @@ This header may not be removed.
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow primeByteLength, i, j, halfBitLength = (bitLength / 2) + (bitLength % 2), length;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow halfBitLength = (bitLength / 2) + (bitLength % 2);
         FGInt *tmpFGInt;
 
         qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: halfBitLength];
@@ -118,9 +117,6 @@ This header may not be removed.
 
 
 -(id) initWithNSData: (NSData *) dataSeed {
-    FGIntOverflow length;
-    FGIntBase* numberArray;
-
     if (!dataSeed) {
         NSLog(@"No dataSeed available for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return nil;
@@ -131,10 +127,9 @@ This header may not be removed.
     }
     if (self = [super init]) {
         FGInt *tmpFGInt;
-        FGIntOverflow seedLength = [dataSeed length], i;
+        FGIntOverflow seedLength = [dataSeed length];
         pFGInt = [[FGInt alloc] initWithNSData: [dataSeed subdataWithRange: NSMakeRange(0, seedLength/2)]];
         qFGInt = [[FGInt alloc] initWithNSData: [dataSeed subdataWithRange: NSMakeRange(seedLength/2, seedLength - seedLength/2)]];
-        FGIntBase firstBit, firstNumberBase;
         
         // if ((seedLength % 2) == 0) {
         //     firstBit = 1 << 31;
@@ -618,7 +613,7 @@ This header may not be removed.
 
     NSData *verificationData = [self encryptNSData: signature];
     BOOL signatureCheck;
-    int difference = [verificationData length] - [plainText length];
+    FGIntIndex difference = [verificationData length] - [plainText length];
     if (([plainText length] < [verificationData length]) && (difference < 4)) {
         NSMutableData *plainTextMutableData = [plainText mutableCopy];
         [plainTextMutableData increaseLengthBy: difference];
@@ -751,11 +746,8 @@ This header may not be removed.
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength, length;
+        FGIntOverflow byteLength, qBitLength = 0, secretKeyLength;
         FGInt *tmpFGInt, *qFGInt;
-        FGIntBase firstBit, firstNumberBase;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
         if (bitLength > 7936) qBitLength = (bitLength * 512) / 15424;
         if (bitLength <= 7936) qBitLength = (bitLength * 384) / 7936;
@@ -818,11 +810,8 @@ This header may not be removed.
         return nil;
     }
     if (self = [super init]) {
-        FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength, length;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow bitLength = 0, byteLength, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength;
         FGInt *tmpFGInt, *qFGInt;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
 //        if (bitLength > 7936) qBitLength = (bitLength * 512) / 15424;
 //        if (bitLength <= 7936) qBitLength = (bitLength * 384) / 7936;
@@ -1114,16 +1103,13 @@ This header may not be removed.
         return nil;
     }
         
-    FGIntOverflow bitLength = [primeFGInt bitSize], kLength, byteLength, j, firstBit;
+    FGIntOverflow bitLength = [primeFGInt bitSize], kLength = 0;
     if (([plainText length] * 8) >= bitLength) {
         NSLog(@"plainText is too big for %s at line %d, decryption will lead to data loss", __PRETTY_FUNCTION__, __LINE__);
         return nil;
     }
         
     FGInt *dataFGInt = [[FGInt alloc] initWithNSData: plainText], *encryptedFGInt, *kFGInt, *hFGInt, *yKFGInt, *tmpFGInt;
-    NSMutableData *tmpData;
-    FGIntOverflow length;
-    FGIntBase* numberArray;
 
     if (bitLength > 7936) kLength = (bitLength * 512) / 15424;
     if (bitLength <= 7936) kLength = (bitLength * 384) / 7936;
@@ -1295,7 +1281,7 @@ This header may not be removed.
     FGIntBase* numberArray;
     do {
         FGInt *dataFGInt = [[FGInt alloc] initWithNSData: plainText], *kFGInt, *hFGInt, *tmpFGInt, *kInvertedFGInt;
-        FGIntOverflow j, firstBit;
+        FGIntBase j, firstBit;
         kFGInt = [[FGInt alloc] initWithNSData: kData];
         firstBit = (1u << 31);
         numberArray = [[kFGInt number] mutableBytes];
@@ -1304,7 +1290,7 @@ This header may not be removed.
         j = j | firstBit;
         numberArray[length - 1] = j;
         
-        FGInt *phi = [primeFGInt mutableCopy], *gcd, *one = [[FGInt alloc] initWithFGIntBase: 1];
+        FGInt *phi = [primeFGInt mutableCopy];
         [phi decrement];
         // gcd = [FGInt binaryGCD: kFGInt and: phi];
         // while ([FGInt compareAbsoluteValueOf: gcd with: one] != equal) {
@@ -1376,7 +1362,7 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow bitLength = [primeFGInt bitSize], kLength, byteLength, j, firstBit;
+    FGIntOverflow bitLength = [primeFGInt bitSize], kLength = 0, byteLength;
     NSMutableData *kData;
     if (bitLength > 7936) kLength = (bitLength * 512) / 15424;
     if (bitLength <= 7936) kLength = (bitLength * 384) / 7936;
@@ -1618,8 +1604,7 @@ This header may not be removed.
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength, length;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow qBitLength = 0, secretKeyLength;
         FGInt *tmpFGInt;
 
 
@@ -1683,8 +1668,7 @@ This header may not be removed.
         return nil;
     }
     if (self = [super init]) {
-        FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength, length;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow bitLength = 0, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength;
         FGInt *tmpFGInt;
 
         if (qBitLength > 384) bitLength = (qBitLength * 15424) / 512;
@@ -1987,7 +1971,8 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = [qFGInt byteSize], firstBit, j;
+    FGIntOverflow byteLength = [qFGInt byteSize];
+    FGIntBase firstBit, j;
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
         return nil;
@@ -2004,7 +1989,7 @@ This header may not be removed.
     j = j | firstBit;
     numberArray[length - 1] = j;
 
-    FGInt *rFGInt, *sFGInt;
+    FGInt *rFGInt = nil, *sFGInt;
     BOOL noLuck;
     do {
         FGInt *hFGInt, *tmpFGInt, *kInvertedFGInt, *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -2057,7 +2042,7 @@ This header may not be removed.
 }
 
 -(NSData *) signNSData: (NSData *) plainText {
-    FGIntOverflow byteLength = [[secretKey number] length], j;
+    FGIntOverflow byteLength = [[secretKey number] length];
     NSMutableData *kData;
     kData = [[NSMutableData alloc] initWithLength: byteLength];
     int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, kData.mutableBytes);
@@ -2315,8 +2300,7 @@ This header may not be removed.
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, i, j, qBitLength, secretKeyLength, length;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow byteLength, qBitLength = 0, secretKeyLength;
         FGInt *tmpFGInt;
 
         if (bitLength > 7936) qBitLength = (bitLength * 512) / 15424;
@@ -2380,11 +2364,8 @@ This header may not be removed.
         return nil;
     }
     if (self = [super init]) {
-        FGIntOverflow bitLength, byteLength, i, j, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength, length;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow bitLength = 0, secretKeyLength = [secretKeyData length]*8, qBitLength = secretKeyLength;
         FGInt *tmpFGInt;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
         if (qBitLength > 384) bitLength = (qBitLength * 15424) / 512;
         if (qBitLength <= 384) bitLength = (qBitLength * 7936) / 384;
@@ -2697,7 +2678,8 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = [qFGInt byteSize], firstBit, j;
+    FGIntOverflow byteLength = [qFGInt byteSize];
+    FGIntBase firstBit, j;
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
         return nil;
@@ -2714,10 +2696,10 @@ This header may not be removed.
     j = j | firstBit;
     numberArray[length - 1] = j;
 
-    FGInt *rFGInt, *sFGInt;
+    FGInt *rFGInt = nil, *sFGInt;
     BOOL noLuck;
     do {
-        FGInt *hFGInt, *tmpFGInt, *kInvertedFGInt, *zero = [[FGInt alloc] initWithFGIntBase: 0];
+        FGInt *hFGInt, *tmpFGInt, *zero = [[FGInt alloc] initWithFGIntBase: 0];
         noLuck = YES;
         while (noLuck) {
             tmpFGInt = [FGInt raise: gFGInt toThePower: kFGInt montgomeryMod: pFGInt];
@@ -3041,11 +3023,8 @@ This header may not be removed.
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, j, secretKeyLength, length;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow secretKeyLength;
         FGInt *tmpFGInt;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
         gPoint = [ECPoint generateSecureCurveAndPointOfSize: bitLength];
         FGInt *nFGInt = [gPoint pointOrder], *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -3649,7 +3628,7 @@ This header may not be removed.
         return signatureCheck;
     }
 
-    FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0], *tmpFGInt, *wFGInt = [FGInt modularInverse: sFGInt mod: nFGInt];
+    FGInt *tmpFGInt, *wFGInt = [FGInt modularInverse: sFGInt mod: nFGInt];
     tmpFGInt = [FGInt multiply: wFGInt and: plainTextFGInt];
     FGInt *u1FGInt = [FGInt mod: tmpFGInt by: nFGInt];
     [tmpFGInt release];
@@ -3811,11 +3790,8 @@ This header may not be removed.
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, j, secretKeyLength, length;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow secretKeyLength;
         FGInt *tmpFGInt;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
         gPoint = [ECPoint generateSecureCurveAndPointOfSize: bitLength];
         FGInt *nFGInt = [gPoint pointOrder], *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -4238,13 +4214,13 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize], j;
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize];
+    FGIntBase j;
     if ([plainText length] > byteLength - 3) {
         NSLog(@"plainText is too big for %s at line %d, make sure it contains %llu bytes or less", __PRETTY_FUNCTION__, __LINE__, byteLength - 3);
         return nil;
     }
 
-    FGInt *rFGInt, *sFGInt;
     FGInt *nFGInt = [gPoint pointOrder];
     ECPoint *dataPoint = [ECPoint inbedNSData: plainText onEllipticCurve: [gPoint ellipticCurve]];
     FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -4286,7 +4262,7 @@ This header may not be removed.
 
 
 -(NSData *) encryptNSData: (NSData *) plainText {
-    FGIntOverflow byteLength = [secretKey byteSize], j;
+    FGIntOverflow byteLength = [secretKey byteSize];
     NSMutableData *kData;
     kData = [[NSMutableData alloc] initWithLength: byteLength];
     int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, kData.mutableBytes);
@@ -4324,9 +4300,9 @@ This header may not be removed.
     NSData *tmpData;
     unsigned char aBuffer[[cipherText length]];
     EllipticCurve *ec = [gPoint ellipticCurve];
-    FGIntBase rangeStart = 0, mpiLength, keyLength;
-    ECPoint *encryptedPoint, *kGPoint;
-    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize], j;
+    FGIntBase rangeStart = 0;
+    ECPoint *encryptedPoint, *kGPoint = nil;
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize];
     if (([cipherText length] != 2*(byteLength + 1)) && ([cipherText length] != 2) && ([cipherText length] != (byteLength + 2))) {
         NSLog(@"cipherText is corrupt for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return nil;
@@ -4555,11 +4531,8 @@ This header may not be removed.
 
 -(id) initWithBitLength: (FGIntOverflow) bitLength {
     if (self = [super init]) {
-        FGIntOverflow byteLength, j, secretKeyLength, length;
-        FGIntBase firstBit, firstNumberBase;
+        FGIntOverflow secretKeyLength;
         FGInt *tmpFGInt;
-        NSMutableData *tmpData;
-        FGIntBase* numberArray;
 
         gPoint = [ECPoint generateSecureCurveAndPointOfSize: bitLength];
         FGInt *nFGInt = [gPoint pointOrder], *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -4770,7 +4743,7 @@ This header may not be removed.
         return signatureCheck;
     }
 
-    FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0], *tmpFGInt, *wFGInt = [FGInt modularInverse: sFGInt mod: nFGInt];
+    FGInt *tmpFGInt, *wFGInt = [FGInt modularInverse: sFGInt mod: nFGInt];
     tmpFGInt = [FGInt multiply: wFGInt and: plainTextFGInt];
     FGInt *u1FGInt = [FGInt mod: tmpFGInt by: nFGInt];
     [tmpFGInt release];
