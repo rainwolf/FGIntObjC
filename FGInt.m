@@ -1444,10 +1444,11 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 /* compute the initial bits for newton inversion with kZero fraction digits */
 
-+(FGInt *) newtonInitialValue: (FGInt *) fGInt precision: (FGIntBase) kZero {
++(FGInt *) newtonInitialValue: (FGInt *) fGInt precision: (FGIntOverflow) kZero {
     FGInt *resFGInt, *tmpFGInt, *bFGInt;
     FGIntOverflow i, j, k, l, isTwo = 0, divisorLength = [[fGInt number] length]/4,
-                    tmpFGIntHead1, tmpFGIntHead2, bFGIntLength, tmpFGIntLength, divInt;
+    tmpFGIntHead1, tmpFGIntHead2, bFGIntLength, tmpFGIntLength;
+    FGIntBase divInt;
     
     k = divisorLength;
     FGIntBase* fGIntNumberArray = [[fGInt number] mutableBytes];
@@ -1493,15 +1494,15 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         while ([FGInt compareAbsoluteValueOf: bFGInt with: fGInt] != smaller) {
             while ([FGInt compareAbsoluteValueOf: bFGInt with: tmpFGInt] != smaller) {
                 if (bFGIntLength > tmpFGIntLength) {
-                    divInt = (FGIntOverflow) (((FGIntOverflow) bFGIntNumber[bFGIntLength - 1] << 32) +
-                                              bFGIntNumber[bFGIntLength - 2]) / tmpFGIntHead1;
+                    divInt = (FGIntBase) ((((FGIntOverflow) bFGIntNumber[bFGIntLength - 1] << 32) +
+                                              bFGIntNumber[bFGIntLength - 2]) / tmpFGIntHead1);
                 } else {
                     if ((bFGIntLength > 1) && (tmpFGIntHead2 != 0)) {
-                       divInt = (((FGIntOverflow) bFGIntNumber[bFGIntLength - 1] << 32) +
-                              bFGIntNumber[bFGIntLength - 2]) / tmpFGIntHead2;
+                       divInt = (FGIntBase) ((((FGIntOverflow) bFGIntNumber[bFGIntLength - 1] << 32) +
+                              bFGIntNumber[bFGIntLength - 2]) / tmpFGIntHead2);
                     } else {
-                        divInt = (FGIntOverflow) (bFGIntNumber[bFGIntLength - 1]) /
-                                 tmpFGIntHead1;
+                        divInt = (FGIntBase) ((FGIntOverflow) bFGIntNumber[bFGIntLength - 1] /
+                                 tmpFGIntHead1);
                     }
                 }
                 if (divInt != 0) {
@@ -1975,14 +1976,14 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         while ([FGInt compareAbsoluteValueOf: modFGInt with: divisorFGInt] != smaller) {
             while ([FGInt compareAbsoluteValueOf: modFGInt with: tmpFGInt] != smaller) {
                 if (modFGIntLength > [[tmpFGInt number] length]/4) {
-                    divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
-                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead1;
+                    divInt = (FGIntBase) ((((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead1);
                 } else {
                     if ((modFGIntLength > 1) && (tmpFGIntHead2 != 0)) {
-                        divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
-                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead2;
+                        divInt = (FGIntBase) ((((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead2);
                     } else {
-                        divInt = (FGIntOverflow) (modFGIntNumber[modFGIntLength - 1]) / tmpFGIntHead1;
+                        divInt = (FGIntBase) (modFGIntNumber[modFGIntLength - 1] / tmpFGIntHead1);
                     }
                 }
                 if (divInt != 0) {
@@ -2059,14 +2060,14 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         while ([FGInt compareAbsoluteValueOf: modFGInt with: divisorFGInt] != smaller) {
             while ([FGInt compareAbsoluteValueOf: modFGInt with: tmpFGInt] != smaller) {
                 if (modFGIntLength > tmpFGIntLength) {
-                    divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
-                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead1;
+                    divInt = (FGIntBase) ((((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead1);
                 } else {
                     if ((modFGIntLength > 1) && (tmpFGIntHead2 != 0)) {
-                        divInt = (FGIntOverflow) (((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
-                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead2;
+                        divInt = (FGIntBase) ((((FGIntOverflow) modFGIntNumber[modFGIntLength - 1] << 32) +
+                                              modFGIntNumber[modFGIntLength - 2]) / tmpFGIntHead2);
                     } else {
-                        divInt = (FGIntOverflow) (modFGIntNumber[modFGIntLength - 1]) / tmpFGIntHead1;
+                        divInt = (FGIntBase) (modFGIntNumber[modFGIntLength - 1] / tmpFGIntHead1);
                     }
                 }
                 if (divInt != 0) {

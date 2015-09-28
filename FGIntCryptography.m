@@ -3455,7 +3455,8 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize], firstBit, j;
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize];
+    FGIntBase firstBit, j;
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
         return nil;
@@ -4226,7 +4227,7 @@ This header may not be removed.
     FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         
     FGInt *tmpFGInt = [[FGInt alloc] initWithNSData: kData];
-    FGIntOverflow firstBit = (1u << 31);
+    FGIntBase firstBit = (1u << 31);
     FGIntBase* numberArray = [[tmpFGInt number] mutableBytes];
     FGIntOverflow length = [[tmpFGInt number] length]/4;
     j = numberArray[length - 1];
@@ -4450,7 +4451,7 @@ This header may not be removed.
                 break;
         }
         [gPoint setEllipticCurve: ec];
-        FGIntBase bits = [[ec p] bitSize] - 1;
+        FGIntOverflow bits = [[ec p] bitSize] - 1;
         [gPoint setX: [[FGInt alloc] initWithRandomNumberOfBitSize: bits]];
         [gPoint setY: [[FGInt alloc] initWithFGIntBase: 0]];
         [gPoint setPointOrder: [[ec curveOrder] mutableCopy]];
@@ -4581,7 +4582,8 @@ This header may not be removed.
         return nil;
     }
 
-    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize], firstBit, j;
+    FGIntOverflow byteLength = [[[gPoint ellipticCurve] p] byteSize];
+    FGIntBase firstBit, j;
     if ([plainText length] < byteLength) {
         NSLog(@"plainText is too small for %s at line %d, make sure it contains more than %llu bytes", __PRETTY_FUNCTION__, __LINE__, byteLength);
         return nil;
@@ -4811,7 +4813,7 @@ This header may not be removed.
 
 +(NSData *) sha512: (NSData *) plainText {
     NSMutableData *hash = [[NSMutableData alloc] initWithLength: CC_SHA512_DIGEST_LENGTH];
-    CC_SHA512([plainText bytes], [plainText length], [hash mutableBytes]);
+    CC_SHA512([plainText bytes], (unsigned int) [plainText length], [hash mutableBytes]);
     return hash;
 }
 

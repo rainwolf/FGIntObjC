@@ -1780,7 +1780,7 @@
 
 +(ECPoint *) constructCurveAndPointWithOrder: (FGInt *) rFGInt andCMD: (unsigned char) cmd andCurve: (EllipticCurve *) ellipticC {
     BOOL constructed = NO;
-    ECPoint *tmpG, *result;
+    ECPoint *tmpG, *result = nil;
     FGInt *tmpFGInt, *tmpA, *tmpB, *xFGInt, *tmpX, *aFGInt = [ellipticC a], *bFGInt = [ellipticC b], *pFGInt = [ellipticC p];
     xFGInt = [[FGInt alloc] initWithFGIntBase: 1];
 
