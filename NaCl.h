@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <Security/SecRandom.h>
 
 
 @interface NaClPacket : NSObject {
@@ -16,7 +17,10 @@
 -(NSData *) unpackXsalsa20Poly1305;
 -(NSData *) packCurve25519Xsalsa20Poly1305;
 -(NSData *) unpackCurve25519Xsalsa20Poly1305;
-
++(NSData *) newCurve25519PrivateKey;
++(NSData *) curve25519PrivateKey: (NSData *) inData;
++(NSData *) basePointTimes: (NSData *) scalar;
++(NSData *) curve25519Point: (NSData *) point times: (NSData *) scalar;
 
 @end
 

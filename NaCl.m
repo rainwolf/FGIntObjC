@@ -137,16 +137,9 @@
 	NSAssert(secretKey, @" no secretKey ");
 	NSAssert(recipientPK, @" no recipientPK ");
 
-	FGInt *secretKeyFGInt = [[FGInt alloc] initWithNSDataToEd25519FGInt: secretKey];
-	FGInt *recipientPKFGInt = [[FGInt alloc] initWithNSData: recipientPK];
-	FGInt *sharedSecretFGInt = [FGInt addBasePointOnCurve25519: recipientPKFGInt kTimes: secretKeyFGInt];
-	[secretKeyFGInt release];
-	[recipientPKFGInt release];
-	NSData *preSharedSecret = [sharedSecretFGInt toNSData];
-	[sharedSecretFGInt release];
+    NSData *preSharedSecret = [NaClPacket curve25519Point:recipientPK times:secretKey];
 	key = [Salsa20 createKeyFromSharedSecret: preSharedSecret];
 	[preSharedSecret release];
-
 
 	return [self packXsalsa20Poly1305];
 }
@@ -155,13 +148,7 @@
 	NSAssert(secretKey, @" no secretKey ");
 	NSAssert(recipientPK, @" no recipientPK ");
 
-	FGInt *secretKeyFGInt = [[FGInt alloc] initWithNSDataToEd25519FGInt: secretKey];
-	FGInt *recipientPKFGInt = [[FGInt alloc] initWithNSData: recipientPK];
-	FGInt *sharedSecretFGInt = [FGInt addBasePointOnCurve25519: recipientPKFGInt kTimes: secretKeyFGInt];
-	[secretKeyFGInt release];
-	[recipientPKFGInt release];
-	NSData *preSharedSecret = [sharedSecretFGInt toNSData];
-	[sharedSecretFGInt release];
+    NSData *preSharedSecret = [NaClPacket curve25519Point:recipientPK times: secretKey];
 	key = [Salsa20 createKeyFromSharedSecret: preSharedSecret];
 	[preSharedSecret release];
 
@@ -169,6 +156,54 @@
 }
 
 
++(NSData *) newCurve25519PrivateKey {
+    NSMutableData *tmpData = [[NSMutableData alloc] initWithCapacity: 32];
+    int result = SecRandomCopyBytes(kSecRandomDefault, 32, [tmpData mutableBytes]);
+    if (result != 0) {
+        [tmpData release];
+        return nil;
+    }
+    unsigned char* numberArray = [tmpData mutableBytes];
+    numberArray[31] = numberArray[31] | 64;
+    numberArray[31] = numberArray[31] & 127;
+    numberArray[0] = numberArray[0] & 248;
+    
+    return tmpData;
+}
+
++(NSData *) curve25519PrivateKey: (NSData *) inData {
+    NSMutableData *tmpData = [[NSMutableData alloc] initWithData:inData];
+    unsigned char* numberArray = [tmpData mutableBytes];
+    numberArray[31] = numberArray[31] | 64;
+    numberArray[31] = numberArray[31] & 127;
+    numberArray[0] = numberArray[0] & 248;
+    
+    return tmpData;
+}
+
++(NSData *) basePointTimes: (NSData *) scalar {
+    unsigned char basePt = 9;
+    NSData *adjustedScalar = [NaClPacket curve25519PrivateKey:scalar];
+    NSData *basePoint = [[NSData alloc] initWithBytes:&basePt length:sizeof(basePt)];
+    NSData *result = [NaClPacket curve25519Point:basePoint times: adjustedScalar];
+    [adjustedScalar release];
+    [basePoint release];
+    
+    return result;
+}
+
++(NSData *) curve25519Point: (NSData *) point times: (NSData *) scalar {
+    NSData *adjustedScalar = [NaClPacket curve25519PrivateKey:scalar];
+    FGInt *pointFGInt = [[FGInt alloc] initWithNSData: point],
+            *scalarFGInt = [[FGInt alloc] initWithNSData: adjustedScalar];
+    [adjustedScalar release];
+    FGInt *resultFGInt = [FGInt addBasePointOnCurve25519: pointFGInt kTimes: scalarFGInt];
+    [pointFGInt release];
+    [scalarFGInt release];
+    NSData *result = [resultFGInt toNSData];
+    
+    return result;
+}
 
 
 @end

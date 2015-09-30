@@ -152,7 +152,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(FGInt *) initWithCurve25519SecretKey {
     FGInt *secretKeyFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: 252];
-    [secretKeyFGInt shiftRightBy: 3];
+    [secretKeyFGInt shiftLeftBy: 3];
     return secretKeyFGInt;
 }
 
