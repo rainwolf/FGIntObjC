@@ -27,9 +27,9 @@
 
 -(NaClPacket *) initWithMessage: (NSData *) messageData key: (NSData *) keyData andNonce: (NSData *) nonceData {
     if (self = [super init]) {
-    	message = messageData;
-    	key = keyData;
-    	nonce = nonceData;
+    	message = [messageData retain];
+    	key = [keyData retain];
+    	nonce = [nonceData retain];
     	recipientPK = nil;
     	secretKey = nil;
     }
@@ -38,11 +38,11 @@
 
 -(NaClPacket *) initWithMessage: (NSData *) messageData recipientsPublicKey: (NSData *) recipientPKData secretKey: (NSData *) secretKeyData andNonce: (NSData *) nonceData {
     if (self = [super init]) {
-    	message = messageData;
+    	message = [messageData retain];
     	key = nil;
-    	nonce = nonceData;
-    	recipientPK = recipientPKData;
-    	secretKey = secretKeyData;
+    	nonce = [nonceData retain];
+    	recipientPK = [recipientPKData retain];
+    	secretKey = [secretKeyData retain];
     }
     return self;
 }
@@ -157,7 +157,7 @@
 
 
 +(NSData *) newCurve25519PrivateKey {
-    NSMutableData *tmpData = [[NSMutableData alloc] initWithCapacity: 32];
+    NSMutableData *tmpData = [[NSMutableData alloc] initWithLength: 32];
     int result = SecRandomCopyBytes(kSecRandomDefault, 32, [tmpData mutableBytes]);
     if (result != 0) {
         [tmpData release];
@@ -181,7 +181,7 @@
     return tmpData;
 }
 
-+(NSData *) basePointTimes: (NSData *) scalar {
++(NSData *) curve25519BasePointTimes: (NSData *) scalar {
     unsigned char basePt = 9;
     NSData *adjustedScalar = [NaClPacket curve25519PrivateKey:scalar];
     NSData *basePoint = [[NSData alloc] initWithBytes:&basePt length:sizeof(basePt)];

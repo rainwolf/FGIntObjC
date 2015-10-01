@@ -19,7 +19,7 @@
 -(NSData *) unpackCurve25519Xsalsa20Poly1305;
 +(NSData *) newCurve25519PrivateKey;
 +(NSData *) curve25519PrivateKey: (NSData *) inData;
-+(NSData *) basePointTimes: (NSData *) scalar;
++(NSData *) curve25519BasePointTimes: (NSData *) scalar;
 +(NSData *) curve25519Point: (NSData *) point times: (NSData *) scalar;
 
 @end
