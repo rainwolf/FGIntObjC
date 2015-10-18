@@ -2110,13 +2110,15 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 /*  barrettMod expects fGInt to contain not more than double the amount of significant bits of divisorFGInt,
     invertedDivisor has double the amount of significant bits of divisorFGInt as fraction bits.
-    barrettMod expects all arguments to be positive.
 */
 
 
 +(FGInt *) barrettMod: (FGInt *) fGInt by: (FGInt *) divisorFGInt with: (FGInt *) invertedDivisor andPrecision: (FGIntOverflow) precision {
     FGInt *modFGInt, *resFGInt, *tmpFGInt;
     FGIntOverflow i, j, k;
+
+    BOOL fGIntSign = [fGInt sign];
+    [fGInt setSign: YES];
     
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
 
@@ -2152,9 +2154,22 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             }
         }
         
-        return modFGInt;
-    } else 
-        return [fGInt mutableCopy];
+        if (fGIntSign) {
+            return modFGInt;
+        } else {
+            [fGInt setSign: NO];
+            FGInt *result = [FGInt subtract: divisorFGInt and: modFGInt];
+            [modFGInt release];
+            return result;
+        }
+    } else {
+        if (fGIntSign) {
+            return [fGInt mutableCopy];
+        } else {
+            [fGInt setSign: NO];
+            return [FGInt add: divisorFGInt and: fGInt];
+        }
+    }
 }
 
 
@@ -2162,6 +2177,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     FGInt *modFGInt, *resFGInt, *tmpFGInt;
     FGIntOverflow i, j, k;
     
+    BOOL fGIntSign = [fGInt sign];
+    [fGInt setSign: YES];
+
     if ([FGInt compareAbsoluteValueOf: fGInt with: divisorFGInt] != smaller) {
 
         tmpFGInt = [[FGInt alloc] initWithoutNumber];
@@ -2206,9 +2224,22 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             }
         }
         
-        return modFGInt;
-    } else 
-        return fGInt;
+        if (fGIntSign) {
+            return modFGInt;
+        } else {
+            [fGInt setSign: NO];
+            FGInt *result = [FGInt subtract: divisorFGInt and: modFGInt];
+            [modFGInt release];
+            return result;
+        }
+    } else {
+        if (fGIntSign) {
+            return fGInt;
+        } else {
+            [fGInt setSign: NO];
+            return [FGInt add: divisorFGInt and: fGInt];
+        }
+    }
 }
 
 

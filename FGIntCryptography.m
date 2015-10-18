@@ -20,7 +20,7 @@ This header may not be removed.
 
 #import "FGIntCryptography.h"
 #import <Security/SecRandom.h>
-#import <CommonCrypto/CommonDigest.h>
+#import "FGIntXtra.h"
 
 
 
@@ -4811,12 +4811,6 @@ This header may not be removed.
 }
 
 
-+(NSData *) sha512: (NSData *) plainText {
-    NSMutableData *hash = [[NSMutableData alloc] initWithLength: CC_SHA512_DIGEST_LENGTH];
-    CC_SHA512([plainText bytes], (unsigned int) [plainText length], [hash mutableBytes]);
-    return hash;
-}
-
 -(void) generateNewSecretAndPublicKey {
     if (secretKey) {
         [secretKey release];
@@ -4828,7 +4822,7 @@ This header may not be removed.
     // capture no random data
     secretKey = (NSData *) tmpData;
 
-    NSMutableData *hashData = (NSMutableData *) [Ed25519SHA512 sha512: secretKey];
+    NSMutableData *hashData = (NSMutableData *) [FGIntXtra SHA512: secretKey];
     tmpData = [[NSMutableData alloc] initWithBytes: [hashData bytes] length: 32];
     FGInt *secretKeyFGInt = [[FGInt alloc] initWithNSDataToEd25519FGInt: tmpData];
     // [tmpData release];
@@ -4876,7 +4870,7 @@ This header may not be removed.
 
 
 -(NSData *) signNSData: (NSData *) plainText {
-    NSMutableData *hashData = (NSMutableData *) [Ed25519SHA512 sha512: secretKey];
+    NSMutableData *hashData = (NSMutableData *) [FGIntXtra SHA512: secretKey];
     NSMutableData *tmpData = [[NSMutableData alloc] initWithBytes: [hashData bytes] length: 32];
     FGInt *secretKeyFGInt = [[FGInt alloc] initWithNSDataToEd25519FGInt: tmpData];
     int result = SecRandomCopyBytes(kSecRandomDefault, [tmpData length], [tmpData mutableBytes]);
@@ -4886,7 +4880,7 @@ This header may not be removed.
     result = SecRandomCopyBytes(kSecRandomDefault, [hashData length], [hashData mutableBytes]);
     [hashData release];
     [r appendData: plainText];
-    tmpData = (NSMutableData *) [Ed25519SHA512 sha512: r];
+    tmpData = (NSMutableData *) [FGIntXtra SHA512: r];
     result = SecRandomCopyBytes(kSecRandomDefault, [r length], [r mutableBytes]);
     [r release];
     FGInt *rFGInt = [[FGInt alloc] initWithNSData: tmpData];
@@ -4902,7 +4896,7 @@ This header may not be removed.
     tmpData = [signatureData mutableCopy];
     [tmpData appendData: [publicKey to25519NSData]];
     [tmpData appendData: plainText];
-    hashData = (NSMutableData *) [Ed25519SHA512 sha512: tmpData];
+    hashData = (NSMutableData *) [FGIntXtra SHA512: tmpData];
     FGInt *hashFGInt = [[FGInt alloc] initWithNSData: hashData];
     [tmpData release];
 
@@ -4934,7 +4928,7 @@ This header may not be removed.
     NSMutableData *tmpData = [[NSMutableData alloc] initWithBytes: [signatureData bytes] length: 32];
     [tmpData appendData: [publicKey to25519NSData]];
     [tmpData appendData: plainText];
-    NSMutableData *hashData = (NSMutableData *) [Ed25519SHA512 sha512: tmpData];
+    NSMutableData *hashData = (NSMutableData *) [FGIntXtra SHA512: tmpData];
     FGInt *tmpFGInt = [[FGInt alloc] initWithNSData: hashData];
     [tmpData release];
     [tmpFGInt setSign: NO];

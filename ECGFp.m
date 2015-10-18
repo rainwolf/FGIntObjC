@@ -737,6 +737,267 @@
 
 
 
++(ECPoint *) projectiveDouble: (ECPoint *) ecPoint aEqualsMinus3: (BOOL) is3 withInvertedPrime: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+    if ([ecPoint infinity]) {
+        ECPoint *result = [ecPoint mutableCopy];
+        return result;
+    }
+    
+    FGInt *zero = [[FGInt alloc] initWithFGIntBase: 0];
+    if ([FGInt compareAbsoluteValueOf: [ecPoint y] with: zero] == equal) {
+        ECPoint *result = [[ECPoint alloc] init];
+        [result setX: [[FGInt alloc] initWithFGIntBase: 1]];
+        [result setY: [[FGInt alloc] initWithFGIntBase: 1]];
+        [result setProjectiveZ: zero];
+        [result setInfinity: YES];
+        [result setEllipticCurve: [ecPoint ellipticCurve]];
+        return result;
+    }
+    [zero release];
+        
+    FGInt *t1, *t2, *t3, *t4, *t5, *tmpFGInt, *pFGInt = [[ecPoint ellipticCurve] p];
+
+    if (is3) {
+        tmpFGInt = [FGInt square: [ecPoint projectiveZ]];
+        t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+        t5 = [FGInt subtract: [ecPoint x] and: t4];
+        [t4 addWith: [ecPoint x]];
+        tmpFGInt = t4;
+        t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt multiply: t4 and: t5];
+        [t5 release];
+        t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+        [t5 multiplyByInt: 3];
+        t4 = [FGInt barrettMod: t5 by: pFGInt with: invertedP andPrecision: precision];
+        [t5 release];
+    } else {
+        tmpFGInt = [FGInt square: [ecPoint projectiveZ]];
+        t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+        t2 = [FGInt square: t1];
+        [t1 release];
+        t1 = [FGInt barrettMod: t2 by: pFGInt with: invertedP andPrecision: precision];
+        [t2 release];
+        tmpFGInt = [FGInt multiply: t1 and: [[ecPoint ellipticCurve] a]];
+        [t1 release];
+        t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+        t1 = [FGInt square: [ecPoint x]];
+        t2 = [FGInt barrettMod: t1 by: pFGInt with: invertedP andPrecision: precision];
+        [t1 release];
+        [t2 multiplyByInt: 3];
+        [t2 addWith: t5];
+        t4 = [FGInt barrettMod: t2 by: pFGInt with: invertedP andPrecision: precision];
+        [t5 release];
+        [t2 release];
+    }
+
+    ECPoint *result = [[ECPoint alloc] init];
+    [result setEllipticCurve: [ecPoint ellipticCurve]];
+
+    t2 = [FGInt multiply: [ecPoint y] and: [ecPoint projectiveZ]];
+    tmpFGInt = [FGInt barrettMod: t2 by: pFGInt with: invertedP andPrecision: precision];
+    [t2 release];
+    [tmpFGInt shiftLeft];
+    t3 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt square: [ecPoint y]];
+    t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t2 and: [ecPoint x]];
+    [tmpFGInt shiftLeftBy: 2];
+    t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt square: t4];
+    t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    [t5 shiftLeft];
+    tmpFGInt = [FGInt subtract: t1 and: t5];
+    [t1 release];
+    t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    [t5 shiftRight];
+    tmpFGInt = [FGInt square: t2];
+    [t2 release];
+    t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [t2 shiftLeftBy: 3];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt subtract: t5 and: t1];
+    [t5 release];
+    t5 = tmpFGInt;
+    tmpFGInt = [FGInt multiply: t4 and: t5];
+    t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt subtract: t5 and: t2];
+    [t2 release];
+    t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    [result setX: t1];
+    [result setY: t2];
+    [result setProjectiveZ: t3];
+
+    return result;
+}
+
+
++(ECPoint *) projectiveAdd: (ECPoint *) ecPoint1 and: (ECPoint *) ecPoint2 aEqualsMinus3: (BOOL) is3 withInvertedPrime: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+    if ([ecPoint1 infinity]) {
+        ECPoint *result = [ecPoint2 mutableCopy];
+        return result;
+    }
+    if ([ecPoint2 infinity]) {
+        ECPoint *result = [ecPoint1 mutableCopy];
+        return result;
+    }
+        
+    FGInt *t1, *t2, *t3, *t4, *t5, *t7, *tmpFGInt, *pFGInt = [[ecPoint1 ellipticCurve] p], *zerone = [[FGInt alloc] initWithFGIntBase: 1];
+    BOOL z1isOne;
+    t1 = [[ecPoint1 x] mutableCopy];
+    t2 = [[ecPoint1 y] mutableCopy];
+    t3 = [[ecPoint1 projectiveZ] mutableCopy];
+
+    z1isOne = ([FGInt compareAbsoluteValueOf: zerone with: [ecPoint2 projectiveZ]] == equal);
+    if (!z1isOne) {
+        tmpFGInt = [FGInt square: [ecPoint2 projectiveZ]];
+        t7 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt multiply: t1 and: t7];
+        [t1 release];
+        t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt multiply: [ecPoint2 projectiveZ] and: t7];
+        [t7 release];
+        t7 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt multiply: t2 and: t7];
+        [t2 release];
+        [t7 release];
+        t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+    }
+
+    tmpFGInt = [FGInt square: [ecPoint1 projectiveZ]];
+    t7 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t7 and: [ecPoint2 x]];
+    t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t7 and: [ecPoint1 projectiveZ]];
+    [t7 release];
+    t7 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t7 and: [ecPoint2 y]];
+    [t7 release];
+    t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt subtract: t1 and: t4];
+    t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    tmpFGInt = [FGInt subtract: t2 and: t5];
+    [t5 release];
+    t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    [zerone decrement];
+    if ([FGInt compareAbsoluteValueOf: t4 with: zerone] == equal) {
+        if ([FGInt compareAbsoluteValueOf: t5 with: zerone] == equal) {
+            [zerone release];
+            [t4 release];
+            [t5 release];
+            [t1 release];
+            [t2 release];
+            return [ECPoint projectiveDouble: ecPoint1 aEqualsMinus3: is3];
+        } else {
+            [zerone release];
+            [t4 release];
+            [t5 release];
+            [t1 release];
+            [t2 release];
+            ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint1 ellipticCurve]];
+            [result makeProjective];
+            return result;
+        }
+    }
+    [t1 shiftLeft];
+    tmpFGInt = [FGInt subtract: t1 and: t4];
+    [t1 release];
+    t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    [t2 shiftLeft];
+    tmpFGInt = [FGInt subtract: t2 and: t5];
+    [t2 release];
+    t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    if (!z1isOne) {
+        tmpFGInt = [FGInt multiply: t3 and: [ecPoint2 projectiveZ]];
+        [t3 release];
+        t3 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [tmpFGInt release];
+    } 
+    tmpFGInt = [FGInt multiply: t3 and: t4];
+    [t3 release];
+    t3 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt square: t4];
+    t7 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t4 and: t7];
+    [t4 release];
+    t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t1 and: t7];
+    [t7 release];
+    t7 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    [t1 release];
+    t1 = [FGInt square: t5];
+    tmpFGInt = [FGInt subtract: t1 and: t7];
+    [t1 release];
+    t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    [t1 shiftLeft];
+    tmpFGInt = [FGInt subtract: t7 and: t1];
+    [t7 release];
+    t7 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    [t1 shiftRight];
+    tmpFGInt = [FGInt multiply: t5 and: t7];
+    [t5 release];
+    [t7 release];
+    t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    tmpFGInt = [FGInt multiply: t2 and: t4];
+    [t4 release];
+    t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    [t2 release];
+    tmpFGInt = [FGInt subtract: t5 and: t4];
+    [t5 release];
+    [t4 release];
+    t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [tmpFGInt release];
+    FGIntBase* numberArray = [[t2 number] mutableBytes];
+    if ((numberArray[0] & 1) == 0) {
+        [t2 shiftRight];
+    } else {
+        [t2 addWith: pFGInt];
+        [t2 shiftRight];
+    }
+
+
+    ECPoint *result = [[ECPoint alloc] init];
+    [result setEllipticCurve: [ecPoint1 ellipticCurve]];
+    [result setX: t1];
+    [result setY: t2];
+    [result setProjectiveZ: t3];
+    return result;
+}
+
+
+
+
+
 +(ECPoint *) projectiveDouble: (ECPoint *) ecPoint withNISTprime: (tag) nistPrimeTag aEqualsMinus3: (BOOL) is3 {
     if ([ecPoint infinity]) {
         ECPoint *result = [ecPoint mutableCopy];
@@ -1004,6 +1265,9 @@
     ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint ellipticCurve]], *tmpECPoint, *tmpECPoint1;
 
     FGInt *pFGInt = [[[ecPoint ellipticCurve] p] mutableCopy];
+    FGIntOverflow precision = [pFGInt bitSize];
+    FGInt *invertedP = [FGInt newtonInversion: pFGInt withPrecision: precision];
+
     [pFGInt decrement];
     [pFGInt decrement];
     [pFGInt decrement];
@@ -1017,15 +1281,19 @@
     [tmpECPoint1 makeProjective];
     [result makeProjective];
 
+
+
     for( i = 0; i < kLength - 1; i++ ) {
         tmp = kFGIntNumber[i];
         for( j = 0; j < 32; ++j ) {
             if ((tmp % 2) == 1) {
-                tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+                // tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+                tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
                 [result release];
                 result = tmpECPoint;
             }
-            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+            // tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
             [tmpECPoint1 release];
             tmpECPoint1 = tmpECPoint;
             tmp >>= 1;
@@ -1034,17 +1302,20 @@
     tmp = kFGIntNumber[kLength - 1];
     while (tmp != 0) {
         if ((tmp % 2) == 1) {
-            tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+            // tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+            tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
             [result release];
             result = tmpECPoint;
         }
         tmp >>= 1;
         if (tmp != 0) {
-            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+            // tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
             [tmpECPoint1 release];
             tmpECPoint1 = tmpECPoint;
         }
     }
+    [invertedP release];
 
     [tmpECPoint1 makeAffine];
     [tmpECPoint1 release];
@@ -1060,6 +1331,9 @@
     }
         
     FGInt *pFGInt = [[[ecPoint1 ellipticCurve] p] mutableCopy];
+    FGIntOverflow precision = [pFGInt bitSize];
+    FGInt *invertedP = [FGInt newtonInversion: pFGInt withPrecision: precision];
+
     [pFGInt decrement];
     [pFGInt decrement];
     [pFGInt decrement];
@@ -1086,25 +1360,30 @@
             k2Base = 0;
         }
         for( int j = 31; j >= 0; --j ) {
-            tmpECPoint = [ECPoint projectiveDouble: result aEqualsMinus3: aEqualsMinus3];
+            // tmpECPoint = [ECPoint projectiveDouble: result aEqualsMinus3: aEqualsMinus3];
+            tmpECPoint = [ECPoint projectiveDouble: result aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
             [result release];
             result = tmpECPoint;
             if ((((k1Base >> j) % 2) == 1) && (((k2Base >> j) % 2) == 1)) {
-                tmpECPoint = [ECPoint projectiveAdd: result and: sum aEqualsMinus3: aEqualsMinus3];
+                // tmpECPoint = [ECPoint projectiveAdd: result and: sum aEqualsMinus3: aEqualsMinus3];
+                tmpECPoint = [ECPoint projectiveAdd: result and: sum aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
                 [result release];
                 result = tmpECPoint;
             } else if (((k1Base >> j) % 2) == 1) {
-                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint1 aEqualsMinus3: aEqualsMinus3];
+                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint1 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
+                // tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint1 aEqualsMinus3: aEqualsMinus3];
                 [result release];
                 result = tmpECPoint;
             } else if (((k2Base >> j) % 2) == 1) {
-                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint2 aEqualsMinus3: aEqualsMinus3];
+                tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint2 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
+                // tmpECPoint = [ECPoint projectiveAdd: result and: ecPoint2 aEqualsMinus3: aEqualsMinus3];
                 [result release];
                 result = tmpECPoint;
             }
         }
     }
     [sum release];
+    [invertedP release];
 
     [one release];
     [ecPoint1 setProjectiveZ: nil];
@@ -1345,21 +1624,19 @@
         NSLog(@"data is empty for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
         return nil;
     }
-    if ([data length] > byteLength - 3) {
-        NSLog(@"data is too big (it needs to be %llu or less) for %s at line %d", byteLength - 2, __PRETTY_FUNCTION__, __LINE__);
+    if ([data length] > byteLength - 4) {
+        NSLog(@"data is too big (it needs to be %llu or less) for %s at line %d", byteLength - 3, __PRETTY_FUNCTION__, __LINE__);
         return nil;
     }
 
     NSMutableData *tmpData = [[NSMutableData alloc] init];
-    unsigned char padLength = MIN(255, byteLength - 1 - [data length] - 1);
-    unsigned char aBuffer[1];
-    aBuffer[0] = 0;
-    for ( FGIntIndex i = 0; i < padLength; ++i ) {
-        [tmpData appendBytes: aBuffer length: 1];
-    }
+    FGIntBase padLength = byteLength - 1 - [data length] - 2;
+    unsigned char aBuffer[2];
+    [tmpData setLength: padLength];
     [tmpData appendData: data];
     aBuffer[0] = padLength;
-    [tmpData appendBytes: aBuffer length: 1];
+    aBuffer[1] = (padLength >> 8);
+    [tmpData appendBytes: aBuffer length: 2];
 
     FGInt *x = [[FGInt alloc] initWithNSData: tmpData], *counter = [[FGInt alloc] initWithFGIntBase: 0], *MaxTries = [[FGInt alloc] initWithFGIntBase: 1], *x3;
     [MaxTries shiftLeftBy: 8 * padLength];
@@ -1409,22 +1686,19 @@
     }
 
     @autoreleasepool{
-        NSData *tmpData = [x toNSData];
-        unsigned char lastByte = 0; 
-        FGIntOverflow idx = [tmpData length];
-        while ((idx > 0) && (lastByte == 0)) {
-            --idx;
-            [tmpData getBytes: &lastByte range: NSMakeRange(idx, 1)];
-        }
-        if (idx == 0) {
-            return nil;
-        }
-        if ([tmpData length] < lastByte + 1 ) {
+        NSMutableData *tmpData = [[x toNSData] mutableCopy];
+        FGIntOverflow byteLength = [[ellipticCurve p] byteSize];
+        [tmpData setLength: byteLength - 1];
+        unsigned char *bytes = [tmpData mutableBytes]; 
+        FGIntOverflow padLength = bytes[[tmpData length] - 1];
+        padLength <<= 8;
+        padLength += bytes[[tmpData length] - 2];
+        if ([tmpData length] < padLength - 2 ) {
             NSLog(@"There is no inbedded data for %s at line %d", __PRETTY_FUNCTION__, __LINE__);
             [tmpData release];
             return nil;
         }
-        NSData *result = [[NSData alloc] initWithData: [tmpData subdataWithRange: NSMakeRange(lastByte, [tmpData length] - 1 - lastByte)]];
+        NSData *result = [[NSData alloc] initWithData: [tmpData subdataWithRange: NSMakeRange(padLength, [tmpData length] - 2 - padLength)]];
         [tmpData release];
         return result;
     }

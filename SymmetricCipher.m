@@ -27,7 +27,9 @@ static word rotateBy(word inputWord, int offSet) {
 	return (inputWord << offSet) | (inputWord >> (32 - offSet));
 }
 
-static void quarterRound(word* const outputWord0, word* const outputWord1, word* const outputWord2, word* const outputWord3, word* const inputWord0, word* const inputWord1, word* const inputWord2, word* const inputWord3) {
+static void quarterRound(word* const outputWord0, word* const outputWord1, word* const outputWord2, word* const outputWord3, 
+	word* const inputWord0, word* const inputWord1, word* const inputWord2, word* const inputWord3) {
+	
 	*outputWord1 = *inputWord1 ^ (rotateBy(*inputWord0 + *inputWord3, 7));
 	*outputWord2 = *inputWord2 ^ (rotateBy(*outputWord1 + *inputWord0, 9));
 	*outputWord3 = *inputWord3 ^ (rotateBy(*outputWord2 + *outputWord1, 13));
@@ -68,7 +70,8 @@ static void salsa20Hash(word* const outputWords, word* const inputWords) {
 }
 
 static void salsa20Expand256bit(unsigned char* const outputBytes, unsigned char* const keyBytes, unsigned char* const nonceBytes) {
-	unsigned char tmpBytes[64] = {101,120,112,97, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 110,100,32,51, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 50,45,98,121, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 116,101,32,107};
+	unsigned char tmpBytes[64] = {101,120,112,97, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 110,100,32,51,
+        0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 50,45,98,121, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 116,101,32,107};
 	memcpy(&tmpBytes[4], keyBytes, 16);
 	memcpy(&tmpBytes[24], nonceBytes, 16);
 	memcpy(&tmpBytes[44], &keyBytes[16], 16);
@@ -76,14 +79,17 @@ static void salsa20Expand256bit(unsigned char* const outputBytes, unsigned char*
 }
 
 static void salsa20Expand128bit(unsigned char* const outputBytes, unsigned char* const keyBytes, unsigned char* const nonceBytes) {
-	unsigned char tmpBytes[64] = {101,120,112,97, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 110,100,32,49, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 54,45,98,121, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 116,101,32,107};
+	unsigned char tmpBytes[64] = {101,120,112,97, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 110,100,32,49,
+        0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 54,45,98,121, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 116,101,32,107};
 	memcpy(&tmpBytes[4], keyBytes, 16);
 	memcpy(&tmpBytes[24], nonceBytes, 16);
 	memcpy(&tmpBytes[44], keyBytes, 16);
 	salsa20Hash((word*) outputBytes, (word*) tmpBytes);
 }
 
-static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, unsigned char* const inputBytes, unsigned long long const length , unsigned char* const keyBytes, unsigned long const keyLength, unsigned char* const nonceBytes) {
+static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, unsigned char* const inputBytes, unsigned long long const length, 
+	unsigned char* const keyBytes, unsigned long const keyLength, unsigned char* const nonceBytes) {
+	
 	unsigned char nonceBytesCounter[16];
 	memcpy(nonceBytesCounter, nonceBytes, 8);
 	unsigned long long nonceCounter = 0;
@@ -118,7 +124,8 @@ static void salsa20EncryptDecryptOrWhatever(unsigned char* const outputBytes, un
 
 
 static void hsalsa20(unsigned char* const outputBytes, unsigned char* const keyBytes, unsigned char* const nonceBytes) {
-	unsigned char tmpBytes[64] = {101,120,112,97, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 110,100,32,51, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 50,45,98,121, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 116,101,32,107};
+	unsigned char tmpBytes[64] = {101,120,112,97, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 110,100,32,51, 
+		0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 50,45,98,121, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 116,101,32,107};
 	memcpy(&tmpBytes[4], keyBytes, 16);
 	memcpy(&tmpBytes[24], nonceBytes, 16);
 	memcpy(&tmpBytes[44], &keyBytes[16], 16);
@@ -226,18 +233,18 @@ static void hsalsa20(unsigned char* const outputBytes, unsigned char* const keyB
 
 
 
-@implementation Rijndael256
-@synthesize message;
-@synthesize iv;
-@synthesize key;
-
-
-
-
-
-@end
-
-
+//@implementation Rijndael256
+//@synthesize message;
+//@synthesize iv;
+//@synthesize key;
+//
+//
+//
+//
+//
+//@end
+//
+//
 
 
 

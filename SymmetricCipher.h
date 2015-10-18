@@ -22,15 +22,15 @@ typedef unsigned int word;
 
 
 
-@interface Rijndael256 : NSObject {
-	NSData *message, *iv, *key;
-}
-@property (retain, readwrite) NSData *message;
-@property (retain, readwrite) NSData *iv;
-@property (retain, readwrite) NSData *key;
+// @interface Rijndael256 : NSObject {
+// 	NSData *message, *iv, *key;
+// }
+// @property (retain, readwrite) NSData *message;
+// @property (retain, readwrite) NSData *iv;
+// @property (retain, readwrite) NSData *key;
 
 
-@end
+// @end
 
 
 
