@@ -11,7 +11,7 @@ int main (int argc, const char * argv[]) {
         double timePassed_ms;
         NSString *plaintextString, *pkey, *skey;
         NSData *encryptedData, *decryptedData, *signedData;
-        FGIntBase bitSize = 1024;    
+        FGIntBase bitSize = 2048;    
 
         NSLog(@" initializing %u bit RSA.", bitSize);
         plaintextString = @"Prediction is very difficult, especially of the future.";
@@ -150,7 +150,7 @@ int main (int argc, const char * argv[]) {
 
 
 
-        bitSize = 160;
+        bitSize = 512;
         plaintextString = @"Physics is like sex. Sure, it may give some practical results, but that's not why we do it.";
         NSLog(@" initializing %u bit ECDSA.", bitSize);
         date = [NSDate date];

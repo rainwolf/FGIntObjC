@@ -5,9 +5,10 @@ clang -ObjC -O3 TwistedEdwardsCurve.m -c
 clang -ObjC -O3 FGIntCryptography.m -c
 clang -ObjC -O3 SymmetricCipher.m -c
 clang -ObjC -O3 OneWay.m -c
+clang -ObjC -O3 FGIntXtra.m -c
 clang -ObjC -O3 NaCl.m -c
 clang -ObjC -O3 NSMutableData+FGInt.m -c
-clang -framework Foundation -framework Security -ObjC NSMutableData+FGInt.o FGInt.o ECGFp.o TwistedEdwardsCurve.o FGIntCryptography.o SymmetricCipher.o OneWay.o NaCl.o main.m -o test
+clang -framework Foundation -framework Security -ObjC NSMutableData+FGInt.o FGInt.o ECGFp.o TwistedEdwardsCurve.o FGIntCryptography.o SymmetricCipher.o OneWay.o FGIntXtra.o NaCl.o main.m -o test
 rm *.o
 ./test
 rm test 

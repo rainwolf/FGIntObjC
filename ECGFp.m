@@ -763,16 +763,13 @@
         [tmpFGInt release];
         t5 = [FGInt subtract: [ecPoint x] and: t4];
         [t4 addWith: [ecPoint x]];
-        tmpFGInt = t4;
-        t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
-        [tmpFGInt release];
+        [t4 reduceBySubtracting: pFGInt atMost: 2];
         tmpFGInt = [FGInt multiply: t4 and: t5];
         [t5 release];
-        t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
-        [tmpFGInt release];
-        [t5 multiplyByInt: 3];
-        t4 = [FGInt barrettMod: t5 by: pFGInt with: invertedP andPrecision: precision];
-        [t5 release];
+        [t4 release];
+        t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+        [t4 multiplyByInt: 3];
+        [t4 reduceBySubtracting: pFGInt atMost: 3];
     } else {
         tmpFGInt = [FGInt square: [ecPoint projectiveZ]];
         t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
@@ -786,30 +783,28 @@
         t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
         [tmpFGInt release];
         t1 = [FGInt square: [ecPoint x]];
-        t2 = [FGInt barrettMod: t1 by: pFGInt with: invertedP andPrecision: precision];
+        t4 = [FGInt barrettMod: t1 by: pFGInt with: invertedP andPrecision: precision];
         [t1 release];
-        [t2 multiplyByInt: 3];
-        [t2 addWith: t5];
-        t4 = [FGInt barrettMod: t2 by: pFGInt with: invertedP andPrecision: precision];
-        [t5 release];
-        [t2 release];
+        [t4 multiplyByInt: 3];
+        [t4 addWith: t5];
+        [t4 reduceBySubtracting: pFGInt atMost: 4];
     }
 
     ECPoint *result = [[ECPoint alloc] init];
     [result setEllipticCurve: [ecPoint ellipticCurve]];
 
     t2 = [FGInt multiply: [ecPoint y] and: [ecPoint projectiveZ]];
-    tmpFGInt = [FGInt barrettMod: t2 by: pFGInt with: invertedP andPrecision: precision];
+    t3 = [FGInt barrettMod: t2 by: pFGInt with: invertedP andPrecision: precision];
     [t2 release];
-    [tmpFGInt shiftLeft];
-    t3 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
-    [tmpFGInt release];
+    [t3 shiftLeft];
+    [t3 reduceBySubtracting: pFGInt atMost: 1];
     tmpFGInt = [FGInt square: [ecPoint y]];
     t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
     [tmpFGInt release];
     tmpFGInt = [FGInt multiply: t2 and: [ecPoint x]];
-    [tmpFGInt shiftLeftBy: 2];
     t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    [t5 shiftLeftBy: 2];
+    [t5 reduceBySubtracting: pFGInt atMost: 4];
     [tmpFGInt release];
     tmpFGInt = [FGInt square: t4];
     t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
@@ -817,15 +812,17 @@
     [t5 shiftLeft];
     tmpFGInt = [FGInt subtract: t1 and: t5];
     [t1 release];
-    t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    t1 = [FGInt reduce: tmpFGInt bySubtracting: pFGInt atMost: 3];
     [tmpFGInt release];
     [t5 shiftRight];
     tmpFGInt = [FGInt square: t2];
     [t2 release];
     t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
     [t2 shiftLeftBy: 3];
+    [t2 reduceBySubtracting: pFGInt atMost: 8];
     [tmpFGInt release];
     tmpFGInt = [FGInt subtract: t5 and: t1];
+    [tmpFGInt reduceBySubtracting: pFGInt atMost: 1];
     [t5 release];
     t5 = tmpFGInt;
     tmpFGInt = [FGInt multiply: t4 and: t5];
@@ -894,10 +891,10 @@
     t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
     [tmpFGInt release];
     tmpFGInt = [FGInt subtract: t1 and: t4];
-    t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    t4 = [FGInt reduce: tmpFGInt bySubtracting: pFGInt atMost: 1];
     tmpFGInt = [FGInt subtract: t2 and: t5];
     [t5 release];
-    t5 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    t5 = [FGInt reduce: tmpFGInt bySubtracting: pFGInt atMost: 1];
     [tmpFGInt release];
     [zerone decrement];
     if ([FGInt compareAbsoluteValueOf: t4 with: zerone] == equal) {
@@ -921,13 +918,12 @@
     }
     [t1 shiftLeft];
     tmpFGInt = [FGInt subtract: t1 and: t4];
-    [t1 release];
-    t1 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    t1 = [FGInt reduce: tmpFGInt bySubtracting: pFGInt atMost: 2];
     [tmpFGInt release];
     [t2 shiftLeft];
     tmpFGInt = [FGInt subtract: t2 and: t5];
     [t2 release];
-    t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    t2 = [FGInt reduce: tmpFGInt bySubtracting: pFGInt atMost: 2];
     [tmpFGInt release];
     if (!z1isOne) {
         tmpFGInt = [FGInt multiply: t3 and: [ecPoint2 projectiveZ]];
@@ -959,7 +955,7 @@
     [t1 shiftLeft];
     tmpFGInt = [FGInt subtract: t7 and: t1];
     [t7 release];
-    t7 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
+    t7 = [FGInt reduce: tmpFGInt bySubtracting: pFGInt atMost: 2];
     [tmpFGInt release];
     [t1 shiftRight];
     tmpFGInt = [FGInt multiply: t5 and: t7];
@@ -972,11 +968,10 @@
     t4 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
     [tmpFGInt release];
     [t2 release];
-    tmpFGInt = [FGInt subtract: t5 and: t4];
+    t2 = [FGInt subtract: t5 and: t4];
     [t5 release];
     [t4 release];
-    t2 = [FGInt barrettMod: tmpFGInt by: pFGInt with: invertedP andPrecision: precision];
-    [tmpFGInt release];
+    [t2 reduceBySubtracting: pFGInt atMost: 1];    
     FGIntBase* numberArray = [[t2 number] mutableBytes];
     if ((numberArray[0] & 1) == 0) {
         [t2 shiftRight];

@@ -4494,7 +4494,7 @@ This header may not be removed.
                 if (yPoint) {
                     [yPoint release];
                 }
-                yPoint = [ECPoint add: gPoint kTimes: secretKey];
+                yPoint = [ECPoint add: gPoint kTimes: secretKey withNISTprime: nistPrime];
             } else {
                 NSLog(@"No ellipticCurve prime for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
             }
@@ -4517,7 +4517,7 @@ This header may not be removed.
                 if (yPoint) {
                     [yPoint release];
                 }
-                yPoint = [ECPoint add: gPoint kTimes: secretKey];
+                yPoint = [ECPoint add: gPoint kTimes: secretKey withNISTprime: nistPrime];
             } else {
                 NSLog(@"No ellipticCurve prime for %s at line %d, cannot compute yFGInt without it", __PRETTY_FUNCTION__, __LINE__);
             }
@@ -4529,29 +4529,6 @@ This header may not be removed.
     }
 }
 
-
--(id) initWithBitLength: (FGIntOverflow) bitLength {
-    if (self = [super init]) {
-        FGIntOverflow secretKeyLength;
-        FGInt *tmpFGInt;
-
-        gPoint = [ECPoint generateSecureCurveAndPointOfSize: bitLength];
-        FGInt *nFGInt = [gPoint pointOrder], *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
-        
-        secretKeyLength = bitLength;
-        do {
-            tmpFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: secretKeyLength];
-            secretKey = [FGInt mod: tmpFGInt by: nFGInt];
-            [tmpFGInt release];
-        } while (([FGInt compareAbsoluteValueOf: zero with: secretKey] == equal) || ([FGInt compareAbsoluteValueOf: one with: secretKey] == equal));
-        [zero release]; 
-        [one release];
-        
-        yPoint = [ECPoint add: gPoint kTimes: secretKey];
-
-    }
-    return self;
-}
 
 
 
@@ -4607,7 +4584,6 @@ This header may not be removed.
         j = j | firstBit;
         numberArray[length - 1] = j;
         FGInt *kFGInt = [FGInt mod: tmpFGInt by: nFGInt];
-        // ECPoint *kGPoint = [ECPoint add: gPoint kTimes: kFGInt];
         ECPoint *kGPoint = [ECPoint add: gPoint kTimes: kFGInt withNISTprime: nistPrime];
         rFGInt = [FGInt mod: [kGPoint x] by: nFGInt];
         while (([FGInt compareAbsoluteValueOf: zero with: kFGInt] == equal) || ([FGInt compareAbsoluteValueOf: one with: kFGInt] == equal) || ([FGInt compareAbsoluteValueOf: zero with: rFGInt] == equal)) {
@@ -4615,8 +4591,6 @@ This header may not be removed.
             [kFGInt release];
             kFGInt = [FGInt mod: tmpFGInt by: nFGInt];
             [kGPoint release];
-            // kGPoint = [ECPoint add: gPoint kTimes: kFGInt];
-            NSLog(@"kitten");
             kGPoint = [ECPoint add: gPoint kTimes: kFGInt withNISTprime: nistPrime];
             [rFGInt release];
             rFGInt = [FGInt mod: [kGPoint x] by: nFGInt];
