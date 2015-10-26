@@ -1,5 +1,4 @@
 #import "NaCl.h"
-#import "NSMutableData+FGInt.h"
 #import "FGInt.h"
 #import "SymmetricCipher.h"
 #import "OneWay.h"

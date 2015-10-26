@@ -36,4 +36,169 @@
     }
 }
 
++(NSString *) dataToHexString: (NSData *) data {
+    NSMutableString *str = [[NSMutableString alloc] initWithFormat:@"%@", data];
+
+    NSRange range = [str rangeOfString: @"<"];
+    if (range.location != NSNotFound) {
+        [str deleteCharactersInRange: range];
+    }
+    range = [str rangeOfString: @">"];
+    if (range.location != NSNotFound) {
+        [str deleteCharactersInRange: range];
+    }
+    range = [str rangeOfString: @" "];
+    while (range.location != NSNotFound) {
+        [str deleteCharactersInRange: range];
+        range = [str rangeOfString: @" "];
+    }
+
+    return str;
+}
+
++(NSData *) hexStringToNSData: (NSString *) str {
+    NSMutableString *mutableStr = [[NSMutableString alloc] initWithString: str];
+    @autoreleasepool{
+        NSRange range;
+        NSCharacterSet *invertedHexSet = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789abcdefABCDEF"] invertedSet];
+        range = [mutableStr rangeOfCharacterFromSet: invertedHexSet];
+        while (range.location != NSNotFound) {
+            [mutableStr deleteCharactersInRange: range];
+            range = [mutableStr rangeOfCharacterFromSet: invertedHexSet];
+        }
+    }
+    NSMutableData *result = [[NSMutableData alloc] initWithLength: [mutableStr length]/2];
+    unsigned char* bytes = [result mutableBytes];
+    NSData *strData = [mutableStr dataUsingEncoding: NSASCIIStringEncoding];
+    const unsigned char* strBytes = [strData bytes];
+
+    for (FGIntOverflow i = 0; i < [mutableStr length]/2; ++i ) {
+        unsigned char tmpByte = strBytes[2*i];
+        if (tmpByte > 64) {
+            tmpByte += 9;
+        }
+        unsigned char byte = tmpByte << 4;
+        tmpByte = strBytes[2*i + 1];
+        if (tmpByte > 64) {
+            tmpByte += 9;
+        }
+        bytes[i] = (byte | (tmpByte & 15));
+    }
+    return result;
+}
+
+
++(NSString *) dataToBase32String: (NSData *) data {
+    unsigned char base32Chars[32] = {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','2','3','4','5','6','7'};
+    FGIntOverflow length = [data length];
+    const unsigned char *bytes = [data bytes];
+    FGIntOverflow i = 0;
+    FGIntBase tmpBytes = 0;
+    unsigned char bits = 0;
+    NSMutableData *result = [[NSMutableData alloc] init];
+    while (i < length) {
+        tmpBytes = (tmpBytes << 8) | bytes[i];
+        bits += 8;
+        while (bits > 4) {
+            bits -= 5;
+            [result appendBytes: &base32Chars[(tmpBytes >> bits) & 31] length: 1];
+        }
+        ++i;
+    }
+    if (bits > 0) {
+        [result appendBytes: &base32Chars[(tmpBytes & (31 >> (5 - bits))) << (5 - bits)] length: 1];
+    }
+    [result increaseLengthBy: 1];
+
+    NSString *str = [[NSString alloc] initWithData: result encoding: NSASCIIStringEncoding];
+    [result release];
+
+    return str;
+}
+
++(NSData *) base32StringToNSData: (NSString *) str {
+    NSMutableString *mutableStr = [[NSMutableString alloc] initWithString: str];
+    @autoreleasepool{
+        NSRange range;
+        NSCharacterSet *invertedBase32Set = [[NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"] invertedSet];
+        range = [mutableStr rangeOfCharacterFromSet: invertedBase32Set];
+        while (range.location != NSNotFound) {
+            [mutableStr deleteCharactersInRange: range];
+            range = [mutableStr rangeOfCharacterFromSet: invertedBase32Set];
+        }
+    }
+    NSData *strData = [mutableStr dataUsingEncoding: NSASCIIStringEncoding];
+    const unsigned char* strBytes = [strData bytes];
+    FGIntOverflow strLength = [mutableStr length];
+    FGIntOverflow resultLength = strLength * 5 / 8 + ((((strLength*5)%8) == 0)?0:1);
+    NSMutableData *result = [[NSMutableData alloc] initWithLength: resultLength];
+    unsigned char* bytes = [result mutableBytes];
+    FGIntOverflow i = 0, resultIdx = 0;
+    FGIntOverflow tmpBytes = 0;
+    int bits = 0;
+    while ( i < strLength) {
+        unsigned char tmpByte = strBytes[i];
+        if (tmpByte < 56) {
+            tmpByte += 41;
+        }
+        tmpByte -= 1;
+        tmpByte &= 31;
+        tmpBytes = tmpByte | (tmpBytes << 5);
+        ++i;
+        bits += 5;
+        if (bits > 7) {
+            bits -= 8;
+            bytes[resultIdx] = tmpBytes >> bits;
+            ++resultIdx;
+        }
+        if ((i == strLength) && (bits > 0)) {
+            tmpBytes = tmpBytes ^ ((tmpBytes >> bits) << bits);
+            if (tmpBytes != 0) {
+                bytes[resultIdx] = tmpBytes;
+                ++resultIdx;
+            }
+        }
+    }
+    if (resultIdx < resultLength) {
+        [result setLength: resultIdx];
+    }
+
+    return result;
+}
+
+
+
+
+
 @end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -11,6 +11,10 @@
 +(NSData *) SHA256: (NSData *) plainText;
 +(NSData *) SHA512: (NSData *) plainText;
 +(void) incrementNSMutableData: (NSMutableData *) data;
++(NSString *) dataToHexString: (NSData *) data;
++(NSData *) hexStringToNSData: (NSString *) str;
++(NSString *) dataToBase32String: (NSData *) data;
++(NSData *) base32StringToNSData: (NSString *) str;
 
 
 @end
