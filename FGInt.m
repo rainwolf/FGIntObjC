@@ -134,6 +134,10 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     FGIntOverflow byteLength = (bitSize + 7) / 8, length;
     NSMutableData *tmpData = [[NSMutableData alloc] initWithLength: byteLength];
     int result = SecRandomCopyBytes(kSecRandomDefault, byteLength, tmpData.mutableBytes);
+    if (result != 0) {
+        [tmpData release];
+        return nil;
+    }
     FGInt *randomFGInt = [[FGInt alloc] initWithNSData: tmpData];
     [tmpData release];
     FGIntBase* numberArray = [[randomFGInt number] mutableBytes];
@@ -145,6 +149,16 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     j = j & firstNumberBase;
     j = j | firstBit;
     numberArray[length - 1] = j;
+
+    return randomFGInt;
+}
+
+-(id) initWithRandomNumberAtMost: (FGInt *) atMost {
+    FGInt *randomFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: [atMost bitSize]];
+
+    if (!([FGInt compareAbsoluteValueOf: randomFGInt with: atMost] == smaller)) {
+        [randomFGInt subtractWith: atMost];
+    }
 
     return randomFGInt;
 }
@@ -222,25 +236,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     return newFGInt;
 }
 
-// -(id) shallowCopy {
-//     FGInt *newFGInt = [[FGInt alloc] initWithoutNumber];
-//     [newFGInt setSign: sign];
-//     [newFGInt setLength: length];    
-
-//     [newFGInt setNumber: [[NSMutableArray alloc] initWithArray: number copyItems: NO]];
-//     return newFGInt;
-// }
-
-
-
-//-(id) duplicate  {
-//    FGInt *newFGInt = [[FGInt alloc] init];
-//    [newFGInt setSign: sign];
-//    [newFGInt setLength: length];    
-//    for(id fGIntBase in number)
-//        [[newFGInt number] addObject: [[FGIntNumberBase alloc] initWithFGIntBase: [fGIntBase digit]]];
-//    return newFGInt;
-//}
 
 
 -(void) verifyAdjust {
@@ -252,11 +247,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 +(void) verifyAdjustNumber: (NSMutableData *) numberData {
     if (([numberData length] % 4) != 0) {
         [numberData setLength: 4*([numberData length]/4) + 4];
-        // NSMutableData *tail = [[NSMutableData alloc] initWithLength: 4 - ([numberData length] % 4)];
-        // [tail appendData: [numberData subdataWithRange: NSMakeRange(4*([numberData length]/4) , ([numberData length] % 4))]];
-        // [numberData setLength: 4*([numberData length]/4)];
-        // [numberData appendData: tail];
-        // [tail release];
     }
 }
 
@@ -557,6 +547,21 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 -(NSData *) toBigEndianNSData {
     NSMutableData *bigEndianNSData = [[NSMutableData alloc] init];
     FGIntOverflow byteLength = [self byteSize]; 
+    unsigned char* numberBytes = [number mutableBytes];
+    for ( FGIntIndex i = 0; i < byteLength; i++ ) {
+        [bigEndianNSData appendBytes: &numberBytes[byteLength - 1 - i] length: 1];
+    }
+
+    return bigEndianNSData;
+}
+
+
+-(NSData *) toBigEndianNSDataOfLength: (FGIntOverflow) length {
+    FGIntOverflow byteLength = [self byteSize];
+    if (byteLength > length) {
+        return nil;
+    }
+    NSMutableData *bigEndianNSData = [[NSMutableData alloc] initWithLength: length - byteLength];
     unsigned char* numberBytes = [number mutableBytes];
     for ( FGIntIndex i = 0; i < byteLength; i++ ) {
         [bigEndianNSData appendBytes: &numberBytes[byteLength - 1 - i] length: 1];

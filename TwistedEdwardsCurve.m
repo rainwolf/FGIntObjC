@@ -463,19 +463,12 @@
 	FGInt *aFGInt = [FGInt squareModulo25638: [tecPoint x]];
 	FGInt *bFGInt = [FGInt squareModulo25638: [tecPoint y]];
 	FGInt *cFGInt = [FGInt squareModulo25638: [tecPoint projectiveZ]];
-	// [tmpFGInt shiftLeft];
-	// FGInt *cFGInt = [FGInt mod: tmpFGInt by: pFGInt];
-	// [tmpFGInt release];
-
-	// FGInt *dFGInt = [FGInt multiplyModulo25638: [[tecPoint tec] a] and: aFGInt];
 
 	FGInt *tmpFGInt = [FGInt addModulo25638: [tecPoint x] and: [tecPoint y]];
 	FGInt *eFGInt = [FGInt squareModulo25638: tmpFGInt];
 	[tmpFGInt release];
 	tmpFGInt = [FGInt subtractModulo25638: eFGInt and: aFGInt];
-	// [aFGInt release];
 	[eFGInt release];
-	// [tmpFGInt release];
 	eFGInt = [FGInt subtractModulo25638: tmpFGInt and: bFGInt];
 	[tmpFGInt release];	
 

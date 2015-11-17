@@ -37,23 +37,19 @@
 }
 
 +(NSString *) dataToHexString: (NSData *) data {
-    NSMutableString *str = [[NSMutableString alloc] initWithFormat:@"%@", data];
+    NSMutableString *mutableStr = [[NSMutableString alloc] initWithFormat:@"%@", data];
 
-    NSRange range = [str rangeOfString: @"<"];
-    if (range.location != NSNotFound) {
-        [str deleteCharactersInRange: range];
-    }
-    range = [str rangeOfString: @">"];
-    if (range.location != NSNotFound) {
-        [str deleteCharactersInRange: range];
-    }
-    range = [str rangeOfString: @" "];
-    while (range.location != NSNotFound) {
-        [str deleteCharactersInRange: range];
-        range = [str rangeOfString: @" "];
+    @autoreleasepool{
+        NSRange range;
+        NSCharacterSet *invertedHexSet = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789abcdefABCDEF"] invertedSet];
+        range = [mutableStr rangeOfCharacterFromSet: invertedHexSet];
+        while (range.location != NSNotFound) {
+            [mutableStr deleteCharactersInRange: range];
+            range = [mutableStr rangeOfCharacterFromSet: invertedHexSet];
+        }
     }
 
-    return str;
+    return mutableStr;
 }
 
 +(NSData *) hexStringToNSData: (NSString *) str {
@@ -135,8 +131,8 @@
     unsigned char* bytes = [result mutableBytes];
     FGIntOverflow i = 0, resultIdx = 0;
     FGIntOverflow tmpBytes = 0;
-    int bits = 0;
-    while ( i < strLength) {
+    unsigned char bits = 0;
+    while ( i < strLength ) {
         unsigned char tmpByte = strBytes[i];
         if (tmpByte < 56) {
             tmpByte += 41;
@@ -146,12 +142,12 @@
         tmpBytes = tmpByte | (tmpBytes << 5);
         ++i;
         bits += 5;
-        if (bits > 7) {
+        if ((bits > 7) && (resultIdx < resultLength)) {
             bits -= 8;
             bytes[resultIdx] = tmpBytes >> bits;
             ++resultIdx;
         }
-        if ((i == strLength) && (bits > 0)) {
+        if ((i == strLength) && (bits > 0) && (resultIdx < resultLength)) {
             tmpBytes = tmpBytes ^ ((tmpBytes >> bits) << bits);
             if (tmpBytes != 0) {
                 bytes[resultIdx] = tmpBytes;

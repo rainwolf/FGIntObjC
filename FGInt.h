@@ -81,11 +81,13 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(FGInt *) initWithMPINSData: (NSData *) mpiNSData;
 -(FGInt *) initWithBigEndianNSData: (NSData *) bigEndianNSData;
 -(id) initWithRandomNumberOfBitSize: (FGIntOverflow) bitSize;
+-(id) initWithRandomNumberAtMost: (FGInt *) atMost;
 -(FGInt *) initWithCurve25519SecretKey;
 -(FGInt *) initWithNSDataToEd25519FGInt: (NSData *) nsData;
 -(NSData *) toNSData;
 -(NSData *) toMPINSData;
 -(NSData *) toBigEndianNSData;
+-(NSData *) toBigEndianNSDataOfLength: (FGIntOverflow) length;
 -(NSString *) toNSString;
 
 // +(FGIntBase) divideFGIntNumberByIntBis: (NSMutableArray *) FGIntNumber divideBy: (FGIntBase) divInt;
