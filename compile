@@ -7,7 +7,9 @@ clang -ObjC -O3 SymmetricCipher.m -c
 clang -ObjC -O3 OneWay.m -c
 clang -ObjC -O3 FGIntXtra.m -c
 clang -ObjC -O3 NaCl.m -c
-clang -framework Foundation -framework Security -ObjC FGInt.o ECGFp.o TwistedEdwardsCurve.o FGIntCryptography.o SymmetricCipher.o OneWay.o FGIntXtra.o NaCl.o main.m -o test
+clang -ObjC -O3 BN256.m -c
+clang -ObjC -O3 BBSsig.m -c
+clang -framework Foundation -framework Security -ObjC FGInt.o ECGFp.o TwistedEdwardsCurve.o FGIntCryptography.o SymmetricCipher.o OneWay.o FGIntXtra.o NaCl.o BN256.o BBSsig.o main.m -o test
 rm *.o
 ./test
 rm test 

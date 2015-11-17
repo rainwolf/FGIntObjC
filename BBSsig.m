@@ -1081,7 +1081,7 @@
 	NSLog(@"Signature verification (after revocation): %@, and took %fms", validation?@"success":@"failed", timePassed_ms1);
 	validation = [memberKey updateWithRevocation: revocation];
 
-	NSLog(@"Updating revocation of the revoked key %@ (should fail)",validation?@"success":@"failed");
+	NSLog(@"Updating revocation of the revoked key %@ (should fail) \n\n",validation?@"success":@"failed");
 }
 
 

@@ -18,6 +18,8 @@ digital signatures for the 1st four, mind you that these are the raw algorithms,
 
 - ~~There is some support for Curve25519 computations, but no pretty framework yet, I have to think that over.~~ I have implemented Salsa20, XSalsa20, Poly1305, Poly1305-AES, XSalsa20Poly1305, and added support for NaCl-like boxed packets.
 
+- Optimal Ate pairing over Barreto-Baehrig curves (hardcoded) and Short Group Signatures
+
 - Feedback is always welcome.
 
 - I have included an example for all algorithms, the documentation consists of comments in the FGInt.m

@@ -3,6 +3,7 @@
 #import "FGIntXtra.h"
 #import "FGIntCryptography.h"
 #import "NaCl.h"
+#import "BBSsig.h"
 
 
 
@@ -396,6 +397,10 @@ int main (int argc, const char * argv[]) {
         NSLog(@" Actual  unboxed  packet: %@ \n \n ", [FGIntXtra dataToHexString: tmpResult]);
 
 
+
+
+        NSLog(@" Running the BBSsig (Short Group Signatures) tests");
+        [BBSsig testBBSsig];
 
 
 
