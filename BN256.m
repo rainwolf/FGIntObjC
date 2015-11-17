@@ -512,17 +512,19 @@
 +(GFP6 *) square: (GFP6 *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP6 *square = [[GFP6 alloc] init];
 
-	GFP2 *s0 = [GFP2 square: [p1 a] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *s4 = [GFP2 square: [p1 c] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *tmp1 = [GFP2 add: [p1 a] and: [p1 c]];
-	GFP2 *tmp2 = [GFP2 add: tmp1 and: [p1 b]];
+	GFP2 *p1a = [p1 a], *p1b = [p1 b], *p1c = [p1 c];
+
+	GFP2 *s0 = [GFP2 square: p1a withInvertedP: invertedP andPrecision: precision];
+	GFP2 *s4 = [GFP2 square: p1c withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp1 = [GFP2 add: p1a and: p1c];
+	GFP2 *tmp2 = [GFP2 add: tmp1 and: p1b];
 	GFP2 *s1 = [GFP2 square: tmp2 withInvertedP: invertedP andPrecision: precision];
 	[tmp2 release];
-	tmp2 = [GFP2 subtract: tmp1 and: [p1 b]];
+	tmp2 = [GFP2 subtract: tmp1 and: p1b];
 	GFP2 *s2 = [GFP2 square: tmp2 withInvertedP: invertedP andPrecision: precision];
 	[tmp2 release];
 	[tmp1 release];
-	GFP2 *s3 = [GFP2 multiply: [p1 b] and: [p1 c] withInvertedP: invertedP andPrecision: precision];
+	GFP2 *s3 = [GFP2 multiply: p1b and: p1c withInvertedP: invertedP andPrecision: precision];
 	[s3 shiftLeft];
 	GFP2 *t1 = [GFP2 add: s1 and: s2];
 	[t1 shiftRight];
@@ -870,10 +872,12 @@
 +(GFP12 *) square: (GFP12 *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP12 *square = [[GFP12 alloc] init];
 
-	GFP6 *v0 = [GFP6 multiply: [p1 a] and: [p1 b] withInvertedP: invertedP andPrecision: precision],
-		*tmp1 = [GFP6 add: [p1 a] and: [p1 b]], *tmp = [[p1 b] mutableCopy];
+	GFP6 *p1a = [p1 a], *p1b = [p1 b];
+
+	GFP6 *v0 = [GFP6 multiply: p1a and: p1b withInvertedP: invertedP andPrecision: precision],
+		*tmp1 = [GFP6 add: p1a and: p1b], *tmp = [p1b mutableCopy];
 	[tmp multiplyByRoot];
-	GFP6 *tmp2 = [GFP6 add: [p1 a] and: tmp];
+	GFP6 *tmp2 = [GFP6 add: p1a and: tmp];
 	[tmp release];
 	tmp = [GFP6 multiply: tmp1 and: tmp2 withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];

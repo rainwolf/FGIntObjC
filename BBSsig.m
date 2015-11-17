@@ -165,12 +165,27 @@
 
 	[order release];
 
-	ehw = [BN256 optimalAtePairing: w and: h];
-	ehg2 = [BN256 optimalAtePairing: g2 and: h];
-	GFP12 *tmp0GFP12 = [BN256 optimalAtePairing: g2 and: g1];
-	minusEg1g2 = [tmp0GFP12 invert];
+	__block GFP12 *tmpEHW, *tmpEHG2, *tmpMG1G2;
+    dispatch_group_t d_group = dispatch_group_create();
+    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
-	[tmp0GFP12 release];
+	dispatch_group_async(d_group, bg_queue, ^{
+		GFP12 *tmp = [BN256 optimalAtePairing: g2 and: g1];
+		tmpMG1G2 = [tmp invert];
+		[tmp release];
+    });
+	dispatch_group_async(d_group, bg_queue, ^{
+		tmpEHW = [BN256 optimalAtePairing: w and: h];
+    });
+	dispatch_group_async(d_group, bg_queue, ^{
+		tmpEHG2 = [BN256 optimalAtePairing: g2 and: h];
+    });
+	dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
+
+	ehw = tmpEHW;
+	ehg2 = tmpEHG2;
+	minusEg1g2 = tmpMG1G2;
 }
 
 
@@ -199,12 +214,30 @@
     	w = [[G2Point alloc] unMarshal: tmpData];
 		[tmpData release];
 
-		ehw = [BN256 optimalAtePairing: w and: h];
-		ehg2 = [BN256 optimalAtePairing: g2 and: h];
-    	GFP12 *tmp0GFP12 = [BN256 optimalAtePairing: g2 and: g1];
-    	minusEg1g2 = [tmp0GFP12 invert];
+		__block GFP12 *tmpEHW, *tmpEHG2, *tmpMG1G2;
+	    dispatch_group_t d_group = dispatch_group_create();
+	    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
-    	[tmp0GFP12 release];
+		dispatch_group_async(d_group, bg_queue, ^{
+			GFP12 *tmp = [BN256 optimalAtePairing: g2 and: g1];
+			tmpMG1G2 = [tmp invert];
+			[tmp release];
+	    });
+		dispatch_group_async(d_group, bg_queue, ^{
+			tmpEHW = [BN256 optimalAtePairing: w and: h];
+	    });
+		dispatch_group_async(d_group, bg_queue, ^{
+			tmpEHG2 = [BN256 optimalAtePairing: g2 and: h];
+	    });
+		dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+	    dispatch_release(d_group);
+
+		ehw = tmpEHW;
+		ehg2 = tmpEHG2;
+		minusEg1g2 = tmpMG1G2;
+		// minusEg1g2 = [tmpMG1G2 invert];
+
+		// [tmpMG1G2 release];
 
     }
     return self;
@@ -391,22 +424,34 @@
     if (self = [super init]) {
     	group = [[BBSGroup alloc] init];
 
-    	// FGIntOverflow precision = 
-    	// FGInt *invertedP
+		__block G1Point *tmp0G1, *tmp1G1;
+		__block G2Point *tmpG2;
+	    dispatch_group_t d_group = dispatch_group_create();
+	    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
-    	G1Point *tmpG1 = [[G1Point alloc] initRandomPoint];
-    	[group setG1: tmpG1];
-    	if (tmpG1 == nil) {
+		dispatch_group_async(d_group, bg_queue, ^{
+			tmp0G1 = [[G1Point alloc] initRandomPoint];
+	    });
+		dispatch_group_async(d_group, bg_queue, ^{
+			tmp1G1 = [[G1Point alloc] initRandomPoint];
+	    });
+		dispatch_group_async(d_group, bg_queue, ^{
+	    	tmpG2 = [[G2Point alloc] initRandomPoint];
+	    });
+		dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+	    // dispatch_release(d_group);
+
+
+    	[group setG1: tmp0G1];
+    	if (tmp0G1 == nil) {
     		[group release];
     		return nil;
     	}
-		tmpG1 = [[G1Point alloc] initRandomPoint];
-    	[group setH: tmpG1];
-    	if (tmpG1 == nil) {
+    	[group setH: tmp1G1];
+    	if (tmp1G1 == nil) {
     		[group release];
     		return nil;
     	}
-    	G2Point *tmpG2 = [[G2Point alloc] initRandomPoint];
     	[group setG2: tmpG2];
     	if (tmpG2 == nil) {
     		[group release];
@@ -447,22 +492,42 @@
     		gamma = tmpFGInt;
     	}
 
-    	tmpFGInt = [FGInt invert: xi1 moduloPrime: order];
-    	[group setU: [G1Point add: [group h] kTimes: tmpFGInt]];
-    	[tmpFGInt release];
-    	tmpFGInt = [FGInt invert: xi2 moduloPrime: order];
-    	[group setV: [G1Point add: [group h] kTimes: tmpFGInt]];
-    	[tmpFGInt release];
-    	[order release];
-
     	[group setW: [G2Point add: [group g2] kTimes: gamma]];
 
-    	[group setEhw: [BN256 optimalAtePairing: [group w] and: [group h]]];
-    	[group setEhg2: [BN256 optimalAtePairing: [group g2] and: [group h]]];
-    	GFP12 *tmp0GFP12 = [BN256 optimalAtePairing: [group g2] and: [group g1]];
-    	[group setMinusEg1g2: [tmp0GFP12 invert]];
+		__block GFP12 *tmpEHW, *tmpEHG2, *tmpMG1G2;
+		__block G1Point *tmpU, *tmpV;
+	    // dispatch_group_t d_group = dispatch_group_create();
+	    // dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
-    	[tmp0GFP12 release];
+		dispatch_group_async(d_group, bg_queue, ^{
+			GFP12 *tmp = [BN256 optimalAtePairing: [group g2] and: [group g1]];
+			tmpMG1G2 = [tmp invert];
+			[tmp release];
+	    });
+		dispatch_group_async(d_group, bg_queue, ^{
+			tmpEHW = [BN256 optimalAtePairing: [group w] and: [group h]];
+	    });
+		dispatch_group_async(d_group, bg_queue, ^{
+			FGInt *tmp = [FGInt invert: xi1 moduloPrime: order];
+			tmpU = [G1Point add: [group h] kTimes: tmpFGInt];
+			[tmp release];
+	    });
+		dispatch_group_async(d_group, bg_queue, ^{
+			tmpEHG2 = [BN256 optimalAtePairing: [group g2] and: [group h]];
+	    });
+		dispatch_group_async(d_group, bg_queue, ^{
+			FGInt *tmp = [FGInt invert: xi2 moduloPrime: order];
+			tmpV = [G1Point add: [group h] kTimes: tmpFGInt];
+			[tmp release];
+	    });
+		dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+	    dispatch_release(d_group);
+
+	    [group setU: tmpU];
+	    [group setV: tmpV];
+    	[group setEhw: tmpEHW];
+    	[group setEhg2: tmpEHG2];
+    	[group setMinusEg1g2: tmpMG1G2];
 
     	[order release];
     }
@@ -613,52 +678,69 @@
 	FGInt *rdelta1 = [rndms objectAtIndex: 5];
 	FGInt *rdelta2 = [rndms objectAtIndex: 6];
 
-	G1Point *r1 = [G1Point add: [[memberKey group] u] kTimes: ralpha withInvertedP: invertedP andPrecision: precision];
-	G1Point *r2 = [G1Point add: [[memberKey group] v] kTimes: rbeta withInvertedP: invertedP andPrecision: precision];
+	__block G1Point *r1, *r2, *r4, *r5;
+	__block GFP12 *r3, *tmp0_r3, *tmp1_r3;
+    dispatch_group_t d_group = dispatch_group_create();
+    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
-	GFP12 *tmpGFP12 = [BN256 optimalAtePairing: [[memberKey group] g2] and: t3];
-	GFP12 *r3 = [GFP12 raise: tmpGFP12 toThePower: rx withInvertedP: invertedP andPrecision: precision];
-	[tmpGFP12 release];
+	dispatch_group_async(d_group, bg_queue, ^{
+		r1 = [G1Point add: [[memberKey group] u] kTimes: ralpha withInvertedP: invertedP andPrecision: precision];
+    });
+	dispatch_group_async(d_group, bg_queue, ^{
+		r2 = [G1Point add: [[memberKey group] v] kTimes: rbeta withInvertedP: invertedP andPrecision: precision];
+    });
+	dispatch_group_async(d_group, bg_queue, ^{
+		GFP12 *tmpGFP12 = [BN256 optimalAtePairing: [[memberKey group] g2] and: t3];
+		r3 = [GFP12 raise: tmpGFP12 toThePower: rx withInvertedP: invertedP andPrecision: precision];
+		[tmpGFP12 release];
+    });
+	dispatch_group_async(d_group, bg_queue, ^{
+		FGInt *tmp0 = [FGInt add: ralpha and: rbeta];
+		[tmp0 reduceBySubtracting: order atMost: 1];
+		FGInt *tmp1 = [FGInt subtract: order and: tmp0];
+		[tmp0 release];
+		GFP12 *tmp0GFP12, *tmp1GFP12;
+		tmp0_r3 = [GFP12 raise: [[memberKey group] ehw] toThePower: tmp1 withInvertedP: invertedP andPrecision: precision];
+		[tmp1 release];
+    });
+	dispatch_group_async(d_group, bg_queue, ^{
+		FGInt *tmp0 = [FGInt add: rdelta1 and: rdelta2];
+		[tmp0 reduceBySubtracting: order atMost: 1];
+		FGInt *tmp1 = [FGInt subtract: order and: tmp0];
+		[tmp0 release];
+		tmp1_r3 = [GFP12 raise: [[memberKey group] ehg2] toThePower: tmp1 withInvertedP: invertedP andPrecision: precision];
+		[tmp1 release];
+    });
+	dispatch_group_async(d_group, bg_queue, ^{
+		G1Point *tmp0G1 = [G1Point add: t1 kTimes: rx withInvertedP: invertedP andPrecision: precision];
+		FGInt *tmp0 = [FGInt subtract: order and: rdelta1];
+		G1Point *tmp1G1 = [G1Point add: [[memberKey group] u] kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
+		r4 = [G1Point add: tmp0G1 and: tmp1G1];
+		[tmp1G1 release];
+		[tmp0G1 release];
+		[tmp0 release];
+    });
+	dispatch_group_async(d_group, bg_queue, ^{
+		G1Point *tmp0G1 = [G1Point add: t2 kTimes: rx withInvertedP: invertedP andPrecision: precision];
+		FGInt *tmp0 = [FGInt subtract: order and: rdelta2];
+		G1Point *tmp1G1 = [G1Point add: [[memberKey group] v] kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
+		r5 = [G1Point add: tmp0G1 and: tmp1G1];
+		[tmp1G1 release];
+		[tmp0G1 release];
+		[tmp0 release];
+    });
+	dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
 
-
-	tmp0 = [FGInt add: ralpha and: rbeta];
-	[tmp0 reduceBySubtracting: order atMost: 1];
-	FGInt *tmp1 = [FGInt subtract: order and: tmp0];
-	[tmp0 release];
-	GFP12 *tmp0GFP12, *tmp1GFP12;
-	tmp0GFP12 = [GFP12 raise: [[memberKey group] ehw] toThePower: tmp1 withInvertedP: invertedP andPrecision: precision];
-	[tmp1 release];
-	tmp1GFP12 = [GFP12 multiply: r3 and: tmp0GFP12 withInvertedP: invertedP andPrecision: precision];
-	[tmp0GFP12 release];
+	GFP12 *tmpGFP12 = [GFP12 multiply: r3 and: tmp0_r3 withInvertedP: invertedP andPrecision: precision];
+	[tmp0_r3 release];
 	[r3 release];
-	r3 = tmp1GFP12;
-
-	tmp0 = [FGInt add: rdelta1 and: rdelta2];
-	[tmp0 reduceBySubtracting: order atMost: 1];
-	tmp1 = [FGInt subtract: order and: tmp0];
-	[tmp0 release];
-	tmp0GFP12 = [GFP12 raise: [[memberKey group] ehg2] toThePower: tmp1 withInvertedP: invertedP andPrecision: precision];
-	[tmp1 release];
-	tmp1GFP12 = [GFP12 multiply: r3 and: tmp0GFP12 withInvertedP: invertedP andPrecision: precision];
-	[tmp0GFP12 release];
+	r3 = tmpGFP12;
+	tmpGFP12 = [GFP12 multiply: r3 and: tmp1_r3 withInvertedP: invertedP andPrecision: precision];
+	[tmp1_r3 release];
 	[r3 release];
-	r3 = tmp1GFP12;
+	r3 = tmpGFP12;
 
-	tmp0G1 = [G1Point add: t1 kTimes: rx withInvertedP: invertedP andPrecision: precision];
-	tmp0 = [FGInt subtract: order and: rdelta1];
-	G1Point *tmp1G1 = [G1Point add: [[memberKey group] u] kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
-	G1Point *r4 = [G1Point add: tmp0G1 and: tmp1G1];
-	[tmp1G1 release];
-	[tmp0G1 release];
-	[tmp0 release];
-
-	tmp0G1 = [G1Point add: t2 kTimes: rx withInvertedP: invertedP andPrecision: precision];
-	tmp0 = [FGInt subtract: order and: rdelta2];
-	tmp1G1 = [G1Point add: [[memberKey group] v] kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
-	G1Point *r5 = [G1Point add: tmp0G1 and: tmp1G1];
-	[tmp1G1 release];
-	[tmp0G1 release];
-	[tmp0 release];
 
 	NSData *tmpData;
 	NSMutableData *hashData = [[NSMutableData alloc] initWithData: digest];
@@ -775,6 +857,42 @@
 }
 
 
++(G1Point *) r1245: (G1Point *) g1 and: (G1Point *) g2 addKtimes: (FGInt *) k andLtimes: (FGInt *) l withOrder: (FGInt *) order andInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	G1Point *tmp0G1 = [G1Point add: g1 kTimes: k withInvertedP: invertedP andPrecision: precision];
+	FGInt *tmp0 = [FGInt subtract: order and: l];
+	G1Point *tmp1G1 = [G1Point add: g2 kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
+	G1Point *result = [G1Point add: tmp0G1 and: tmp1G1];
+	[tmp1G1 release];
+	[tmp0G1 release];
+
+	return result;
+}
+
++(GFP12 *) sAdd: (FGInt *) s1 and: (FGInt *) s2 andRaise: (GFP12 *) gfp12 withOrder: (FGInt *) order andInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision { 
+	FGInt *tmp1 = [FGInt add: s1 and: s2];
+	[tmp1 reduceBySubtracting: order atMost: 1];
+	FGInt *tmp0 = [FGInt subtract: order and: tmp1];
+	[tmp1 release];
+ 	GFP12 *result = [GFP12 raise: gfp12 toThePower: tmp0 withInvertedP: invertedP andPrecision: precision];
+	[tmp0 release];
+
+	return result;
+}
+
++(GFP12 *) pair: (G2Point *) g2 and: (G1Point *) g1 multiply: (GFP12 *) gfp12 andRaiseTo: (FGInt *) exp withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	GFP12 *tmp0GFP12 = [BN256 optimalAtePairing: g2 and: g1];
+	if (gfp12) {
+		GFP12 *tmp1GFP12 = [GFP12 multiply: tmp0GFP12 and: gfp12 withInvertedP: invertedP andPrecision: precision];
+		[tmp0GFP12 release];
+		tmp0GFP12 = tmp1GFP12;
+	}
+	GFP12 *result = [GFP12 raise: tmp0GFP12 toThePower: exp withInvertedP: invertedP andPrecision: precision];
+	[tmp0GFP12 release];
+
+	return result;
+}
+
+
 +(BOOL) verifySignature: (NSData *) signature ofDigest: (NSData *) digest withGroupKey: (BBSGroup *) groupKey {
 	if ([signature length] != 12*cnstLength) {
 		// NSLog(@" kitty no ");
@@ -820,71 +938,61 @@
 	FGIntBase numberArray[] = nNumber;
 	[order setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
 
-	G1Point *tmp0G1 = [G1Point add: [groupKey u] kTimes: salpha withInvertedP: invertedP andPrecision: precision];
-	FGInt *tmp0 = [FGInt subtract: order and: c];
-	G1Point *tmp1G1 = [G1Point add: t1 kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
-	G1Point *r1 = [G1Point add: tmp0G1 and: tmp1G1];
-	[tmp1G1 release];
-	[tmp0G1 release];
 
-	tmp0G1 = [G1Point add: [groupKey v] kTimes: sbeta withInvertedP: invertedP andPrecision: precision];
-	tmp1G1 = [G1Point add: t2 kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
-	G1Point *r2 = [G1Point add: tmp0G1 and: tmp1G1];
-	[tmp0 release];
-	[tmp1G1 release];
-	[tmp0G1 release];
+	FGInt *tmp0;
+	__block G1Point *r1, *r2, *r4, *r5;
+    dispatch_group_t d_group = dispatch_group_create();
+    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
-	tmp0G1 = [G1Point add: t1 kTimes: sx withInvertedP: invertedP andPrecision: precision];
-	tmp0 = [FGInt subtract: order and: sdelta1];
-	tmp1G1 = [G1Point add: [groupKey u] kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
-	G1Point *r4 = [G1Point add: tmp0G1 and: tmp1G1];
-	[tmp0 release];
-	[tmp1G1 release];
-	[tmp0G1 release];
+	dispatch_group_async(d_group, bg_queue, ^{
+	 	r1 = [BBSsig r1245: [groupKey u] and: t1 addKtimes: salpha andLtimes: c withOrder: order andInvertedP: invertedP andPrecision: precision];
+    });
 
-	tmp0G1 = [G1Point add: t2 kTimes: sx withInvertedP: invertedP andPrecision: precision];
-	tmp0 = [FGInt subtract: order and: sdelta2];
-	tmp1G1 = [G1Point add: [groupKey v] kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
-	G1Point *r5 = [G1Point add: tmp0G1 and: tmp1G1];
-	[tmp0 release];
-	[tmp1G1 release];
-	[tmp0G1 release];
+	dispatch_group_async(d_group, bg_queue, ^{
+		r2 = [BBSsig r1245: [groupKey v] and: t2 addKtimes: sbeta andLtimes: c withOrder: order andInvertedP: invertedP andPrecision: precision];
+    });
 
-	GFP12 *tmpGFP12 = [BN256 optimalAtePairing: [groupKey g2] and: t3];
-	GFP12 *r3 = [GFP12 raise: tmpGFP12 toThePower: sx withInvertedP: invertedP andPrecision: precision];
-	[tmpGFP12 release];
+	dispatch_group_async(d_group, bg_queue, ^{
+		r4 = [BBSsig r1245: t1 and: [groupKey u] addKtimes: sx andLtimes: sdelta1 withOrder: order andInvertedP: invertedP andPrecision: precision];
+    });
 
-	FGInt *tmp1 = [FGInt add: salpha and: sbeta];
-	[tmp1 reduceBySubtracting: order atMost: 1];
-	tmp0 = [FGInt subtract: order and: tmp1];
-	[tmp1 release];
- 	GFP12 *tmp0GFP12 = [GFP12 raise: [groupKey ehw] toThePower: tmp0 withInvertedP: invertedP andPrecision: precision];
-	[tmp0 release];
-	GFP12 *tmp1GFP12 = [GFP12 multiply: r3 and: tmp0GFP12 withInvertedP: invertedP andPrecision: precision];
-	[r3 release];
-	[tmp0GFP12 release];
-	r3 = tmp1GFP12;
+	dispatch_group_async(d_group, bg_queue, ^{
+		r5 = [BBSsig r1245: t2 and: [groupKey v] addKtimes: sx andLtimes: sdelta2 withOrder: order andInvertedP: invertedP andPrecision: precision];
+    });
 
-	tmp1 = [FGInt add: sdelta1 and: sdelta2];
-	[tmp1 reduceBySubtracting: order atMost: 1];
-	tmp0 = [FGInt subtract: order and: tmp1];
-	[tmp1 release];
-	tmp0GFP12 = [GFP12 raise: [groupKey ehg2] toThePower: tmp0 withInvertedP: invertedP andPrecision: precision];
-	[tmp0 release];
-	tmp1GFP12 = [GFP12 multiply: r3 and: tmp0GFP12 withInvertedP: invertedP andPrecision: precision];
-	[r3 release];
-	[tmp0GFP12 release];
-	r3 = tmp1GFP12;
+	__block GFP12 *tmp0_r3, *tmp1_r3, *tmp2_r3, *tmp3_r3;
 
-	tmp0GFP12 = [BN256 optimalAtePairing: [groupKey w] and: t3];
-	tmp1GFP12 = [GFP12 multiply: tmp0GFP12 and: [groupKey minusEg1g2] withInvertedP: invertedP andPrecision: precision];
-	[tmp0GFP12 release];
-	tmp0GFP12 = [GFP12 raise: tmp1GFP12 toThePower: c withInvertedP: invertedP andPrecision: precision];
-	[tmp1GFP12 release];
-	tmp1GFP12 = [GFP12 multiply: r3 and: tmp0GFP12 withInvertedP: invertedP andPrecision: precision];
-	[r3 release];
-	[tmp0GFP12 release];
-	r3 = tmp1GFP12;
+	dispatch_group_async(d_group, bg_queue, ^{
+		tmp0_r3 = [BBSsig sAdd: salpha and: sbeta andRaise: [groupKey ehw] withOrder: order andInvertedP: invertedP andPrecision: precision];
+    });
+
+	dispatch_group_async(d_group, bg_queue, ^{
+		tmp1_r3 = [BBSsig sAdd: sdelta1 and: sdelta2 andRaise: [groupKey ehg2] withOrder: order andInvertedP: invertedP andPrecision: precision];
+    });
+
+	dispatch_group_async(d_group, bg_queue, ^{
+		tmp2_r3 = [BBSsig pair: [groupKey g2] and: t3 multiply: nil andRaiseTo: sx withInvertedP: invertedP andPrecision: precision];
+    });
+
+	dispatch_group_async(d_group, bg_queue, ^{
+		tmp3_r3 = [BBSsig pair: [groupKey w] and: t3 multiply: [groupKey minusEg1g2] andRaiseTo: c withInvertedP: invertedP andPrecision: precision];
+    });
+
+	dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
+
+
+    GFP12 *r3 = [GFP12 multiply: tmp1_r3 and: tmp0_r3 withInvertedP: invertedP andPrecision: precision];
+    [tmp1_r3 release];
+    [tmp0_r3 release];
+    tmp0_r3 = [GFP12 multiply: r3 and: tmp2_r3 withInvertedP: invertedP andPrecision: precision];
+    [tmp2_r3 release];
+    [r3 release];
+    r3 = tmp0_r3;
+    tmp0_r3 = [GFP12 multiply: r3 and: tmp3_r3 withInvertedP: invertedP andPrecision: precision];
+    [tmp3_r3 release];
+    [r3 release];
+    r3 = tmp0_r3;
 
 	NSMutableData *hashData = [[NSMutableData alloc] initWithData: digest];
 	tmpData = [t1 marshal];
