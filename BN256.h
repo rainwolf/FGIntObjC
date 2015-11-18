@@ -27,7 +27,7 @@
 @interface GFP2 : NSObject <NSMutableCopying> {
 	FGInt *a, *b, *p;
 }
-@property (retain, readwrite) FGInt *a, *b, *p;
+@property (assign, readwrite) FGInt *a, *b, *p;
 
 -(id) initOne;
 -(id) initZero;
@@ -56,7 +56,7 @@
 @interface GFP6 : NSObject <NSMutableCopying> {
 	GFP2 *a, *b, *c;
 }
-@property (retain, readwrite) GFP2 *a, *b, *c;
+@property (assign, readwrite) GFP2 *a, *b, *c;
 
 -(id) initOne;
 -(id) initZero;
@@ -85,7 +85,7 @@
 @interface GFP12 : NSObject <NSMutableCopying> {
 	GFP6 *a, *b;
 }
-@property (retain, readwrite) GFP6 *a, *b;
+@property (assign, readwrite) GFP6 *a, *b;
 
 -(id) initOne;
 -(id) initZero;
@@ -114,7 +114,7 @@
 	GFP2 *x, *y, *z, *t;
 	BOOL infinity;
 }
-@property (retain, readwrite) GFP2 *x, *y, *z, *t;
+@property (assign, readwrite) GFP2 *x, *y, *z, *t;
 @property (assign, readwrite) BOOL infinity;
 
 -(id) initInfinity;
@@ -143,7 +143,7 @@
 	FGInt *x, *y, *z, *p;
 	BOOL infinity;
 }
-@property (retain, readwrite) FGInt *x, *y, *z, *p;
+@property (assign, readwrite) FGInt *x, *y, *z, *p;
 @property (assign, readwrite) BOOL infinity;
 
 -(id) initInfinityWithP: (FGInt *) pFGInt;

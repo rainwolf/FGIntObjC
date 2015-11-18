@@ -56,7 +56,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 }
 
 @property (assign, readwrite) BOOL sign;
-@property (retain, readwrite) NSMutableData *number;
+@property (assign, readwrite) NSMutableData *number;
 
 -(FGInt *) initWithNZeroes: (FGIntOverflow) n;
 -(FGInt *) initAsP25519;

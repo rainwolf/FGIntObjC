@@ -70,7 +70,8 @@
 
     [newGFP2 setA: [a mutableCopy]];
     [newGFP2 setB: [b mutableCopy]];
-    [newGFP2 setP: [p retain]];
+    // [newGFP2 setP: [p retain]];
+    [newGFP2 setP: [p mutableCopy]];
 
     return newGFP2;
 }
@@ -99,7 +100,8 @@
 	tmpFGInt = [FGInt add: [p1 b] and: [p2 b]];
 	[tmpFGInt reduceBySubtracting: p atMost: 1];
 	[sum setB: tmpFGInt];
-	[sum setP: [p retain]];
+	// [sum setP: [p retain]];
+	[sum setP: [p mutableCopy]];
 
 	return sum;
 }
@@ -115,7 +117,8 @@
 	tmpFGInt = [FGInt subtract: [p1 b] and: [p2 b]];
 	[tmpFGInt reduceBySubtracting: p atMost: 1];
 	[sum setB: tmpFGInt];
-	[sum setP: [p retain]];
+	// [sum setP: [p retain]];
+	[sum setP: [p mutableCopy]];
 
 	return sum;
 }
@@ -143,7 +146,8 @@
 	[product setA: [[FGInt subtract: v0 and: v1] reduceBySubtracting: p atMost: 1]];
 	[v0 release];
 	[v1 release];
-	[product setP: [p retain]];
+	// [product setP: [p retain]];
+	[product setP: [p mutableCopy]];
 
 	return product;
 }
@@ -165,7 +169,8 @@
 
 	[v0 shiftLeft];
 	[square setB: [v0 reduceBySubtracting: p atMost: 1]];
-	[square setP: [p retain]];
+	// [square setP: [p retain]];
+	[square setP: [p mutableCopy]];
 
 	return square;
 }
@@ -181,7 +186,8 @@
 	tmp = [[p1 b] mutableCopy];
 	[tmp multiplyByInt: 3];
 	[product setB: [[FGInt add: tmp and: [p1 a]] reduceBySubtracting: p atMost: 4]];
-	[product setP: [p retain]];
+	// [product setP: [p retain]];
+	[product setP: [p mutableCopy]];
 
 	return product;
 }
@@ -250,7 +256,8 @@
 	[inverted setB: [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision]];
 	[tmp release];
 
-	[inverted setP: [p retain]];
+	// [inverted setP: [p retain]];
+	[inverted setP: [p mutableCopy]];
 
 	return inverted;
 }
@@ -264,7 +271,8 @@
     GFP2 *tmp1, *tmp;
     FGIntBase* nFGIntNumber = [[fGIntN number] mutableBytes];
 
-    tmp1 = [gfp2 retain];
+    // tmp1 = [gfp2 retain];
+    tmp1 = [gfp2 mutableCopy];
 
     for( FGIntIndex i = 0; i < nLength - 1; i++ ) {
         tmpWord = nFGIntNumber[i];
@@ -662,7 +670,8 @@
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
 	[tmp setB: tmpFGInt];
-	[tmp setP: [[a p] retain]];
+	[tmp setP: [[a p] mutableCopy]];
+	// [tmp setP: [[a p] retain]];
 
 	GFP2 *tmp0 = [GFP2 multiply: c and: tmp withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
@@ -678,7 +687,8 @@
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray4 length: cnstLength]];
 	[tmp setB: tmpFGInt];
-	[tmp setP: [[a p] retain]];
+	// [tmp setP: [[a p] retain]];
+	[tmp setP: [[a p] mutableCopy]];
 
 	tmp0 = [GFP2 multiply: b and: tmp withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
@@ -910,7 +920,8 @@
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
 	[tmp setB: tmpFGInt];
-	[tmp setP: [[[a a] p] retain]];
+	// [tmp setP: [[[a a] p] retain]];
+	[tmp setP: [[[a a] p] mutableCopy]];
 
 	[b multiplyByGFP2: tmp withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
@@ -967,7 +978,8 @@
     GFP12 *tmp1, *tmp;
     FGIntBase* nFGIntNumber = [[fGIntN number] mutableBytes];
 
-    tmp1 = [gfp12 retain];
+    // tmp1 = [gfp12 retain];
+    tmp1 = [gfp12 mutableCopy];
 
     for( FGIntIndex i = 0; i < nLength - 1; i++ ) {
         tmpWord = nFGIntNumber[i];
@@ -1090,7 +1102,7 @@
 		FGIntBase numberArray2[] = {3273939312u, 938160865u, 3406146634u, 3157767012u, 1551183656u, 63401627u, 4285480269u, 785163334u};
 		[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
 		[x setB: tmpFGInt];
-		[x setP: [p retain]];
+		[x setP: p];
 		y = [[GFP2 alloc] init];
 		tmpFGInt = [[FGInt alloc] initWithoutNumber];
 		FGIntBase numberArray3[] = {3190851493u, 1766072483u, 3258878351u, 789467123u, 2581297586u, 924241030u, 3905616588u, 659445575u};
@@ -1100,7 +1112,7 @@
 		FGIntBase numberArray4[] = {2402402066u, 3751226898u, 4082187586u, 3185580628u, 2763768501u, 2519441126u, 591073251u, 766578421u};
 		[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray4 length: cnstLength]];
 		[y setB: tmpFGInt];
-		[y setP: [p retain]];
+		[y setP: [p mutableCopy]];
     	z = nil;
     	infinity = NO;
     }
@@ -1376,8 +1388,14 @@
 	[tmp2 release];
 	[y release];
 	y = tmp;
-	[z release];
+    if (z != nil) {
+	    [z release];
+    }
 	z = nil;
+    if (t != nil) {
+	    [t release];
+    }
+	t = nil;
 }
 -(void) makeAffine {
 	if (z == nil) {
@@ -1401,7 +1419,8 @@
     FGIntBase tmp;
     FGIntBase* kFGIntNumber = [[kFGInt number] mutableBytes];
     
-    tmpECPoint1 = [g2Point retain];
+    // tmpECPoint1 = [g2Point retain];
+    tmpECPoint1 = [g2Point mutableCopy];
     [tmpECPoint1 makeProjective];
     [result makeProjective];
 
@@ -1550,7 +1569,8 @@
     	x = nil;
     	y = nil;
     	z = nil;
-    	p = [pFGInt retain];
+    	// p = [pFGInt retain];
+    	p = [pFGInt mutableCopy];
     	infinity = YES;
     }
     return self;
@@ -1635,7 +1655,8 @@
     [newG1Point setX: [x mutableCopy]];
     [newG1Point setY: [y mutableCopy]];
     [newG1Point setZ: [z mutableCopy]];
-    [newG1Point setP: [p retain]];
+    // [newG1Point setP: [p retain]];
+    [newG1Point setP: [p mutableCopy]];
 
     return newG1Point;
 }
@@ -1817,7 +1838,8 @@
 		sum = [[G1Point alloc] initInfinityWithP: p];
 	}
 
-	[sum setP: [p retain]];
+	// [sum setP: [p retain]];
+	[sum setP: [p mutableCopy]];
 
 	return sum;
 }
@@ -1898,7 +1920,8 @@
 	[d release];
 	[f release];
 
-	[sum setP: [p retain]];
+	// [sum setP: [p retain]];
+	[sum setP: [p mutableCopy]];
 
 	return sum;
 }
@@ -1939,7 +1962,8 @@
     FGIntBase tmp;
     FGIntBase* kFGIntNumber = [[kFGInt number] mutableBytes];
     
-    tmpECPoint1 = [g1Point retain];
+    // tmpECPoint1 = [g1Point retain];
+    tmpECPoint1 = [g1Point mutableCopy];
     [tmpECPoint1 makeProjective];
     [result makeProjective];
 
@@ -2374,7 +2398,8 @@
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray4 length: cnstLength]];
 	[tmp setB: tmpFGInt];
-	[tmp setP: [[tmp0 p] retain]];
+	// [tmp setP: [[tmp0 p] retain]];
+	[tmp setP: [[tmp0 p] mutableCopy]];
 	[q1 setX: [GFP2 multiply: tmp0 and: tmp withInvertedP: invertedP andPrecision: precision]];
 	[tmp release];
 	[tmp0 release];
@@ -2389,7 +2414,8 @@
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray6 length: cnstLength]];
 	[tmp setB: tmpFGInt];
-	[tmp setP: [[tmp0 p] retain]];
+	// [tmp setP: [[tmp0 p] retain]];
+	[tmp setP: [[tmp0 p] mutableCopy]];
 	[q1 setY: [GFP2 multiply: tmp0 and: tmp withInvertedP: invertedP andPrecision: precision]];
 	[tmp release];
 	[tmp0 release];
@@ -2402,7 +2428,8 @@
 	[tmp multiplyByFGInt: tmpFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpFGInt release];
 	[q2 setX: tmp];
-	[q2 setY: [[q y] retain]];
+	// [q2 setY: [[q y] retain]];
+	[q2 setY: [[q y] mutableCopy]];
 
 	[cachedR2 release];
 	cachedR2 = [GFP2 square: [q1 y] withInvertedP: invertedP andPrecision: precision];
