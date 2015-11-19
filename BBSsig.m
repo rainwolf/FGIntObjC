@@ -181,11 +181,11 @@
 		tmpEHG2 = [BN256 optimalAtePairing: g2 and: h];
     });
 	dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
 
 	ehw = tmpEHW;
 	ehg2 = tmpEHG2;
 	minusEg1g2 = tmpMG1G2;
-    dispatch_release(d_group);
 }
 
 
@@ -230,6 +230,7 @@
 			tmpEHG2 = [BN256 optimalAtePairing: g2 and: h];
 	    });
 		dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+	    dispatch_release(d_group);
 
 		ehw = tmpEHW;
 		ehg2 = tmpEHG2;
@@ -238,7 +239,6 @@
 
 		// [tmpMG1G2 release];
 
-	    dispatch_release(d_group);
     }
     return self;
 }
@@ -307,6 +307,7 @@
 			return nil;
 		}
 		FGInt *tmp0 = [FGInt add: [bbsGroupPrivate gamma] and: x];
+		// [tmp0 reduceBySubtracting: order atMost: 1];
 		FGInt *tmp1 = [FGInt invert: tmp0 moduloPrime: order];
 		[tmp0 release];
 
@@ -316,6 +317,15 @@
 		[order release];
     }
     return self;
+}
+-(id) mutableCopyWithZone: (NSZone *) zone {
+	BBSMemberKey *newMember = [[BBSMemberKey alloc] init];
+
+	[newMember setX: [x mutableCopy]];
+	[newMember setA: [a mutableCopy]];
+	[newMember setGroup: [group mutableCopy]];
+
+	return newMember;
 }
 -(void) dealloc {
 	if (x != nil) {
@@ -458,9 +468,6 @@
     		return nil;
     	}
 
-		xi1 = nil;
-		xi2 = nil;
-		gamma = nil;
     	FGInt *order = [[FGInt alloc] initWithoutNumber];
     	FGIntBase numberArray[] = nNumber;
     	[order setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
@@ -494,12 +501,13 @@
 
     	[group setW: [G2Point add: [group g2] kTimes: gamma]];
 
+
 		__block GFP12 *tmpEHW, *tmpEHG2, *tmpMG1G2;
 		__block G1Point *tmpU, *tmpV;
 	    // dispatch_group_t d_group = dispatch_group_create();
 	    // dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-	    d_group = dispatch_group_create();
-	    bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+	    // d_group = dispatch_group_create();
+	    // bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
 		dispatch_group_async(d_group, bg_queue, ^{
 			GFP12 *tmp = [BN256 optimalAtePairing: [group g2] and: [group g1]];
@@ -514,15 +522,16 @@
 	    });
 		dispatch_group_async(d_group, bg_queue, ^{
 			FGInt *tmp = [FGInt invert: xi1 moduloPrime: order];
-			tmpU = [G1Point add: [group h] kTimes: tmpFGInt];
+			tmpU = [G1Point add: [group h] kTimes: tmp];
 			[tmp release];
 	    });
 		dispatch_group_async(d_group, bg_queue, ^{
 			FGInt *tmp = [FGInt invert: xi2 moduloPrime: order];
-			tmpV = [G1Point add: [group h] kTimes: tmpFGInt];
+			tmpV = [G1Point add: [group h] kTimes: tmp];
 			[tmp release];
 	    });
 		dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+	    dispatch_release(d_group);
 
     	[group setEhw: tmpEHW];
     	[group setEhg2: tmpEHG2];
@@ -531,9 +540,17 @@
 	    [group setV: tmpV];
 
     	[order release];
-	    dispatch_release(d_group);
     }
     return self;
+}
+-(id) mutableCopyWithZone: (NSZone *) zone {
+	BBSPrivateKey *newPrivate = [[BBSPrivateKey alloc] init];
+
+	[newPrivate setXi1: [xi1 mutableCopy]];
+	[newPrivate setXi2: [xi2 mutableCopy]];
+	[newPrivate setGroup: [group mutableCopy]];
+
+	return newPrivate;
 }
 -(void) dealloc {
 	if (xi1 != nil) {
@@ -634,6 +651,9 @@
 	FGInt *order = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = nNumber;
 	[order setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 	FGInt *tmp0;
 
 	NSMutableArray <FGInt *>*rndms = [[NSMutableArray alloc] init];
@@ -647,18 +667,20 @@
 		[rndms addObject: tmp0];
 	}
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
-	FGIntBase numberArrayP[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength + 4]];
+	FGIntBase numberArrayInvP[] = invertedPnumber;
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArrayInvP length: cnstLength + 4]];
 
 	FGInt *alpha = [rndms objectAtIndex: 0];
 	FGInt *beta = [rndms objectAtIndex: 1];
 
-	G1Point *t1 = [G1Point add: [[memberKey group] u] kTimes: alpha withInvertedP: invertedP andPrecision: precision];
-	G1Point *t2 = [G1Point add: [[memberKey group] v] kTimes: beta withInvertedP: invertedP andPrecision: precision];
+	G1Point *t1 = [G1Point add: [[memberKey group] u] kTimes: alpha with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	G1Point *t2 = [G1Point add: [[memberKey group] v] kTimes: beta with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	tmp0 = [FGInt add: alpha and: beta];
 	[tmp0 reduceBySubtracting: order atMost: 1];
-	G1Point *tmp0G1 = [G1Point add: [[memberKey group] h] kTimes: tmp0 withInvertedP: invertedP andPrecision: precision], 
+	G1Point *tmp0G1 = [G1Point add: [[memberKey group] h] kTimes: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision], 
+			// *t33 = [[memberKey a] mutableCopy],
+			// *t3 = [G1Point add: tmp0G1 and: t33];
 			*t3 = [G1Point add: tmp0G1 and: [memberKey a]];
 	[tmp0 release];
 	[tmp0G1 release];
@@ -686,14 +708,14 @@
     dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
 	dispatch_group_async(d_group, bg_queue, ^{
-		r1 = [G1Point add: [[memberKey group] u] kTimes: ralpha withInvertedP: invertedP andPrecision: precision];
+		r1 = [G1Point add: [[memberKey group] u] kTimes: ralpha with: pFGInt withInvertedP: invertedP andPrecision: precision];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-		r2 = [G1Point add: [[memberKey group] v] kTimes: rbeta withInvertedP: invertedP andPrecision: precision];
+		r2 = [G1Point add: [[memberKey group] v] kTimes: rbeta with: pFGInt withInvertedP: invertedP andPrecision: precision];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
 		GFP12 *tmpGFP12 = [BN256 optimalAtePairing: [[memberKey group] g2] and: t3];
-		r3 = [GFP12 raise: tmpGFP12 toThePower: rx withInvertedP: invertedP andPrecision: precision];
+		r3 = [GFP12 raise: tmpGFP12 toThePower: rx with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		[tmpGFP12 release];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
@@ -702,7 +724,7 @@
 		FGInt *tmp1 = [FGInt subtract: order and: tmp0];
 		[tmp0 release];
 		GFP12 *tmp0GFP12, *tmp1GFP12;
-		tmp0_r3 = [GFP12 raise: [[memberKey group] ehw] toThePower: tmp1 withInvertedP: invertedP andPrecision: precision];
+		tmp0_r3 = [GFP12 raise: [[memberKey group] ehw] toThePower: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		[tmp1 release];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
@@ -710,35 +732,36 @@
 		[tmp0 reduceBySubtracting: order atMost: 1];
 		FGInt *tmp1 = [FGInt subtract: order and: tmp0];
 		[tmp0 release];
-		tmp1_r3 = [GFP12 raise: [[memberKey group] ehg2] toThePower: tmp1 withInvertedP: invertedP andPrecision: precision];
+		tmp1_r3 = [GFP12 raise: [[memberKey group] ehg2] toThePower: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		[tmp1 release];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-		G1Point *tmp0G1 = [G1Point add: t1 kTimes: rx withInvertedP: invertedP andPrecision: precision];
+		G1Point *tmp0G1 = [G1Point add: t1 kTimes: rx with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		FGInt *tmp0 = [FGInt subtract: order and: rdelta1];
-		G1Point *tmp1G1 = [G1Point add: [[memberKey group] u] kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
+		G1Point *tmp1G1 = [G1Point add: [[memberKey group] u] kTimes: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		r4 = [G1Point add: tmp0G1 and: tmp1G1];
 		[tmp1G1 release];
 		[tmp0G1 release];
 		[tmp0 release];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-		G1Point *tmp0G1 = [G1Point add: t2 kTimes: rx withInvertedP: invertedP andPrecision: precision];
+		G1Point *tmp0G1 = [G1Point add: t2 kTimes: rx with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		FGInt *tmp0 = [FGInt subtract: order and: rdelta2];
-		G1Point *tmp1G1 = [G1Point add: [[memberKey group] v] kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
+		G1Point *tmp1G1 = [G1Point add: [[memberKey group] v] kTimes: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		r5 = [G1Point add: tmp0G1 and: tmp1G1];
 		[tmp1G1 release];
 		[tmp0G1 release];
 		[tmp0 release];
     });
 	dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
 
 
-	GFP12 *tmpGFP12 = [GFP12 multiply: r3 and: tmp0_r3 withInvertedP: invertedP andPrecision: precision];
+	GFP12 *tmpGFP12 = [GFP12 multiply: r3 and: tmp0_r3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0_r3 release];
 	[r3 release];
 	r3 = tmpGFP12;
-	tmpGFP12 = [GFP12 multiply: r3 and: tmp1_r3 withInvertedP: invertedP andPrecision: precision];
+	tmpGFP12 = [GFP12 multiply: r3 and: tmp1_r3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1_r3 release];
 	[r3 release];
 	r3 = tmpGFP12;
@@ -833,6 +856,7 @@
 
 
 	[order release];
+	[pFGInt release];
 	[rndms release];
 	[t1 release];
 	[t2 release];
@@ -853,17 +877,18 @@
 	[sdelta1 release];
 	[sdelta2 release];
 
-    dispatch_release(d_group);
+
 
 
 	return signature;
 }
 
 
-+(G1Point *) r1245: (G1Point *) g1 and: (G1Point *) g2 addKtimes: (FGInt *) k andLtimes: (FGInt *) l withOrder: (FGInt *) order andInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	G1Point *tmp0G1 = [G1Point add: g1 kTimes: k withInvertedP: invertedP andPrecision: precision];
++(G1Point *) r1245: (G1Point *) g1 and: (G1Point *) g2 addKtimes: (FGInt *) k andLtimes: (FGInt *) l with: (FGInt *) pFGInt withOrder: (FGInt *) order andInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	G1Point *tmp0G1 = [G1Point add: g1 kTimes: k with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	FGInt *tmp0 = [FGInt subtract: order and: l];
-	G1Point *tmp1G1 = [G1Point add: g2 kTimes: tmp0 withInvertedP: invertedP andPrecision: precision];
+	G1Point *tmp1G1 = [G1Point add: g2 kTimes: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp0 release];
 	G1Point *result = [G1Point add: tmp0G1 and: tmp1G1];
 	[tmp1G1 release];
 	[tmp0G1 release];
@@ -871,25 +896,25 @@
 	return result;
 }
 
-+(GFP12 *) sAdd: (FGInt *) s1 and: (FGInt *) s2 andRaise: (GFP12 *) gfp12 withOrder: (FGInt *) order andInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision { 
++(GFP12 *) sAdd: (FGInt *) s1 and: (FGInt *) s2 andRaise: (GFP12 *) gfp12 with: (FGInt *) pFGInt withOrder: (FGInt *) order andInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision { 
 	FGInt *tmp1 = [FGInt add: s1 and: s2];
 	[tmp1 reduceBySubtracting: order atMost: 1];
 	FGInt *tmp0 = [FGInt subtract: order and: tmp1];
 	[tmp1 release];
- 	GFP12 *result = [GFP12 raise: gfp12 toThePower: tmp0 withInvertedP: invertedP andPrecision: precision];
+ 	GFP12 *result = [GFP12 raise: gfp12 toThePower: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
 
 	return result;
 }
 
-+(GFP12 *) pair: (G2Point *) g2 and: (G1Point *) g1 multiply: (GFP12 *) gfp12 andRaiseTo: (FGInt *) exp withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	GFP12 *tmp0GFP12 = [BN256 optimalAtePairing: g2 and: g1 withInvertedP: invertedP andPrecision: precision];
++(GFP12 *) pair: (G2Point *) g2 and: (G1Point *) g1 multiply: (GFP12 *) gfp12 andRaiseTo: (FGInt *) exp with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	GFP12 *tmp0GFP12 = [BN256 optimalAtePairing: g2 and: g1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	if (gfp12) {
-		GFP12 *tmp1GFP12 = [GFP12 multiply: tmp0GFP12 and: gfp12 withInvertedP: invertedP andPrecision: precision];
+		GFP12 *tmp1GFP12 = [GFP12 multiply: tmp0GFP12 and: gfp12 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		[tmp0GFP12 release];
 		tmp0GFP12 = tmp1GFP12;
 	}
-	GFP12 *result = [GFP12 raise: tmp0GFP12 toThePower: exp withInvertedP: invertedP andPrecision: precision];
+	GFP12 *result = [GFP12 raise: tmp0GFP12 toThePower: exp with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0GFP12 release];
 
 	return result;
@@ -898,11 +923,8 @@
 
 +(BOOL) verifySignature: (NSData *) signature ofDigest: (NSData *) digest withGroupKey: (BBSGroup *) groupKey {
 	if ([signature length] != 12*cnstLength) {
-		// NSLog(@" kitty no ");
 		return NO;
 	}
-
-		// NSLog(@" kitty length ok ");
 
 	const unsigned char *signatureBytes = [signature bytes];
 	NSData *tmpData = [[NSData alloc] initWithBytes: signatureBytes length: 2*cnstLength];
@@ -937,11 +959,14 @@
 
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
-	FGIntBase numberArrayP[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength + 4]];
+	FGIntBase numberArrayInvP[] = invertedPnumber;
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArrayInvP length: cnstLength + 4]];
 	FGInt *order = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = nNumber;
 	[order setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
 
 	FGInt *tmp0;
@@ -951,28 +976,28 @@
     dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
 	dispatch_group_async(d_group, bg_queue, ^{
-		tmp2_r3 = [BBSsig pair: [groupKey g2] and: t3 multiply: nil andRaiseTo: sx withInvertedP: invertedP andPrecision: precision];
+		tmp2_r3 = [BBSsig pair: [groupKey g2] and: t3 multiply: nil andRaiseTo: sx with: pFGInt withInvertedP: invertedP andPrecision: precision];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-		tmp3_r3 = [BBSsig pair: [groupKey w] and: t3 multiply: [groupKey minusEg1g2] andRaiseTo: c withInvertedP: invertedP andPrecision: precision];
+		tmp3_r3 = [BBSsig pair: [groupKey w] and: t3 multiply: [groupKey minusEg1g2] andRaiseTo: c with: pFGInt withInvertedP: invertedP andPrecision: precision];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-		tmp0_r3 = [BBSsig sAdd: salpha and: sbeta andRaise: [groupKey ehw] withOrder: order andInvertedP: invertedP andPrecision: precision];
+		tmp0_r3 = [BBSsig sAdd: salpha and: sbeta andRaise: [groupKey ehw] with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-		tmp1_r3 = [BBSsig sAdd: sdelta1 and: sdelta2 andRaise: [groupKey ehg2] withOrder: order andInvertedP: invertedP andPrecision: precision];
+		tmp1_r3 = [BBSsig sAdd: sdelta1 and: sdelta2 andRaise: [groupKey ehg2] with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-	 	r1 = [BBSsig r1245: [groupKey u] and: t1 addKtimes: salpha andLtimes: c withOrder: order andInvertedP: invertedP andPrecision: precision];
+	 	r1 = [BBSsig r1245: [groupKey u] and: t1 addKtimes: salpha andLtimes: c with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-		r2 = [BBSsig r1245: [groupKey v] and: t2 addKtimes: sbeta andLtimes: c withOrder: order andInvertedP: invertedP andPrecision: precision];
+		r2 = [BBSsig r1245: [groupKey v] and: t2 addKtimes: sbeta andLtimes: c with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-		r4 = [BBSsig r1245: t1 and: [groupKey u] addKtimes: sx andLtimes: sdelta1 withOrder: order andInvertedP: invertedP andPrecision: precision];
+		r4 = [BBSsig r1245: t1 and: [groupKey u] addKtimes: sx andLtimes: sdelta1 with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
     });
 	dispatch_group_async(d_group, bg_queue, ^{
-		r5 = [BBSsig r1245: t2 and: [groupKey v] addKtimes: sx andLtimes: sdelta2 withOrder: order andInvertedP: invertedP andPrecision: precision];
+		r5 = [BBSsig r1245: t2 and: [groupKey v] addKtimes: sx andLtimes: sdelta2 with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
     });
 
 	dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
@@ -980,24 +1005,24 @@
 
     // [tt3 release];
 
-		// tmp2_r3 = [BBSsig pair: [groupKey g2] and: t3 multiply: nil andRaiseTo: sx withInvertedP: invertedP andPrecision: precision];
-		// tmp3_r3 = [BBSsig pair: [groupKey w] and: t3 multiply: [groupKey minusEg1g2] andRaiseTo: c withInvertedP: invertedP andPrecision: precision];
-		// tmp0_r3 = [BBSsig sAdd: salpha and: sbeta andRaise: [groupKey ehw] withOrder: order andInvertedP: invertedP andPrecision: precision];
-		// tmp1_r3 = [BBSsig sAdd: sdelta1 and: sdelta2 andRaise: [groupKey ehg2] withOrder: order andInvertedP: invertedP andPrecision: precision];
-	 // 	r1 = [BBSsig r1245: [groupKey u] and: t1 addKtimes: salpha andLtimes: c withOrder: order andInvertedP: invertedP andPrecision: precision];
-		// r2 = [BBSsig r1245: [groupKey v] and: t2 addKtimes: sbeta andLtimes: c withOrder: order andInvertedP: invertedP andPrecision: precision];
-		// r4 = [BBSsig r1245: t1 and: [groupKey u] addKtimes: sx andLtimes: sdelta1 withOrder: order andInvertedP: invertedP andPrecision: precision];
-		// r5 = [BBSsig r1245: t2 and: [groupKey v] addKtimes: sx andLtimes: sdelta2 withOrder: order andInvertedP: invertedP andPrecision: precision];
+		// tmp2_r3 = [BBSsig pair: [groupKey g2] and: t3 multiply: nil andRaiseTo: sx with: pFGInt withInvertedP: invertedP andPrecision: precision];
+		// tmp3_r3 = [BBSsig pair: [groupKey w] and: t3 multiply: [groupKey minusEg1g2] andRaiseTo: c with: pFGInt withInvertedP: invertedP andPrecision: precision];
+		// tmp0_r3 = [BBSsig sAdd: salpha and: sbeta andRaise: [groupKey ehw] with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
+		// tmp1_r3 = [BBSsig sAdd: sdelta1 and: sdelta2 andRaise: [groupKey ehg2] with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
+	 // 	r1 = [BBSsig r1245: [groupKey u] and: t1 addKtimes: salpha andLtimes: c with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
+		// r2 = [BBSsig r1245: [groupKey v] and: t2 addKtimes: sbeta andLtimes: c with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
+		// r4 = [BBSsig r1245: t1 and: [groupKey u] addKtimes: sx andLtimes: sdelta1 with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
+		// r5 = [BBSsig r1245: t2 and: [groupKey v] addKtimes: sx andLtimes: sdelta2 with: pFGInt withOrder: order andInvertedP: invertedP andPrecision: precision];
 
 
-    GFP12 *r3 = [GFP12 multiply: tmp1_r3 and: tmp0_r3 withInvertedP: invertedP andPrecision: precision];
+    GFP12 *r3 = [GFP12 multiply: tmp1_r3 and: tmp0_r3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
     [tmp1_r3 release];
     [tmp0_r3 release];
-    tmp0_r3 = [GFP12 multiply: r3 and: tmp2_r3 withInvertedP: invertedP andPrecision: precision];
+    tmp0_r3 = [GFP12 multiply: r3 and: tmp2_r3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
     [tmp2_r3 release];
     [r3 release];
     r3 = tmp0_r3;
-    tmp0_r3 = [GFP12 multiply: r3 and: tmp3_r3 withInvertedP: invertedP andPrecision: precision];
+    tmp0_r3 = [GFP12 multiply: r3 and: tmp3_r3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
     [tmp3_r3 release];
     [r3 release];
     r3 = tmp0_r3;
@@ -1053,6 +1078,7 @@
 	[r3 release];
 	[invertedP release];
 	[cPrime release];
+	[pFGInt release];
 
 
 	return isValid;
@@ -1064,7 +1090,7 @@
 		return nil;
 	}
 
-	const unsigned char *signatureBytes = [signature bytes];
+	unsigned char *signatureBytes = (unsigned char *) [signature bytes];
 	NSData *tmpData = [[NSData alloc] initWithBytes: signatureBytes length: 2*cnstLength];
 	G1Point *t1 = [[G1Point alloc] unMarshal: tmpData];
 	[tmpData release];
@@ -1081,11 +1107,15 @@
 	[tmp0G1 release];
 	[tmp1G1 release];
 	[tmp2G1 changeSign];
-	tmp0G1 = [G1Point add: tmp2G1 and: t3];
+	tmp0G1 = [G1Point add: t3 and: tmp2G1];
 	[tmp2G1 release];
 
 	tmpData = [tmp0G1 marshal];
 	[tmp0G1 release];
+
+	[t1 release];
+	[t2 release];
+	[t3 release];
 
 	return tmpData;
 }
@@ -1106,86 +1136,78 @@
 	BBSMemberKey *memberKey = [[BBSMemberKey alloc] initNewMemberWithGroupPrivateKey: privateKey];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	if (memberKey == nil) {
-	    NSLog(@"Member key generation failed");
+	    NSLog(@"Member key generation                                                        failed");
 	} else {
 	    NSLog(@"Member key generation: success, and took %fms", timePassed_ms1);
 	}
 
 	BBSGroup *group = [[privateKey group] mutableCopy];
-	// group = [[BBSGroup alloc] unMarshal: [group marshal]];
-	// privateKey = [[BBSPrivateKey alloc] unMarshal: [privateKey marshal]];
-	// [privateKey setGroup: group];
+	group = [[BBSGroup alloc] unMarshal: [group marshal]];
+	privateKey = [[BBSPrivateKey alloc] unMarshal: [privateKey marshal]];
+	[privateKey setGroup: group];
 
 	NSData *digest = [FGIntXtra SHA256: [[[NSString alloc] initWithString:@"hello world"] dataUsingEncoding: NSASCIIStringEncoding]];
 	date1 = [NSDate date];
 	NSData *signature = [BBSsig sign: digest withMemberKey: memberKey];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	if (signature == nil) {
-	    NSLog(@"Signature generation failed");
+	    NSLog(@"Signature generation                                                        failed");
 	} else {
 	    NSLog(@"Signature generation: success, and took %fms", timePassed_ms1);
 	}
-	// date1 = [NSDate date];
-	// NSData *openSignature = [BBSsig openSignature: signature withPrivateKey: privateKey];
-	// timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
-	// if ([openSignature isEqualToData: [[memberKey a] marshal]]) {
-	//     NSLog(@"Signature open success, and took %fms", timePassed_ms1);
-	// } else {
-	//     NSLog(@"Signature open failed, and took %fms", timePassed_ms1);
-	//     NSLog(@"Signature open failed, and took %fms \n%@\n%@", timePassed_ms1, openSignature, [[memberKey a] marshal]);
-	// }
+	date1 = [NSDate date];
+	NSData *openSignature = [BBSsig openSignature: signature withPrivateKey: privateKey];
+	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
+	if ([openSignature isEqualToData: [[memberKey a] marshal]]) {
+	    NSLog(@"Signature open success, and took %fms", timePassed_ms1);
+	} else {
+	    NSLog(@"Signature open                                                        failed, and took %fms", timePassed_ms1);
+	}
 
 	date1 = [NSDate date];
 	BOOL validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [privateKey group]];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
-	NSLog(@"Signature verification:                                 %@, and took %fms", validation?@"success":@"failed", timePassed_ms1);
+	NSLog(@"Signature verification: %@, and took %fms", validation?@"success":@"                                                       failed", timePassed_ms1);
 	digest = [FGIntXtra SHA256: [[[NSString alloc] initWithString:@"hello worldsies"] dataUsingEncoding: NSASCIIStringEncoding]];
-	NSLog(@"Signature verification: %@ (should fail)", [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [privateKey group]]?@"success":@"failed");
+	NSLog(@"Signature verification: %@ (should fail)", [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [privateKey group]]?@"                                                       success":@"failed");
 
 
 	digest = [FGIntXtra SHA256: [[[NSString alloc] initWithString:@"hello world"] dataUsingEncoding: NSASCIIStringEncoding]];
 	date1 = [NSDate date];
 	BBSMemberKey *memberKey2 = [[BBSMemberKey alloc] initNewMemberWithGroupPrivateKey: privateKey];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
-	// if (memberKey2 == nil) {
-	//     NSLog(@"Member key 2 generation failed");
-	// } else {
-	//     NSLog(@"Member key 2 generation: success, and took %fms", timePassed_ms1);
-	// }
-	// memberKey2 = [[BBSMemberKey alloc] unMarshal: [memberKey2 marshal]];
-	// [memberKey2 setGroup: [group mutableCopy]];
+	if (memberKey2 == nil) {
+	    NSLog(@"Member key 2 generation                                                        failed");
+	} else {
+	    NSLog(@"Member key 2 generation: success, and took %fms", timePassed_ms1);
+	}
+	memberKey2 = [[BBSMemberKey alloc] unMarshal: [memberKey2 marshal]];
+	[memberKey2 setGroup: [group mutableCopy]];
 
-	[group release];
-	[memberKey release];
-	[privateKey release];
-	[memberKey2 release];
-	[digest release];
-	[signature release];
-return;
 	date1 = [NSDate date];
 	BBSRevocation *revocation = [privateKey generateRevocationForMember: memberKey];
-	// [[privateKey group] updateWithRevocation: [[BBSRevocation alloc] unMarshal: [revocation marshal]]];
-	[[privateKey group] updateWithRevocation: revocation];
+	[[privateKey group] updateWithRevocation: [[BBSRevocation alloc] unMarshal: [revocation marshal]]];
+	// [[privateKey group] updateWithRevocation: revocation];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	NSLog(@"Revocation generation and updating took %fms", timePassed_ms1);
 
 	date1 = [NSDate date];
 	validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [privateKey group]];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
-	NSLog(@"Signature verification after revocation: %@, and took %fms (should fail)", validation?@"success":@"failed", timePassed_ms1);
+	NSLog(@"Signature verification after revocation: %@, and took %fms (should fail)", validation?@"                                                       success":@"failed", timePassed_ms1);
 
 	date1 = [NSDate date];
 	signature = [BBSsig sign: digest withMemberKey: memberKey2];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	if (signature == nil) {
-	    NSLog(@"Signature generation (before processing revocation) failed");
+	    NSLog(@"Signature generation (before processing revocation)                                                        failed");
 	} else {
 	    NSLog(@"Signature generation (before processing revocation): success, and took %fms", timePassed_ms1);
 	}
 	date1 = [NSDate date];
 	validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [privateKey group]];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
-	NSLog(@"Signature verification (before processing revocation): %@, and took %fms (should fail)", validation?@"success":@"failed", timePassed_ms1);
+	NSLog(@"Signature verification (before processing revocation): %@, and took %fms (should fail)", validation?@"                                                       success":@"failed", timePassed_ms1);
 
 	validation = [memberKey2 updateWithRevocation: revocation];
 	NSLog(@"Updating revocation %@",validation?@"success":@"failed");
@@ -1194,17 +1216,25 @@ return;
 	signature = [BBSsig sign: digest withMemberKey: memberKey2];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	if (signature == nil) {
-	    NSLog(@"Signature generation (after processing revocation) failed");
+	    NSLog(@"Signature generation (after processing revocation)                                                        failed");
 	} else {
 	    NSLog(@"Signature generation (after processing revocation): success, and took %fms", timePassed_ms1);
 	}
 	date1 = [NSDate date];
 	validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [privateKey group]];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
-	NSLog(@"Signature verification (after revocation): %@, and took %fms", validation?@"success":@"failed", timePassed_ms1);
+	NSLog(@"Signature verification (after revocation): %@, and took %fms", validation?@"success":@"                                                       failed", timePassed_ms1);
 	validation = [memberKey updateWithRevocation: revocation];
 
-	NSLog(@"Updating revocation of the revoked key %@ (should fail) \n\n",validation?@"success":@"failed");
+	NSLog(@"Updating revocation of the revoked key %@ (should fail) \n\n",validation?@"                                                       success":@"failed");
+
+
+	[group release];
+	[memberKey release];
+	[privateKey release];
+	[memberKey2 release];
+	[digest release];
+	[signature release];
 }
 
 

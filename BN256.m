@@ -10,14 +10,13 @@
 
 
 @implementation GFP2
-@synthesize a, b, p;
+@synthesize a, b;
 
 
 -(id) init {
     if (self = [super init]) {
     	a = nil;
     	b = nil;
-    	p = nil;
     }
     return self;
 }
@@ -25,9 +24,6 @@
     if (self = [super init]) {
     	a = [[FGInt alloc] initWithFGIntBase: 1];
     	b = [[FGInt alloc] initAsZero];
-		p = [[FGInt alloc] initWithoutNumber];
-		FGIntBase numberArray[8] = pNumber;
-		[p setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
     }
     return self;
 }
@@ -35,9 +31,6 @@
     if (self = [super init]) {
     	a = [[FGInt alloc] initAsZero];
     	b = [[FGInt alloc] initAsZero];
-		p = [[FGInt alloc] initWithoutNumber];
-		FGIntBase numberArray[8] = pNumber;
-		[p setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
     }
     return self;
 }
@@ -53,16 +46,12 @@
 		tmpData = [[NSData alloc] initWithBytes: bytes length: cnstLength];
     	b = [[FGInt alloc] initWithBigEndianNSData: tmpData];
     	[tmpData release];
-		p = [[FGInt alloc] initWithoutNumber];
-		FGIntBase numberArray[8] = pNumber;
-		[p setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
     }
     return self;
 }
 -(void) dealloc {
     [a release];
     [b release];
-    [p release];
     [super dealloc];
 }
 -(id) mutableCopyWithZone: (NSZone *) zone {
@@ -70,8 +59,6 @@
 
     [newGFP2 setA: [a mutableCopy]];
     [newGFP2 setB: [b mutableCopy]];
-    // [newGFP2 setP: [p retain]];
-    [newGFP2 setP: [p mutableCopy]];
 
     return newGFP2;
 }
@@ -89,200 +76,185 @@
 	[b changeSign];
 }
 
-+(GFP2 *) add: (GFP2 *) p1 and: (GFP2 *) p2 {
++(GFP2 *) add: (GFP2 *) p1 and: (GFP2 *) p2 with: (FGInt *) pFGInt {
 	GFP2 *sum = [[GFP2 alloc] init];
-	FGInt *p = [p1 p];
 
 	FGInt *tmpFGInt;
 	tmpFGInt = [FGInt add: [p1 a] and: [p2 a]];
-	[tmpFGInt reduceBySubtracting: p atMost: 1];
+	[tmpFGInt reduceBySubtracting: pFGInt atMost: 1];
 	[sum setA: tmpFGInt];
 	tmpFGInt = [FGInt add: [p1 b] and: [p2 b]];
-	[tmpFGInt reduceBySubtracting: p atMost: 1];
+	[tmpFGInt reduceBySubtracting: pFGInt atMost: 1];
 	[sum setB: tmpFGInt];
-	// [sum setP: [p retain]];
-	[sum setP: [p mutableCopy]];
 
 	return sum;
 }
 
-+(GFP2 *) subtract: (GFP2 *) p1 and: (GFP2 *) p2 {
+
++(GFP2 *) subtract: (GFP2 *) p1 and: (GFP2 *) p2 with: (FGInt *) pFGInt {
 	GFP2 *sum = [[GFP2 alloc] init];
-	FGInt *p = [p1 p];
 
 	FGInt *tmpFGInt;
 	tmpFGInt = [FGInt subtract: [p1 a] and: [p2 a]];
-	[tmpFGInt reduceBySubtracting: p atMost: 1];
+	[tmpFGInt reduceBySubtracting: pFGInt atMost: 1];
 	[sum setA: tmpFGInt];
 	tmpFGInt = [FGInt subtract: [p1 b] and: [p2 b]];
-	[tmpFGInt reduceBySubtracting: p atMost: 1];
+	[tmpFGInt reduceBySubtracting: pFGInt atMost: 1];
 	[sum setB: tmpFGInt];
-	// [sum setP: [p retain]];
-	[sum setP: [p mutableCopy]];
 
 	return sum;
 }
 
-+(GFP2 *) multiply: (GFP2 *) p1 and: (GFP2 *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
++(GFP2 *) multiply: (GFP2 *) p1 and: (GFP2 *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP2 *product = [[GFP2 alloc] init];
-	FGInt *p = [p1 p];
 
 	FGInt *tmp = [FGInt multiply: [p1 a] and: [p2 a]];
-	FGInt *v0 = [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision];
+	FGInt *v0 = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
+	[tmp release];
 	tmp = [FGInt multiply: [p1 b] and: [p2 b]];
-	FGInt *v1 = [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision],
-		*tmp1 = [[FGInt add: [p1 a] and: [p1 b]] reduceBySubtracting: p atMost: 1], 
-		*tmp2 = [[FGInt add: [p2 a] and: [p2 b]] reduceBySubtracting: p atMost: 1];
+	FGInt *v1 = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision],
+		*tmp1 = [[FGInt add: [p1 a] and: [p1 b]] reduceBySubtracting: pFGInt atMost: 1], 
+		*tmp2 = [[FGInt add: [p2 a] and: [p2 b]] reduceBySubtracting: pFGInt atMost: 1];
+	[tmp release];
 
 	tmp = [FGInt multiply: tmp1 and: tmp2];
 	[tmp2 release];
-	FGInt *tmp0 = [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision];
+	[tmp1 release];
+	FGInt *tmp0 = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
 	[tmp release];
-	tmp1 = [[FGInt subtract: tmp0 and: v0] reduceBySubtracting: p atMost: 1];
+	tmp1 = [[FGInt subtract: tmp0 and: v0] reduceBySubtracting: pFGInt atMost: 1];
 	[tmp0 release];
 
-	[product setB: [[FGInt subtract: tmp1 and: v1] reduceBySubtracting: p atMost: 1]];
+	[product setB: [[FGInt subtract: tmp1 and: v1] reduceBySubtracting: pFGInt atMost: 1]];
 	[tmp1 release];
-	[product setA: [[FGInt subtract: v0 and: v1] reduceBySubtracting: p atMost: 1]];
+	[product setA: [[FGInt subtract: v0 and: v1] reduceBySubtracting: pFGInt atMost: 1]];
 	[v0 release];
 	[v1 release];
-	// [product setP: [p retain]];
-	[product setP: [p mutableCopy]];
 
 	return product;
 }
 
-+(GFP2 *) square: (GFP2 *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
++(GFP2 *) square: (GFP2 *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP2 *square = [[GFP2 alloc] init];
-	FGInt *p = [p1 p];
 
 	FGInt *tmp = [FGInt multiply: [p1 a] and: [p1 b]],
-		*tmp1 = [[FGInt add: [p1 a] and: [p1 b]] reduceBySubtracting: p atMost: 1], *tmp2 = [[FGInt subtract: [p1 a] and: [p1 b]] reduceBySubtracting: p atMost: 1];
-	FGInt *v0 = [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision];
+		*tmp1 = [[FGInt add: [p1 a] and: [p1 b]] reduceBySubtracting: pFGInt atMost: 1], *tmp2 = [[FGInt subtract: [p1 a] and: [p1 b]] reduceBySubtracting: pFGInt atMost: 1];
+	FGInt *v0 = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
 	[tmp release];
 	tmp = [FGInt multiply: tmp1 and: tmp2];
 	[tmp1 release];
 	[tmp2 release];
 
-	[square setA: [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision]];
+	[square setA: [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision]];
 	[tmp release];
 
 	[v0 shiftLeft];
-	[square setB: [v0 reduceBySubtracting: p atMost: 1]];
-	// [square setP: [p retain]];
-	[square setP: [p mutableCopy]];
+	[square setB: [v0 reduceBySubtracting: pFGInt atMost: 1]];
 
 	return square;
 }
 
-+(GFP2 *) multiplyByResiduePlus3: (GFP2 *) p1 {
++(GFP2 *) multiplyByResiduePlus3: (GFP2 *) p1 with: (FGInt *) pFGInt {
 	GFP2 *product = [[GFP2 alloc] init];
-	FGInt *p = [p1 p];
 
 	FGInt *tmp = [[p1 a] mutableCopy];
 	[tmp multiplyByInt: 3];
-	[product setA: [[FGInt subtract: tmp and: [p1 b]] reduceBySubtracting: p atMost: 4]];
+	[product setA: [[FGInt subtract: tmp and: [p1 b]] reduceBySubtracting: pFGInt atMost: 4]];
 	[tmp release];
 	tmp = [[p1 b] mutableCopy];
 	[tmp multiplyByInt: 3];
-	[product setB: [[FGInt add: tmp and: [p1 a]] reduceBySubtracting: p atMost: 4]];
-	// [product setP: [p retain]];
-	[product setP: [p mutableCopy]];
+	[product setB: [[FGInt add: tmp and: [p1 a]] reduceBySubtracting: pFGInt atMost: 4]];
+	[tmp release];
 
 	return product;
 }
 
--(void) shiftLeft {
+-(void) shiftLeftWith: (FGInt *) pFGInt {
 	[a shiftLeft];
-	[a reduceBySubtracting: p atMost: 1];
+	[a reduceBySubtracting: pFGInt atMost: 1];
 	[b shiftLeft];
-	[b reduceBySubtracting: p atMost: 1];
+	[b reduceBySubtracting: pFGInt atMost: 1];
 }
 
--(void) shiftRight {
+-(void) shiftRightWith: (FGInt *) pFGInt {
 	if (![a isEven]) {
-		[a addWith: p];
+		[a addWith: pFGInt];
 	}
 	[a shiftRight];
 	if (![b isEven]) {
-		[b addWith: p];
+		[b addWith: pFGInt];
 	}
 	[b shiftRight];
 }
 
--(void) multiplyByInt: (unsigned char) c {
+-(void) multiplyByInt: (unsigned char) c with: (FGInt  *) pFGInt {
 	[a multiplyByInt: c];
-	[a reduceBySubtracting: p atMost: c];
+	[a reduceBySubtracting: pFGInt atMost: c];
 	[b multiplyByInt: c];
-	[b reduceBySubtracting: p atMost: c];
+	[b reduceBySubtracting: pFGInt atMost: c];
 }
 
--(void) multiplyByFGInt: (FGInt *) fGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+-(void) multiplyByFGInt: (FGInt *) fGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	FGInt *tmp = [FGInt multiply: a and: fGInt];
 	[a release];
-	a = [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision];
+	a = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
 	[tmp release];
 	tmp = [FGInt multiply: b and: fGInt];
 	[b release];
-	b = [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision];
+	b = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
 	[tmp release];
 }
 
 
--(GFP2 *) invertWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+-(GFP2 *) invertWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	FGInt *tmp1 = [FGInt square: a];
-	FGInt* tmp2 = [FGInt barrettMod: tmp1 by: p with: invertedP andPrecision: precision];
+	FGInt* tmp2 = [FGInt barrettMod: tmp1 by: pFGInt with: invertedP andPrecision: precision];
 	[tmp1 release];
 
 	tmp1 = [FGInt square: b];
-	FGInt* tmp = [FGInt barrettMod: tmp1 by: p with: invertedP andPrecision: precision];
+	FGInt* tmp = [FGInt barrettMod: tmp1 by: pFGInt with: invertedP andPrecision: precision];
 	[tmp1 release];
 
 	[tmp addWith: tmp2];
 	[tmp2 release];
-	[tmp reduceBySubtracting: p atMost: 1];
+	[tmp reduceBySubtracting: pFGInt atMost: 1];
 
-	FGInt *denominator = [FGInt invert: tmp moduloPrime: p];
+	FGInt *denominator = [FGInt invert: tmp moduloPrime: pFGInt];
 	[tmp release];
 
 	tmp = [FGInt multiply: a and: denominator];
 
 	GFP2 *inverted = [[GFP2 alloc] init];
-	[inverted setA: [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision]];
+	[inverted setA: [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision]];
 	[tmp release];
 
 	tmp = [FGInt multiply: b and: denominator];
 	[tmp changeSign];
-	[inverted setB: [FGInt barrettMod: tmp by: p with: invertedP andPrecision: precision]];
+	[inverted setB: [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision]];
 	[tmp release];
-
-	// [inverted setP: [p retain]];
-	[inverted setP: [p mutableCopy]];
 
 	return inverted;
 }
 
 
-
-+(GFP2 *) raise: (GFP2 *) gfp2 toThePower: (FGInt *) fGIntN withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
++(GFP2 *) raise: (GFP2 *) gfp2 toThePower: (FGInt *) fGIntN with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
     GFP2 *power = [[GFP2 alloc] initOne];
     FGIntOverflow nLength = [[fGIntN number] length]/4;
     FGIntBase tmpWord;
     GFP2 *tmp1, *tmp;
     FGIntBase* nFGIntNumber = [[fGIntN number] mutableBytes];
 
-    // tmp1 = [gfp2 retain];
     tmp1 = [gfp2 mutableCopy];
 
     for( FGIntIndex i = 0; i < nLength - 1; i++ ) {
         tmpWord = nFGIntNumber[i];
         for( FGIntIndex j = 0; j < 32; ++j ) {
             if ((tmpWord % 2) == 1) {
-                tmp = [GFP2 multiply: power and: tmp1 withInvertedP: invertedP andPrecision: precision];
+                tmp = [GFP2 multiply: power and: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
                 [power release];
                 power = tmp;
             }
-            tmp = [GFP2 square: tmp1 withInvertedP: invertedP andPrecision: precision];
+            tmp = [GFP2 square: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
             [tmp1 release];
             tmp1 = tmp;
             tmpWord >>= 1;
@@ -291,13 +263,13 @@
     tmpWord = nFGIntNumber[nLength - 1];
     while(tmpWord != 0) {
         if ((tmpWord % 2) == 1) {
-            tmp = [GFP2 multiply: power and: tmp1 withInvertedP: invertedP andPrecision: precision];
+            tmp = [GFP2 multiply: power and: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
             [power release];
             power = tmp;
         }
         tmpWord >>= 1;
         if (tmpWord != 0) {
-            tmp = [GFP2 square: tmp1 withInvertedP: invertedP andPrecision: precision];
+            tmp = [GFP2 square: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
             [tmp1 release];
             tmp1 = tmp;
         }
@@ -309,24 +281,29 @@
 }
 
 
+
 -(NSString *) toBase10String {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
 	NSMutableString *base10String = [[NSMutableString alloc] init];
-	FGInt *tmp = [FGInt longDivisionMod: a by: p];
+	FGInt *tmp = [FGInt longDivisionMod: a by: pFGInt];
 	NSString *tmpStr = [tmp toBase10String];
-	// [tmp release];
 	[a release];
 	a = tmp;
 	[base10String appendString: tmpStr];
 	[tmpStr release];
 	[base10String appendString: @" + "];
-	tmp = [FGInt longDivisionMod: b by: p];
+	tmp = [FGInt longDivisionMod: b by: pFGInt];
 	tmpStr = [tmp toBase10String];
 	[b release];
 	b = tmp;
-	// [tmp release];
 	[base10String appendString: tmpStr];
 	[tmpStr release];
 	[base10String appendString: @"i"];
+
+	[pFGInt release];
 
 	return base10String;	
 }
@@ -335,16 +312,20 @@
 	if ((a == nil) || (b == nil)) {
 		return nil;
 	}
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArray[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
 	NSMutableData *result = [[NSMutableData alloc] init];
-	FGInt *tmp = [FGInt longDivisionMod: b by: p];
+	FGInt *tmp = [FGInt longDivisionMod: b by: pFGInt];
 	NSData *tmpData = [tmp toBigEndianNSDataOfLength: cnstLength];
 	[result appendData: tmpData];
 	[tmpData release];
-	tmp = [FGInt longDivisionMod: a by: p];
+	tmp = [FGInt longDivisionMod: a by: pFGInt];
 	tmpData = [tmp toBigEndianNSDataOfLength: cnstLength];
 	[result appendData: tmpData];
 	[tmpData release];
 
+	[pFGInt release];
 	return result;
 }
 
@@ -435,79 +416,79 @@
 }
 
 
-+(GFP6 *) add: (GFP6 *) p1 and: (GFP6 *) p2 {
++(GFP6 *) add: (GFP6 *) p1 and: (GFP6 *) p2 with: (FGInt *) pFGInt {
 	GFP6 *sum = [[GFP6 alloc] init];
 
 	GFP2 *tmp;
-	tmp = [GFP2 add: [p1 a] and: [p2 a]];
+	tmp = [GFP2 add: [p1 a] and: [p2 a] with: pFGInt];
 	[sum setA: tmp];
-	tmp = [GFP2 add: [p1 b] and: [p2 b]];
+	tmp = [GFP2 add: [p1 b] and: [p2 b] with: pFGInt];
 	[sum setB: tmp];
-	tmp = [GFP2 add: [p1 c] and: [p2 c]];
+	tmp = [GFP2 add: [p1 c] and: [p2 c] with: pFGInt];
 	[sum setC: tmp];
 
 	return sum;
 }
 
-+(GFP6 *) subtract: (GFP6 *) p1 and: (GFP6 *) p2 {
++(GFP6 *) subtract: (GFP6 *) p1 and: (GFP6 *) p2 with: (FGInt *) pFGInt {
 	GFP6 *sum = [[GFP6 alloc] init];
 
 	GFP2 *tmp;
-	tmp = [GFP2 subtract: [p1 a] and: [p2 a]];
+	tmp = [GFP2 subtract: [p1 a] and: [p2 a] with: pFGInt];
 	[sum setA: tmp];
-	tmp = [GFP2 subtract: [p1 b] and: [p2 b]];
+	tmp = [GFP2 subtract: [p1 b] and: [p2 b] with: pFGInt];
 	[sum setB: tmp];
-	tmp = [GFP2 subtract: [p1 c] and: [p2 c]];
+	tmp = [GFP2 subtract: [p1 c] and: [p2 c] with: pFGInt];
 	[sum setC: tmp];
 
 	return sum;
 }
 
-+(GFP6 *) multiply: (GFP6 *) p1 and: (GFP6 *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
++(GFP6 *) multiply: (GFP6 *) p1 and: (GFP6 *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP6 *product = [[GFP6 alloc] init];
 
-	GFP2 *v0 = [GFP2 multiply: [p1 a] and: [p2 a] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *v1 = [GFP2 multiply: [p1 b] and: [p2 b] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *v2 = [GFP2 multiply: [p1 c] and: [p2 c] withInvertedP: invertedP andPrecision: precision];
+	GFP2 *v0 = [GFP2 multiply: [p1 a] and: [p2 a]  with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *v1 = [GFP2 multiply: [p1 b] and: [p2 b]  with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *v2 = [GFP2 multiply: [p1 c] and: [p2 c]  with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
-	GFP2 *tmp1 = [GFP2 add: [p1 b] and: [p1 c]];
-	GFP2 *tmp2 = [GFP2 add: [p2 b] and: [p2 c]];
-	GFP2 *tmp = [GFP2 multiply: tmp1 and: tmp2 withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp1 = [GFP2 add: [p1 b] and: [p1 c]  with: pFGInt];
+	GFP2 *tmp2 = [GFP2 add: [p2 b] and: [p2 c]  with: pFGInt];
+	GFP2 *tmp = [GFP2 multiply: tmp1 and: tmp2  with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];
 	[tmp2 release];
-	tmp1 = [GFP2 subtract: tmp and: v1];
+	tmp1 = [GFP2 subtract: tmp and: v1  with: pFGInt];
 	[tmp release];
-	tmp2 = [GFP2 subtract: tmp1 and: v2];
+	tmp2 = [GFP2 subtract: tmp1 and: v2  with: pFGInt];
 	[tmp1 release];
-	tmp = [GFP2 multiplyByResiduePlus3: tmp2];
+	tmp = [GFP2 multiplyByResiduePlus3: tmp2  with: pFGInt];
 	[tmp2 release];
-	[product setA: [GFP2 add: v0 and: tmp]];
-	[tmp release];
-
-	tmp1 = [GFP2 add: [p1 b] and: [p1 a]];
-	tmp2 = [GFP2 add: [p2 b] and: [p2 a]];
-	tmp = [GFP2 multiply: tmp1 and: tmp2 withInvertedP: invertedP andPrecision: precision];
-	[tmp1 release];
-	[tmp2 release];
-	tmp1 = [GFP2 subtract: tmp and: v1];
-	[tmp release];
-	tmp2 = [GFP2 subtract: tmp1 and: v0];
-	[tmp1 release];
-	tmp = [GFP2 multiplyByResiduePlus3: v2];
-	[product setB: [GFP2 add: tmp2 and: tmp]];
-	[tmp2 release];
+	[product setA: [GFP2 add: v0 and: tmp  with: pFGInt]];
 	[tmp release];
 
-	tmp1 = [GFP2 add: [p1 c] and: [p1 a]];
-	tmp2 = [GFP2 add: [p2 c] and: [p2 a]];
-	tmp = [GFP2 multiply: tmp1 and: tmp2 withInvertedP: invertedP andPrecision: precision];
+	tmp1 = [GFP2 add: [p1 b] and: [p1 a]  with: pFGInt];
+	tmp2 = [GFP2 add: [p2 b] and: [p2 a]  with: pFGInt];
+	tmp = [GFP2 multiply: tmp1 and: tmp2  with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];
 	[tmp2 release];
-	tmp1 = [GFP2 subtract: tmp and: v2];
+	tmp1 = [GFP2 subtract: tmp and: v1  with: pFGInt];
 	[tmp release];
-	tmp2 = [GFP2 subtract: tmp1 and: v0];
+	tmp2 = [GFP2 subtract: tmp1 and: v0  with: pFGInt];
 	[tmp1 release];
-	[product setC: [GFP2 add: tmp2 and: v1]];
+	tmp = [GFP2 multiplyByResiduePlus3: v2  with: pFGInt];
+	[product setB: [GFP2 add: tmp2 and: tmp  with: pFGInt]];
+	[tmp2 release];
+	[tmp release];
+
+	tmp1 = [GFP2 add: [p1 c] and: [p1 a]  with: pFGInt];
+	tmp2 = [GFP2 add: [p2 c] and: [p2 a]  with: pFGInt];
+	tmp = [GFP2 multiply: tmp1 and: tmp2  with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp1 release];
+	[tmp2 release];
+	tmp1 = [GFP2 subtract: tmp and: v2  with: pFGInt];
+	[tmp release];
+	tmp2 = [GFP2 subtract: tmp1 and: v0  with: pFGInt];
+	[tmp1 release];
+	[product setC: [GFP2 add: tmp2 and: v1  with: pFGInt]];
 	[tmp2 release];
 
 	[v0 release];
@@ -517,40 +498,40 @@
 	return product;
 }
 
-+(GFP6 *) square: (GFP6 *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
++(GFP6 *) square: (GFP6 *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP6 *square = [[GFP6 alloc] init];
 
 	GFP2 *p1a = [p1 a], *p1b = [p1 b], *p1c = [p1 c];
 
-	GFP2 *s0 = [GFP2 square: p1a withInvertedP: invertedP andPrecision: precision];
-	GFP2 *s4 = [GFP2 square: p1c withInvertedP: invertedP andPrecision: precision];
-	GFP2 *tmp1 = [GFP2 add: p1a and: p1c];
-	GFP2 *tmp2 = [GFP2 add: tmp1 and: p1b];
-	GFP2 *s1 = [GFP2 square: tmp2 withInvertedP: invertedP andPrecision: precision];
+	GFP2 *s0 = [GFP2 square: p1a  with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *s4 = [GFP2 square: p1c  with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp1 = [GFP2 add: p1a and: p1c  with: pFGInt];
+	GFP2 *tmp2 = [GFP2 add: tmp1 and: p1b  with: pFGInt];
+	GFP2 *s1 = [GFP2 square: tmp2  with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp2 release];
-	tmp2 = [GFP2 subtract: tmp1 and: p1b];
-	GFP2 *s2 = [GFP2 square: tmp2 withInvertedP: invertedP andPrecision: precision];
+	tmp2 = [GFP2 subtract: tmp1 and: p1b  with: pFGInt];
+	GFP2 *s2 = [GFP2 square: tmp2  with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp2 release];
 	[tmp1 release];
-	GFP2 *s3 = [GFP2 multiply: p1b and: p1c withInvertedP: invertedP andPrecision: precision];
-	[s3 shiftLeft];
-	GFP2 *t1 = [GFP2 add: s1 and: s2];
-	[t1 shiftRight];
+	GFP2 *s3 = [GFP2 multiply: p1b and: p1c  with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[s3 shiftLeftWith: pFGInt];
+	GFP2 *t1 = [GFP2 add: s1 and: s2  with: pFGInt];
+	[t1 shiftRightWith: pFGInt];
 
-	tmp1 = [GFP2 multiplyByResiduePlus3: s3];
-	[square setA: [GFP2 add: tmp1 and: s0]];
-	[tmp1 release];
-
-	tmp1 = [GFP2 multiplyByResiduePlus3: s4];
-	tmp2 = [GFP2 add: tmp1 and: s1];
-	[tmp1 release];
-	tmp1 = [GFP2 subtract: tmp2 and: s3];
-	[tmp2 release];
-	[square setB: [GFP2 subtract: tmp1 and: t1]];
+	tmp1 = [GFP2 multiplyByResiduePlus3: s3  with: pFGInt];
+	[square setA: [GFP2 add: tmp1 and: s0  with: pFGInt]];
 	[tmp1 release];
 
-	tmp1 = [GFP2 subtract: t1 and: s0];
-	[square setC: [GFP2 subtract: tmp1 and: s4]];
+	tmp1 = [GFP2 multiplyByResiduePlus3: s4  with: pFGInt];
+	tmp2 = [GFP2 add: tmp1 and: s1  with: pFGInt];
+	[tmp1 release];
+	tmp1 = [GFP2 subtract: tmp2 and: s3  with: pFGInt];
+	[tmp2 release];
+	[square setB: [GFP2 subtract: tmp1 and: t1  with: pFGInt]];
+	[tmp1 release];
+
+	tmp1 = [GFP2 subtract: t1 and: s0  with: pFGInt];
+	[square setC: [GFP2 subtract: tmp1 and: s4  with: pFGInt]];
 	[tmp1 release];
 
 	[s0 release];
@@ -564,8 +545,8 @@
 }
 
 
--(GFP6 *) multiplyByRoot {
-	GFP2 *tmp = [GFP2 multiplyByResiduePlus3: c];
+-(GFP6 *) multiplyByRootWith: (FGInt *) pFGInt {
+	GFP2 *tmp = [GFP2 multiplyByResiduePlus3: c with: pFGInt];
 	[c release];
 	c = b;
 	b = a;
@@ -574,79 +555,78 @@
 	return self;
 }
 
--(void) shiftLeft {
-	[a shiftLeft];
-	[b shiftLeft];
-	[c shiftLeft];
+-(void) shiftLeftWith: (FGInt *) pFGInt {
+	[a shiftLeftWith: pFGInt];
+	[b shiftLeftWith: pFGInt];
+	[c shiftLeftWith: pFGInt];
 }
 
--(void) multiplyByFGInt: (FGInt *) fGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	[a multiplyByFGInt: fGInt withInvertedP: invertedP andPrecision: precision];
-	[b multiplyByFGInt: fGInt withInvertedP: invertedP andPrecision: precision];
-	[c multiplyByFGInt: fGInt withInvertedP: invertedP andPrecision: precision];
+-(void) multiplyByFGInt: (FGInt *) fGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	[a multiplyByFGInt: fGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[b multiplyByFGInt: fGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[c multiplyByFGInt: fGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 }
 
--(void) multiplyByGFP2: (GFP2 *) gfp2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	GFP2 *tmp = [GFP2 multiply: a and: gfp2 withInvertedP: invertedP andPrecision: precision];
+-(void) multiplyByGFP2: (GFP2 *) gfp2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	GFP2 *tmp = [GFP2 multiply: a and: gfp2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[a release];
 	a = tmp;
-	tmp = [GFP2 multiply: b and: gfp2 withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP2 multiply: b and: gfp2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[b release];
 	b = tmp;
-	tmp = [GFP2 multiply: c and: gfp2 withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP2 multiply: c and: gfp2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[c release];
 	c = tmp;
 }
 
-
--(GFP6 *) invertWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+-(GFP6 *) invertWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP6 *iGFP6 = [[GFP6 alloc] init];
 
-	GFP2 *tmp = [GFP2 square: a withInvertedP: invertedP andPrecision: precision];
-	GFP2 *tmp1 = [GFP2 multiply: c and: b withInvertedP: invertedP andPrecision: precision];
-	GFP2 *tmp2 = [GFP2 multiplyByResiduePlus3: tmp1];
+	GFP2 *tmp = [GFP2 square: a with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp1 = [GFP2 multiply: c and: b with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp2 = [GFP2 multiplyByResiduePlus3: tmp1 with: pFGInt];
 	[tmp1 release];
-	[iGFP6 setA: [GFP2 subtract: tmp and: tmp2]];
+	[iGFP6 setA: [GFP2 subtract: tmp and: tmp2 with: pFGInt]];
 	[tmp release];
 	[tmp2 release];
 
-	tmp = [GFP2 square: c withInvertedP: invertedP andPrecision: precision];
-	tmp2 = [GFP2 multiplyByResiduePlus3: tmp];
+	tmp = [GFP2 square: c with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp2 = [GFP2 multiplyByResiduePlus3: tmp with: pFGInt];
 	[tmp release];
-	tmp1 = [GFP2 multiply: a and: b withInvertedP: invertedP andPrecision: precision];
-	[iGFP6 setB: [GFP2 subtract: tmp2 and: tmp1]];
+	tmp1 = [GFP2 multiply: a and: b with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[iGFP6 setB: [GFP2 subtract: tmp2 and: tmp1 with: pFGInt]];
 	[tmp1 release];
 	[tmp2 release];
 
-	tmp = [GFP2 square: b withInvertedP: invertedP andPrecision: precision];
-	tmp1 = [GFP2 multiply: a and: c withInvertedP: invertedP andPrecision: precision];
-	[iGFP6 setC: [GFP2 subtract: tmp and: tmp1]];
+	tmp = [GFP2 square: b with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp1 = [GFP2 multiply: a and: c with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[iGFP6 setC: [GFP2 subtract: tmp and: tmp1 with: pFGInt]];
 	[tmp release];
 	[tmp1 release];
 
-	tmp1 = [GFP2 multiply: a and: [iGFP6 a] withInvertedP: invertedP andPrecision: precision];
-	tmp2 = [GFP2 multiply: c and: [iGFP6 b] withInvertedP: invertedP andPrecision: precision];
-	tmp = [GFP2 multiplyByResiduePlus3: tmp2];
+	tmp1 = [GFP2 multiply: a and: [iGFP6 a] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp2 = [GFP2 multiply: c and: [iGFP6 b] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP2 multiplyByResiduePlus3: tmp2 with: pFGInt];
 	[tmp2 release];
-	tmp2 = [GFP2 add: tmp1 and: tmp];
+	tmp2 = [GFP2 add: tmp1 and: tmp with: pFGInt];
 	[tmp release];
 	[tmp1 release];
-	tmp1 = [GFP2 multiply: b and: [iGFP6 c] withInvertedP: invertedP andPrecision: precision];
-	tmp = [GFP2 multiplyByResiduePlus3: tmp1];
+	tmp1 = [GFP2 multiply: b and: [iGFP6 c] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP2 multiplyByResiduePlus3: tmp1 with: pFGInt];
 	[tmp1 release];
-	tmp1 = [GFP2 add: tmp2 and: tmp];
+	tmp1 = [GFP2 add: tmp2 and: tmp with: pFGInt];
 	[tmp2 release];
 	[tmp release];
-	tmp = [tmp1 invertWithInvertedP: invertedP andPrecision: precision];
+	tmp = [tmp1 invertWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];
 
-	tmp1 = [GFP2 multiply: [iGFP6 a] and: tmp withInvertedP: invertedP andPrecision: precision];
+	tmp1 = [GFP2 multiply: [iGFP6 a] and: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[[iGFP6 a] release];
 	[iGFP6 setA: tmp1];
-	tmp1 = [GFP2 multiply: [iGFP6 b] and: tmp withInvertedP: invertedP andPrecision: precision];
+	tmp1 = [GFP2 multiply: [iGFP6 b] and: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[[iGFP6 b] release];
 	[iGFP6 setB: tmp1];
-	tmp1 = [GFP2 multiply: [iGFP6 c] and: tmp withInvertedP: invertedP andPrecision: precision];
+	tmp1 = [GFP2 multiply: [iGFP6 c] and: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[[iGFP6 c] release];
 	[iGFP6 setC: tmp1];
 
@@ -655,8 +635,7 @@
 	return iGFP6;
 }
 
-
--(void) frobeniusWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+-(void) frobeniusWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	[a conjugate];
 	[b conjugate];
 	[c conjugate];
@@ -664,16 +643,14 @@
 	GFP2 *tmp = [[GFP2 alloc] init];
 	FGIntBase numberArray1[8] = iPlus3To2Pm2o3aNumber;
 	FGInt *tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray1 length: cnstLength]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray1 length: cnstLength freeWhenDone: NO]];
 	[tmp setA: tmpFGInt];
 	FGIntBase numberArray2[8] = iPlus3To2Pm2o3bNumber;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray2 length: cnstLength freeWhenDone: NO]];
 	[tmp setB: tmpFGInt];
-	[tmp setP: [[a p] mutableCopy]];
-	// [tmp setP: [[a p] retain]];
 
-	GFP2 *tmp0 = [GFP2 multiply: c and: tmp withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp0 = [GFP2 multiply: c and: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
 	[c release];
 	c = tmp0;
@@ -681,32 +658,30 @@
 	tmp = [[GFP2 alloc] init];
 	FGIntBase numberArray3[8] = iPlus3ToPm1o3aNumber;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray3 length: cnstLength]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray3 length: cnstLength freeWhenDone: NO]];
 	[tmp setA: tmpFGInt];
 	FGIntBase numberArray4[8] = iPlus3ToPm1o3bNumber;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray4 length: cnstLength]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray4 length: cnstLength freeWhenDone: NO]];
 	[tmp setB: tmpFGInt];
-	// [tmp setP: [[a p] retain]];
-	[tmp setP: [[a p] mutableCopy]];
 
-	tmp0 = [GFP2 multiply: b and: tmp withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 multiply: b and: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
 	[b release];
 	b = tmp0;
 }
 
--(void) frobenius2WithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+-(void) frobenius2With: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	FGIntBase numberArray1[8] = iPlus3To2Psm2o3Number;
 	FGInt *tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray1 length: cnstLength]];
-	[c multiplyByFGInt: tmpFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray1 length: cnstLength freeWhenDone: NO]];
+	[c multiplyByFGInt: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpFGInt release];
 
 	FGIntBase numberArray2[8] = iPlus3ToPsm1o3Number;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
-	[b multiplyByFGInt: tmpFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray2 length: cnstLength freeWhenDone: NO]];
+	[b multiplyByFGInt: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpFGInt release];
 }
 
@@ -833,40 +808,73 @@
 }
 
 +(GFP12 *) add: (GFP12 *) p1 and: (GFP12 *) p2 {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArray[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+
+	GFP12 *sum = [GFP12 add: p1 and: p2 with: pFGInt];
+
+	[pFGInt release];
+
+	return sum;
+}
++(GFP12 *) add: (GFP12 *) p1 and: (GFP12 *) p2 with: (FGInt *) pFGInt {
 	GFP12 *sum = [[GFP12 alloc] init];
 
-	[sum setA: [GFP6 add: [p1 a] and: [p2 a]]];
-	[sum setB: [GFP6 add: [p1 b] and: [p2 b]]];
+	[sum setA: [GFP6 add: [p1 a] and: [p2 a] with: pFGInt]];
+	[sum setB: [GFP6 add: [p1 b] and: [p2 b] with: pFGInt]];
 
 	return sum;
 }
 
 +(GFP12 *) subtract: (GFP12 *) p1 and: (GFP12 *) p2 {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArray[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+
+	GFP12 *sum = [GFP12 subtract: p1 and: p2 with: pFGInt];
+
+	[pFGInt release];
+
+	return sum;
+}
++(GFP12 *) subtract: (GFP12 *) p1 and: (GFP12 *) p2 with: (FGInt *) pFGInt {
 	GFP12 *sum = [[GFP12 alloc] init];
 
-	[sum setA: [GFP6 subtract: [p1 a] and: [p2 a]]];
-	[sum setB: [GFP6 subtract: [p1 b] and: [p2 b]]];
+	[sum setA: [GFP6 subtract: [p1 a] and: [p2 a] with: pFGInt]];
+	[sum setB: [GFP6 subtract: [p1 b] and: [p2 b] with: pFGInt]];
 
 	return sum;
 }
 
 +(GFP12 *) multiply: (GFP12 *) p1 and: (GFP12 *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArray[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+
+	GFP12 *sum = [GFP12 multiply: p1 and: p2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+
+	return sum;
+}
++(GFP12 *) multiply: (GFP12 *) p1 and: (GFP12 *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP12 *product = [[GFP12 alloc] init];
 
-	GFP6 *v0 = [GFP6 multiply: [p1 a] and: [p2 a] withInvertedP: invertedP andPrecision: precision];
-	GFP6 *v1 = [GFP6 multiply: [p1 b] and: [p2 b] withInvertedP: invertedP andPrecision: precision];
-	GFP6 *tmp1 = [GFP6 add: [p1 a] and: [p1 b]], *tmp2 = [GFP6 add: [p2 a] and: [p2 b]];
+	GFP6 *v0 = [GFP6 multiply: [p1 a] and: [p2 a] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP6 *v1 = [GFP6 multiply: [p1 b] and: [p2 b] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP6 *tmp1 = [GFP6 add: [p1 a] and: [p1 b] with: pFGInt], *tmp2 = [GFP6 add: [p2 a] and: [p2 b] with: pFGInt];
 
-	GFP6 *tmp = [GFP6 multiply: tmp1 and: tmp2 withInvertedP: invertedP andPrecision: precision];
+	GFP6 *tmp = [GFP6 multiply: tmp1 and: tmp2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];
 	[tmp2 release];
-	tmp1 = [GFP6 subtract: tmp and: v0];
+	tmp1 = [GFP6 subtract: tmp and: v0 with: pFGInt];
 	[tmp release];
-	[product setB: [GFP6 subtract: tmp1 and: v1]];
+	[product setB: [GFP6 subtract: tmp1 and: v1 with: pFGInt]];
 	[tmp1 release];
 
-	[v1 multiplyByRoot];
-	[product setA: [GFP6 add: v0 and: v1]];
+	[v1 multiplyByRootWith: pFGInt];
+	[product setA: [GFP6 add: v0 and: v1 with: pFGInt]];
 	[v0 release];
 	[v1 release];
 
@@ -874,86 +882,104 @@
 }
 
 -(void) multiplyByFGInt: (FGInt *) fGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	[a multiplyByFGInt: fGInt withInvertedP: invertedP andPrecision: precision];
-	[b multiplyByFGInt: fGInt withInvertedP: invertedP andPrecision: precision];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArray[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+
+	[self multiplyByFGInt: fGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+}
+-(void) multiplyByFGInt: (FGInt *) fGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	[a multiplyByFGInt: fGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[b multiplyByFGInt: fGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 }
 
 
 +(GFP12 *) square: (GFP12 *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArray[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+
+	GFP12 *sum = [GFP12 square: p1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+
+	return sum;
+}
++(GFP12 *) square: (GFP12 *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP12 *square = [[GFP12 alloc] init];
 
 	GFP6 *p1a = [p1 a], *p1b = [p1 b];
 
-	GFP6 *v0 = [GFP6 multiply: p1a and: p1b withInvertedP: invertedP andPrecision: precision],
-		*tmp1 = [GFP6 add: p1a and: p1b], *tmp = [p1b mutableCopy];
-	[tmp multiplyByRoot];
-	GFP6 *tmp2 = [GFP6 add: p1a and: tmp];
+	GFP6 *v0 = [GFP6 multiply: p1a and: p1b with: pFGInt withInvertedP: invertedP andPrecision: precision],
+		*tmp1 = [GFP6 add: p1a and: p1b with: pFGInt], *tmp = [p1b mutableCopy];
+	[tmp multiplyByRootWith: pFGInt];
+	GFP6 *tmp2 = [GFP6 add: p1a and: tmp with: pFGInt];
 	[tmp release];
-	tmp = [GFP6 multiply: tmp1 and: tmp2 withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP6 multiply: tmp1 and: tmp2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];
 	[tmp2 release];
-	tmp1 = [GFP6 subtract: tmp and: v0];
+	tmp1 = [GFP6 subtract: tmp and: v0 with: pFGInt];
 	[tmp release];
 	tmp = [v0 mutableCopy];
-	[tmp multiplyByRoot];
+	[tmp multiplyByRootWith: pFGInt];
 
-	[square setA: [GFP6 subtract: tmp1 and: tmp]];
+	[square setA: [GFP6 subtract: tmp1 and: tmp with: pFGInt]];
 	[tmp1 release];
 	[tmp release];
 
-	[v0 shiftLeft];
+	[v0 shiftLeftWith: pFGInt];
 	[square setB: v0];
 
 	return square;
 }
 
--(void) frobeniusWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	[a frobeniusWithInvertedP: invertedP andPrecision: precision];
-	[b frobeniusWithInvertedP: invertedP andPrecision: precision];
+-(void) frobeniusWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	[a frobeniusWith: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[b frobeniusWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	GFP2 *tmp = [[GFP2 alloc] init];
 	FGIntBase numberArray1[8] = iPlus3ToPm1o6aNumber;
 	FGInt *tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray1 length: cnstLength]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray1 length: cnstLength freeWhenDone: NO]];
 	[tmp setA: tmpFGInt];
 	FGIntBase numberArray2[8] = iPlus3ToPm1o6bNumber;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray2 length: cnstLength freeWhenDone: NO]];
 	[tmp setB: tmpFGInt];
-	// [tmp setP: [[[a a] p] retain]];
-	[tmp setP: [[[a a] p] mutableCopy]];
 
-	[b multiplyByGFP2: tmp withInvertedP: invertedP andPrecision: precision];
+	[b multiplyByGFP2: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
 }
 
--(void) frobenius2WithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	[a frobenius2WithInvertedP: invertedP andPrecision: precision];
-	[b frobenius2WithInvertedP: invertedP andPrecision: precision];
+-(void) frobenius2With: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	[a frobenius2With: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[b frobenius2With: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	FGIntBase numberArray[8] = iPlus3ToPsm1o6Number;
 	FGInt *tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
-	[b multiplyByFGInt: tmpFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray length: cnstLength freeWhenDone: NO]];
+	[b multiplyByFGInt: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpFGInt release];
 }
 
--(GFP12 *) invertWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+-(GFP12 *) invertWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP12 *iGFP12 = [[GFP12 alloc] init];
 
-	GFP6 *tmp1 = [GFP6 square: a withInvertedP: invertedP andPrecision: precision];
-	GFP6 *tmp2 = [GFP6 square: b withInvertedP: invertedP andPrecision: precision];
-	[tmp2 multiplyByRoot];
+	GFP6 *tmp1 = [GFP6 square: a with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP6 *tmp2 = [GFP6 square: b with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp2 multiplyByRootWith: pFGInt];
 
-	GFP6 *tmp = [GFP6 subtract: tmp1 and: tmp2];
+	GFP6 *tmp = [GFP6 subtract: tmp1 and: tmp2 with: pFGInt];
 	[tmp1 release];
 	[tmp2 release];
-	GFP6 *denominator = [tmp invertWithInvertedP: invertedP andPrecision: precision];
+	GFP6 *denominator = [tmp invertWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
 
-	tmp = [GFP6 multiply: a and: denominator withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP6 multiply: a and: denominator with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[iGFP12 setA: tmp];
-	tmp = [GFP6 multiply: b and: denominator withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP6 multiply: b and: denominator with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp changeSign];
 	[iGFP12 setB: tmp];
 
@@ -964,14 +990,29 @@
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = invertedPnumber;
 	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength + 4]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArray[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
 
-	GFP12 *tmp = [self invertWithInvertedP: invertedP andPrecision: precision];
+	GFP12 *tmp = [self invertWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[invertedP release];
+	[pFGInt release];
 
 	return tmp;
 }
 
 +(GFP12 *) raise: (GFP12 *) gfp12 toThePower: (FGInt *) fGIntN withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArray[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+
+	GFP12 *result = [GFP12 raise: gfp12 toThePower: fGIntN with: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+
+	return result;
+}
++(GFP12 *) raise: (GFP12 *) gfp12 toThePower: (FGInt *) fGIntN with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
     GFP12 *power = [[GFP12 alloc] initOne];
     FGIntOverflow nLength = [[fGIntN number] length]/4;
     FGIntBase tmpWord;
@@ -985,11 +1026,11 @@
         tmpWord = nFGIntNumber[i];
         for( FGIntIndex j = 0; j < 32; ++j ) {
             if ((tmpWord % 2) == 1) {
-                tmp = [GFP12 multiply: power and: tmp1 withInvertedP: invertedP andPrecision: precision];
+                tmp = [GFP12 multiply: power and: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
                 [power release];
                 power = tmp;
             }
-            tmp = [GFP12 square: tmp1 withInvertedP: invertedP andPrecision: precision];
+            tmp = [GFP12 square: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
             [tmp1 release];
             tmp1 = tmp;
             tmpWord >>= 1;
@@ -998,13 +1039,13 @@
     tmpWord = nFGIntNumber[nLength - 1];
     while(tmpWord != 0) {
         if ((tmpWord % 2) == 1) {
-            tmp = [GFP12 multiply: power and: tmp1 withInvertedP: invertedP andPrecision: precision];
+            tmp = [GFP12 multiply: power and: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
             [power release];
             power = tmp;
         }
         tmpWord >>= 1;
         if (tmpWord != 0) {
-            tmp = [GFP12 square: tmp1 withInvertedP: invertedP andPrecision: precision];
+            tmp = [GFP12 square: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
             [tmp1 release];
             tmp1 = tmp;
         }
@@ -1088,9 +1129,6 @@
 }
 -(id) initGenerator {
     if (self = [super init]) {
-    	FGInt *p = [[FGInt alloc] initWithoutNumber];
-		FGIntBase numberArray[] = pNumber;
-		[p setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
 
 		FGInt *tmpFGInt;
 		x = [[GFP2 alloc] init];
@@ -1102,7 +1140,7 @@
 		FGIntBase numberArray2[] = {3273939312u, 938160865u, 3406146634u, 3157767012u, 1551183656u, 63401627u, 4285480269u, 785163334u};
 		[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
 		[x setB: tmpFGInt];
-		[x setP: p];
+		
 		y = [[GFP2 alloc] init];
 		tmpFGInt = [[FGInt alloc] initWithoutNumber];
 		FGIntBase numberArray3[] = {3190851493u, 1766072483u, 3258878351u, 789467123u, 2581297586u, 924241030u, 3905616588u, 659445575u};
@@ -1112,29 +1150,30 @@
 		FGIntBase numberArray4[] = {2402402066u, 3751226898u, 4082187586u, 3185580628u, 2763768501u, 2519441126u, 591073251u, 766578421u};
 		[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray4 length: cnstLength]];
 		[y setB: tmpFGInt];
-		[y setP: [p mutableCopy]];
+		
     	z = nil;
+    	t = nil;
     	infinity = NO;
     }
     return self;
 }
 -(id) initRandomPoint {
+	FGIntOverflow precision = precisionBits;
 	FGInt *order = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = nNumber;
 	[order setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
 
-	FGInt *tmpFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: cnstLength*8];
-	FGInt *tmpModOrder = nil;
-	if (tmpFGInt != nil) {
-		tmpModOrder = [FGInt longDivisionMod: tmpFGInt by: order];
-	} else {
+	FGInt *tmpFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: precision];
+	if (tmpFGInt == nil) {
 		[order release];
 		return nil;
 	}
 
-	G2Point *result = [G2Point addGeneratorKTimes: tmpModOrder];
+	[tmpFGInt reduceBySubtracting: order atMost: 1];
 
-	[tmpModOrder release];
+	G2Point *result = [G2Point addGeneratorKTimes: tmpFGInt];
+
+	[tmpFGInt release];
 	[order release];
 
 	return result;
@@ -1216,14 +1255,18 @@
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
 	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
 	G2Point *tmp0G2 = [p1 mutableCopy], *tmp1G2 = [p2 mutableCopy];
 	[tmp0G2 makeProjective];
 	[tmp1G2 makeProjective];
 
-	G2Point *result = [G2Point projectiveAdd: tmp0G2 and: tmp1G2 withInvertedP: invertedP andPrecision: precision];
-	[result makeAffineWithInvertedP: invertedP andPrecision: precision];
+	G2Point *result = [G2Point projectiveAdd: tmp0G2 and: tmp1G2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[result makeAffineWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 
+	[pFGInt release];
     [invertedP release];
     [tmp0G2 release];
     [tmp1G2 release];
@@ -1233,6 +1276,17 @@
 
 
 +(G2Point *) projectiveAdd: (G2Point *) p1 and: (G2Point *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
+	G2Point *sum = [G2Point projectiveAdd: p1 and: p2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+
+	return sum;
+}
++(G2Point *) projectiveAdd: (G2Point *) p1 and: (G2Point *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	if ([p1 infinity]) {
 		return [p2 mutableCopy];
 	}
@@ -1242,25 +1296,25 @@
 
 	G2Point *sum = [[G2Point alloc] init];
 
-	GFP2 *z1z1 = [GFP2 square: [p1 z] withInvertedP: invertedP andPrecision: precision], 
-		*z2z2 = [GFP2 square: [p2 z] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *u1 = [GFP2 multiply: z2z2 and: [p1 x] withInvertedP: invertedP andPrecision: precision], 
-		*u2 = [GFP2 multiply: z1z1 and: [p2 x] withInvertedP: invertedP andPrecision: precision];
+	GFP2 *z1z1 = [GFP2 square: [p1 z] with: pFGInt withInvertedP: invertedP andPrecision: precision], 
+		*z2z2 = [GFP2 square: [p2 z] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *u1 = [GFP2 multiply: z2z2 and: [p1 x] with: pFGInt withInvertedP: invertedP andPrecision: precision], 
+		*u2 = [GFP2 multiply: z1z1 and: [p2 x] with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
-	GFP2 *tmp = [GFP2 multiply: [p1 y] and: [p2 z] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *s1 = [GFP2 multiply: tmp and: z2z2 withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp = [GFP2 multiply: [p1 y] and: [p2 z] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *s1 = [GFP2 multiply: tmp and: z2z2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
-	tmp = [GFP2 multiply: [p2 y] and: [p1 z] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *s2 = [GFP2 multiply: tmp and: z1z1 withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP2 multiply: [p2 y] and: [p1 z] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *s2 = [GFP2 multiply: tmp and: z1z1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
 
-	GFP2 *h = [GFP2 subtract: u2 and: u1];
+	GFP2 *h = [GFP2 subtract: u2 and: u1 with: pFGInt];
 	tmp = [h mutableCopy];
-	[tmp shiftLeft];
-	GFP2 *i = [GFP2 square: tmp withInvertedP: invertedP andPrecision: precision];
+	[tmp shiftLeftWith: pFGInt];
+	GFP2 *i = [GFP2 square: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp release];
-	GFP2 *j = [GFP2 multiply: i and: h withInvertedP: invertedP andPrecision: precision];
-	GFP2 *r = [GFP2 subtract: s2 and: s1];
+	GFP2 *j = [GFP2 multiply: i and: h with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *r = [GFP2 subtract: s2 and: s1 with: pFGInt];
 	if ([h isZero] && [r isZero]) {
 		[z1z1 release];
 		[z2z2 release];
@@ -1273,36 +1327,36 @@
 		[j release];
 		[r release];
 
-		return [G2Point projectiveDouble: p1 withInvertedP: invertedP andPrecision: precision];
+		return [G2Point projectiveDouble: p1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	}
-	[r shiftLeft];
-	GFP2 *v = [GFP2 multiply: u1 and: i withInvertedP: invertedP andPrecision: precision];
+	[r shiftLeftWith: pFGInt];
+	GFP2 *v = [GFP2 multiply: u1 and: i with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
-	GFP2 *tmp1 = [GFP2 square: r withInvertedP: invertedP andPrecision: precision];
-	tmp = [GFP2 subtract: tmp1 and: j];
+	GFP2 *tmp1 = [GFP2 square: r with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP2 subtract: tmp1 and: j with: pFGInt];
 	[tmp1 release];
-	tmp1 = [GFP2 subtract: tmp and: v];
+	tmp1 = [GFP2 subtract: tmp and: v with: pFGInt];
 	[tmp release];
-	[sum setX: [GFP2 subtract: tmp1 and: v]];
-	[tmp1 release];
-
-	tmp1 = [GFP2 subtract: v and: [sum x]];
-	tmp = [GFP2 multiply: r and: tmp1 withInvertedP: invertedP andPrecision: precision];
-	[tmp1 release];
-	tmp1 = [GFP2 multiply: s1 and: j withInvertedP: invertedP andPrecision: precision];
-	[tmp1 shiftLeft];
-	[sum setY: [GFP2 subtract: tmp and: tmp1]];
-	[tmp release];
+	[sum setX: [GFP2 subtract: tmp1 and: v with: pFGInt]];
 	[tmp1 release];
 
-	tmp1 = [GFP2 add: [p1 z] and: [p2 z]];
-	tmp = [GFP2 square: tmp1 withInvertedP: invertedP andPrecision: precision];
+	tmp1 = [GFP2 subtract: v and: [sum x] with: pFGInt];
+	tmp = [GFP2 multiply: r and: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];
-	tmp1 = [GFP2 subtract: tmp and: z1z1];
+	tmp1 = [GFP2 multiply: s1 and: j with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp1 shiftLeftWith: pFGInt];
+	[sum setY: [GFP2 subtract: tmp and: tmp1 with: pFGInt]];
 	[tmp release];
-	tmp = [GFP2 subtract: tmp1 and: z2z2];
 	[tmp1 release];
-	[sum setZ: [GFP2 multiply: tmp and: h withInvertedP: invertedP andPrecision: precision]];
+
+	tmp1 = [GFP2 add: [p1 z] and: [p2 z] with: pFGInt];
+	tmp = [GFP2 square: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp1 release];
+	tmp1 = [GFP2 subtract: tmp and: z1z1 with: pFGInt];
+	[tmp release];
+	tmp = [GFP2 subtract: tmp1 and: z2z2 with: pFGInt];
+	[tmp1 release];
+	[sum setZ: [GFP2 multiply: tmp and: h with: pFGInt withInvertedP: invertedP andPrecision: precision]];
 	[tmp release];
 
 	[z1z1 release];
@@ -1327,40 +1381,51 @@
 
 
 +(G2Point *) projectiveDouble: (G2Point *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
+	G2Point *sum = [G2Point projectiveDouble: p1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+
+	return sum;
+}
++(G2Point *) projectiveDouble: (G2Point *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	if ([p1 infinity]) {
 		return [[G2Point alloc] initInfinity];
 	}
 
 	G2Point *sum = [[G2Point alloc] init];
 
-	GFP2 *a = [GFP2 square: [p1 x] withInvertedP: invertedP andPrecision: precision], 
-		*b = [GFP2 square: [p1 y] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *c = [GFP2 square: b withInvertedP: invertedP andPrecision: precision];
+	GFP2 *a = [GFP2 square: [p1 x] with: pFGInt withInvertedP: invertedP andPrecision: precision], 
+		*b = [GFP2 square: [p1 y] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *c = [GFP2 square: b with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
-	GFP2 *tmp1 = [GFP2 add: [p1 x] and: b];
-	GFP2 *tmp = [GFP2 square: tmp1 withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp1 = [GFP2 add: [p1 x] and: b with: pFGInt];
+	GFP2 *tmp = [GFP2 square: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];
-	tmp1 = [GFP2 subtract: tmp and: a];
+	tmp1 = [GFP2 subtract: tmp and: a with: pFGInt];
 	[tmp release];
-	GFP2 *d = [GFP2 subtract: tmp1 and: c];
+	GFP2 *d = [GFP2 subtract: tmp1 and: c with: pFGInt];
 	[tmp1 release];
-	[d shiftLeft];
-	[a multiplyByInt: 3];
-	GFP2 *f = [GFP2 square: a withInvertedP: invertedP andPrecision: precision];
+	[d shiftLeftWith: pFGInt];
+	[a multiplyByInt: 3 with: pFGInt];
+	GFP2 *f = [GFP2 square: a with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
-	tmp = [GFP2 subtract: f and: d];
-	[sum setX: [GFP2 subtract: tmp and: d]];
-	[tmp release];
-
-	[c multiplyByInt: 8];
-	tmp1 = [GFP2 subtract: d and: [sum x]];
-	tmp = [GFP2 multiply: tmp1 and: a withInvertedP: invertedP andPrecision: precision];
-	[tmp1 release];
-	[sum setY: [GFP2 subtract: tmp and: c]];
+	tmp = [GFP2 subtract: f and: d with: pFGInt];
+	[sum setX: [GFP2 subtract: tmp and: d with: pFGInt]];
 	[tmp release];
 
-	tmp = [GFP2 multiply: [p1 y] and: [p1 z] withInvertedP: invertedP andPrecision: precision];
-	[tmp shiftLeft];
+	[c multiplyByInt: 8 with: pFGInt];
+	tmp1 = [GFP2 subtract: d and: [sum x] with: pFGInt];
+	tmp = [GFP2 multiply: tmp1 and: a with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp1 release];
+	[sum setY: [GFP2 subtract: tmp and: c with: pFGInt]];
+	[tmp release];
+
+	tmp = [GFP2 multiply: [p1 y] and: [p1 z] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp shiftLeftWith: pFGInt];
 	[sum setZ: tmp];
 
 	[a release];
@@ -1373,18 +1438,27 @@
 }
 
 -(void) makeAffineWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
+	[self makeAffineWith: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+}
+-(void) makeAffineWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	if (z == nil) {
 		return;
 	}
-	GFP2 *tmp = [z invertWithInvertedP: invertedP andPrecision: precision];
-	GFP2 *tmp1 = [GFP2 square: tmp withInvertedP: invertedP andPrecision: precision];
-	GFP2 *tmp2 = [GFP2 multiply: x and: tmp1 withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp = [z invertWith: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp1 = [GFP2 square: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp2 = [GFP2 multiply: x and: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[x release];
 	x = tmp2;
-	tmp2 = [GFP2 multiply: tmp and: tmp1 withInvertedP: invertedP andPrecision: precision];
+	tmp2 = [GFP2 multiply: tmp and: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];
 	[tmp release];
-	tmp = [GFP2 multiply: y and: tmp2 withInvertedP: invertedP andPrecision: precision];
+	tmp = [GFP2 multiply: y and: tmp2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp2 release];
 	[y release];
 	y = tmp;
@@ -1405,14 +1479,29 @@
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
 	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
-	[self makeAffineWithInvertedP: invertedP andPrecision: precision];
+	[self makeAffineWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 
+	[pFGInt release];
 	[invertedP release];
 }
 
 
 +(G2Point *) add: (G2Point *) g2Point kTimes: (FGInt *) kFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
+	G2Point *result = [G2Point add: g2Point kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+
+	return result;
+}
++(G2Point *) add: (G2Point *) g2Point kTimes: (FGInt *) kFGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
     G2Point *result = [[G2Point alloc] initInfinity], *tmpECPoint, *tmpECPoint1;
 
     FGIntOverflow kLength = [[kFGInt number] length]/4, i, j;
@@ -1463,19 +1552,28 @@
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
 	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
-	G2Point *result = [G2Point add: g2Point kTimes: kFGInt withInvertedP: invertedP andPrecision: precisionBits];
+	G2Point *result = [G2Point add: g2Point kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precisionBits];
 
+	[pFGInt release];
 	[invertedP release];
 
     return result;
 }
 
 +(G2Point *) addGeneratorKTimes: (FGInt *) kFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
 	G2Point * g2gen = [[G2Point alloc] initGenerator];
 
-    G2Point *result = [G2Point add: g2gen kTimes: kFGInt withInvertedP: invertedP andPrecision: precision];
+    G2Point *result = [G2Point add: g2gen kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
+    [pFGInt release];
     [g2gen release];
 
     return result;
@@ -1486,11 +1584,15 @@
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
 	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
-    G2Point *result = [G2Point add: generator kTimes: kFGInt withInvertedP: invertedP andPrecision: precision];
+    G2Point *result = [G2Point add: generator kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
     [generator release];
     [invertedP release];
+    [pFGInt release];
 
     return result;
 }
@@ -1550,7 +1652,7 @@
 
 
 @implementation G1Point
-@synthesize x, y, z, p;
+@synthesize x, y, z;
 @synthesize infinity;
 
 
@@ -1559,27 +1661,27 @@
     	x = nil;
     	y = nil;
     	z = nil;
-    	p = nil;
+    	// p = nil;
     	infinity = NO;
     }
     return self;
 }
--(id) initInfinityWithP: (FGInt *) pFGInt {
+-(id) initInfinity {
     if (self = [super init]) {
     	x = nil;
     	y = nil;
     	z = nil;
     	// p = [pFGInt retain];
-    	p = [pFGInt mutableCopy];
+    	// p = [pFGInt mutableCopy];
     	infinity = YES;
     }
     return self;
 }
 -(id) initGenerator {
     if (self = [super init]) {
-		p = [[FGInt alloc] initWithoutNumber];
-		FGIntBase numberArray[8] = pNumber;
-		[p setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+		// p = [[FGInt alloc] initWithoutNumber];
+		// FGIntBase numberArray[8] = pNumber;
+		// [p setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
 		x = [[FGInt alloc] initWithFGIntBase: 1];
 		y = [[FGInt alloc] initWithFGIntBase: 2];
 		[y changeSign];
@@ -1613,9 +1715,9 @@
 		return nil;
 	}
     if (self = [super init]) {
-    	p = [[FGInt alloc] initWithoutNumber];
-		FGIntBase numberArray[] = pNumber;
-		[p setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
+  //   	p = [[FGInt alloc] initWithoutNumber];
+		// FGIntBase numberArray[] = pNumber;
+		// [p setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
 
     	const unsigned char* bytes = [marshalData bytes];
     	NSData *tmpData = [[NSData alloc] initWithBytes: &bytes[cnstLength] length: cnstLength];
@@ -1647,7 +1749,7 @@
 }
 -(id) mutableCopyWithZone: (NSZone *) zone {
 	if (infinity) {
-		return [[G1Point alloc] initInfinityWithP: p];
+		return [[G1Point alloc] initInfinity];
 	}
 
     G1Point *newG1Point = [[G1Point allocWithZone: zone] init];
@@ -1656,7 +1758,7 @@
     [newG1Point setY: [y mutableCopy]];
     [newG1Point setZ: [z mutableCopy]];
     // [newG1Point setP: [p retain]];
-    [newG1Point setP: [p mutableCopy]];
+    // [newG1Point setP: [p mutableCopy]];
 
     return newG1Point;
 }
@@ -1676,15 +1778,20 @@
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
 	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
 
 	G1Point *tmp0G2 = [p1 mutableCopy], *tmp1G2 = [p2 mutableCopy];
 	[tmp0G2 makeProjective];
 	[tmp1G2 makeProjective];
 
-	G1Point *result = [G1Point projectiveAdd: tmp0G2 and: tmp1G2 withInvertedP: invertedP andPrecision: precision];
-	[result makeAffineWithInvertedP: invertedP andPrecision: precision];
+	G1Point *result = [G1Point projectiveAdd: tmp0G2 and: tmp1G2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[result makeAffineWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 
     [invertedP release];
+	[pFGInt release];
     [tmp0G2 release];
     [tmp1G2 release];
 
@@ -1692,7 +1799,7 @@
 }
 
 
-+(G1Point *) projectiveAdd: (G1Point *) p1 and: (G1Point *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
++(G1Point *) projectiveAdd: (G1Point *) p1 and: (G1Point *) p2 with: (FGInt *) p withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	if ([p1 infinity]) {
 		return [p2 mutableCopy];
 	}
@@ -1702,12 +1809,7 @@
 
 	G1Point *sum = [[G1Point alloc] init];
 
-	FGInt *tmpBarrett, *p = nil;
-	if ([p1 p] != nil) {
-		p = [p1 p];
-	} else 	if ([p2 p] != nil) {
-		p = [p2 p];
-	}
+	FGInt *tmpBarrett;
 
 
 	tmpBarrett = [FGInt square: [p1 z]];
@@ -1763,7 +1865,7 @@
 		[j release];
 		[r release];
 
-		return [G1Point projectiveDouble: p1 withInvertedP: invertedP andPrecision: precision];
+		return [G1Point projectiveDouble: p1 with: p withInvertedP: invertedP andPrecision: precision];
 	}
 	[r shiftLeft];
 	[r reduceBySubtracting: p atMost: 4];
@@ -1830,32 +1932,24 @@
 
 	if ([[sum z] isZero]) {
 		[sum release];
-		if ([p1 p] != nil) {
-			p = [p1 p];
-		} else 	if ([p2 p] != nil) {
-			p = [p2 p];
-		}
-		sum = [[G1Point alloc] initInfinityWithP: p];
+		sum = [[G1Point alloc] initInfinity];
 	}
 
 	// [sum setP: [p retain]];
-	[sum setP: [p mutableCopy]];
+	// [sum setP: [p mutableCopy]];
 
 	return sum;
 }
 
 
-+(G1Point *) projectiveDouble: (G1Point *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
++(G1Point *) projectiveDouble: (G1Point *) p1 with: (FGInt *) p withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	if ([p1 infinity]) {
-		return [[G1Point alloc] initInfinityWithP: [p1 p]];
+		return [[G1Point alloc] initInfinity];
 	}
 
 	G1Point *sum = [[G1Point alloc] init];
 
-	FGInt *tmpBarrett, *p = nil;
-	if ([p1 p] != nil) {
-		p = [p1 p];
-	} 
+	FGInt *tmpBarrett;
 	// else {
 	// 	NSLog(@"uh-oh");
 	// 	p = [[FGInt alloc] initWithBase10String: @"65000549695646603732796438742359905742825358107623003571877145026864184071783"];
@@ -1921,31 +2015,31 @@
 	[f release];
 
 	// [sum setP: [p retain]];
-	[sum setP: [p mutableCopy]];
+	// [sum setP: [p mutableCopy]];
 
 	return sum;
 }
 
--(void) makeAffineWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+-(void) makeAffineWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	if (z == nil) {
 		return;
 	}
-	FGInt *tmp = [FGInt invert: z moduloPrime: p];
+	FGInt *tmp = [FGInt invert: z moduloPrime: pFGInt];
 	FGInt *tmpBarrett = [FGInt square: tmp];
-	FGInt *tmp1 = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
+	FGInt *tmp1 = [FGInt barrettMod: tmpBarrett by: pFGInt with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	tmpBarrett = [FGInt multiply: x and: tmp1];
-	FGInt *tmp2 = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
+	FGInt *tmp2 = [FGInt barrettMod: tmpBarrett by: pFGInt with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[x release];
 	x = tmp2;
 	tmpBarrett = [FGInt multiply: tmp and: tmp1];
-	tmp2 = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
+	tmp2 = [FGInt barrettMod: tmpBarrett by: pFGInt with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp1 release];
 	[tmp release];
 	tmpBarrett = [FGInt multiply: y and: tmp2];
-	tmp =  [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
+	tmp =  [FGInt barrettMod: tmpBarrett by: pFGInt with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp2 release];
 	[y release];
@@ -1956,7 +2050,19 @@
 
 
 +(G1Point *) add: (G1Point *) g1Point kTimes: (FGInt *) kFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-    G1Point *result = [[G1Point alloc] initInfinityWithP: [g1Point p]], *tmpECPoint, *tmpECPoint1;
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
+	G1Point *result = [G1Point add: g1Point kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+
+	return result;
+}
+
++(G1Point *) add: (G1Point *) g1Point kTimes: (FGInt *) kFGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+    G1Point *result = [[G1Point alloc] initInfinity], *tmpECPoint, *tmpECPoint1;
 
     FGIntOverflow kLength = [[kFGInt number] length]/4, i, j;
     FGIntBase tmp;
@@ -1971,11 +2077,11 @@
         tmp = kFGIntNumber[i];
         for( j = 0; j < 32; ++j ) {
             if ((tmp % 2) == 1) {
-                tmpECPoint = [G1Point projectiveAdd: result and: tmpECPoint1 withInvertedP: invertedP andPrecision: precision];
+                tmpECPoint = [G1Point projectiveAdd: result and: tmpECPoint1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
                 [result release];
                 result = tmpECPoint;
             }
-            tmpECPoint = [G1Point projectiveDouble: tmpECPoint1 withInvertedP: invertedP andPrecision: precision];
+            tmpECPoint = [G1Point projectiveDouble: tmpECPoint1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
             [tmpECPoint1 release];
             tmpECPoint1 = tmpECPoint;
             tmp >>= 1;
@@ -1984,20 +2090,20 @@
     tmp = kFGIntNumber[kLength - 1];
     while (tmp != 0) {
         if ((tmp % 2) == 1) {
-            tmpECPoint = [G1Point projectiveAdd: result and: tmpECPoint1 withInvertedP: invertedP andPrecision: precision];
+            tmpECPoint = [G1Point projectiveAdd: result and: tmpECPoint1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
             [result release];
             result = tmpECPoint;
         }
         tmp >>= 1;
         if (tmp != 0) {
-            tmpECPoint = [G1Point projectiveDouble: tmpECPoint1 withInvertedP: invertedP andPrecision: precision];
+            tmpECPoint = [G1Point projectiveDouble: tmpECPoint1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
             [tmpECPoint1 release];
             tmpECPoint1 = tmpECPoint;
         }
     }
 
     [tmpECPoint1 release];
-    [result makeAffineWithInvertedP: invertedP andPrecision: precision];
+    [result makeAffineWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 
     return result;
 }
@@ -2006,19 +2112,27 @@
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
 	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
-	G1Point *result = [G1Point add: g1Point kTimes: kFGInt withInvertedP: invertedP andPrecision: precisionBits];
+	G1Point *result = [G1Point add: g1Point kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precisionBits];
 
+	[pFGInt release];
 	[invertedP release];
     return result;
 }
 
 +(G1Point *) addGeneratorKTimes: (FGInt *) kFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	G1Point * g1gen = [[G1Point alloc] initGenerator];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
-    G1Point *result = [G1Point add: g1gen kTimes: kFGInt withInvertedP: invertedP andPrecision: precision];
+    G1Point *result = [G1Point add: g1gen kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
     [g1gen release];
+	[pFGInt release];
 
     return result;
 }
@@ -2064,21 +2178,43 @@
 	}
 	if ((x == nil) || (y == nil)) {
 		return nil;
+		NSLog(@"uh-oh");
 	}
 
 	if (![x sign] || ![y sign]) {
 		NSLog(@"uh-oh");
 	}
 
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
+	FGInt *tmp;
+	if (![x sign]) {
+		tmp = [FGInt add: pFGInt and: x];
+	} else {
+		tmp = x;
+	}
+
 	NSMutableData *result = [[NSMutableData alloc] init];
 	// NSData *tmpData = [x toBigEndianNSDataOfLength: cnstLength];
-	NSData *tmpData = [[FGInt longDivisionMod: x by: p] toBigEndianNSDataOfLength: cnstLength];
+	// NSData *tmpData = [[FGInt longDivisionMod: x by: pFGInt] toBigEndianNSDataOfLength: cnstLength];
+	NSData *tmpData = [tmp toBigEndianNSDataOfLength: cnstLength];
 	[result appendData: tmpData];
 	[tmpData release];
+
 	// tmpData = [y toBigEndianNSDataOfLength: cnstLength];
-	tmpData = [[FGInt longDivisionMod: y by: p] toBigEndianNSDataOfLength: cnstLength];
+	if (![x sign]) {
+		tmp = [FGInt add: pFGInt and: y];
+	} else {
+		tmp = y;
+	}
+	// tmpData = [[FGInt longDivisionMod: y by: pFGInt] toBigEndianNSDataOfLength: cnstLength];
+	tmpData = [tmp toBigEndianNSDataOfLength: cnstLength];
 	[result appendData: tmpData];
 	[tmpData release];
+
+	[pFGInt release];
 
 	return result;
 }
@@ -2105,26 +2241,26 @@
 //		cachedR2 is y1^2 and constant
 //		g1Point is constant, xq,yq and where the line is evaluated in
 
-+(void) add: (G2Point **) g2p and: (G2Point *) g2q with: (GFP2 *) cachedR2 evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
++(void) add: (G2Point **) g2p and: (G2Point *) g2q with: (GFP2 *) cachedR2 evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP2 *tmp0, *tmp1, *tmp2;
 
-	GFP2 *b = [GFP2 multiply: [g2q x] and: [*g2p t] withInvertedP: invertedP andPrecision: precision];
-	tmp0 = [GFP2 add: [*g2p z] and: [g2q y]];
-	tmp1 = [GFP2 square: tmp0 withInvertedP: invertedP andPrecision: precision];
+	GFP2 *b = [GFP2 multiply: [g2q x] and: [*g2p t] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 add: [*g2p z] and: [g2q y] with: pFGInt];
+	tmp1 = [GFP2 square: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
-	tmp0 = [GFP2 subtract: tmp1 and: cachedR2];
+	tmp0 = [GFP2 subtract: tmp1 and: cachedR2 with: pFGInt];
 	[tmp1 release];
-	tmp1 = [GFP2 subtract: tmp0 and: [*g2p t]];
+	tmp1 = [GFP2 subtract: tmp0 and: [*g2p t] with: pFGInt];
 	[tmp0 release];
-	GFP2 *d = [GFP2 multiply: tmp1 and: [*g2p t] withInvertedP: invertedP andPrecision: precision];
+	GFP2 *d = [GFP2 multiply: tmp1 and: [*g2p t] with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp1 release];
-	GFP2 *h = [GFP2 subtract: b and: [*g2p x]];
-	GFP2 *i = [GFP2 square: h withInvertedP: invertedP andPrecision: precision];
+	GFP2 *h = [GFP2 subtract: b and: [*g2p x] with: pFGInt];
+	GFP2 *i = [GFP2 square: h with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	GFP2 *e = [i mutableCopy];
-	[e multiplyByInt: 4];
-	GFP2 *j = [GFP2 multiply: h and: e withInvertedP: invertedP andPrecision: precision];
-	tmp0 = [GFP2 subtract: d and: [*g2p y]];
-	GFP2 *l1 = [GFP2 subtract: tmp0 and: [*g2p y]];
+	[e multiplyByInt: 4 with: pFGInt];
+	GFP2 *j = [GFP2 multiply: h and: e with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 subtract: d and: [*g2p y] with: pFGInt];
+	GFP2 *l1 = [GFP2 subtract: tmp0 and: [*g2p y] with: pFGInt];
 	[tmp0 release];
 	if ([h isZero] && [l1 isZero]) {
 		[b release];
@@ -2134,91 +2270,91 @@
 		[e release];
 		[j release];
 		[l1 release];
-		return [BN256 double: g2p evaluateLineIn: g1Point andMultiply: f withInvertedP: invertedP andPrecision: precision];
+		return [BN256 double: g2p evaluateLineIn: g1Point andMultiply: f with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	}
 
-	GFP2 *v = [GFP2 multiply: [*g2p x] and: e withInvertedP: invertedP andPrecision: precision];
-	tmp0 = [GFP2 square: l1 withInvertedP: invertedP andPrecision: precision];
-	tmp1 = [GFP2 subtract: tmp0 and: j];
+	GFP2 *v = [GFP2 multiply: [*g2p x] and: e with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 square: l1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmp1 = [GFP2 subtract: tmp0 and: j with: pFGInt];
 	[tmp0 release];
-	tmp0 = [GFP2 subtract: tmp1 and: v];
+	tmp0 = [GFP2 subtract: tmp1 and: v with: pFGInt];
 	[tmp1 release];
 	G2Point *sum = [[G2Point alloc] init];
-	[sum setX: [GFP2 subtract: tmp0 and: v]];
+	[sum setX: [GFP2 subtract: tmp0 and: v with: pFGInt]];
 	[tmp0 release];
 
-	tmp0 = [GFP2 subtract: v and: [sum x]];
-	tmp1 = [GFP2 multiply: tmp0 and: l1 withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 subtract: v and: [sum x] with: pFGInt];
+	tmp1 = [GFP2 multiply: tmp0 and: l1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
-	tmp0 = [GFP2 multiply: [*g2p y] and: j withInvertedP: invertedP andPrecision: precision];
-	[tmp0 shiftLeft];
-	[sum setY: [GFP2 subtract: tmp1 and: tmp0]];
+	tmp0 = [GFP2 multiply: [*g2p y] and: j with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp0 shiftLeftWith: pFGInt];
+	[sum setY: [GFP2 subtract: tmp1 and: tmp0 with: pFGInt]];
 	[tmp1 release];
 	[tmp0 release];
 
-	tmp0 = [GFP2 add: h and: [*g2p z]];
-	tmp1 = [GFP2 square: tmp0 withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 add: h and: [*g2p z] with: pFGInt];
+	tmp1 = [GFP2 square: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
-	tmp0 = [GFP2 subtract: tmp1 and: [*g2p t]];
+	tmp0 = [GFP2 subtract: tmp1 and: [*g2p t] with: pFGInt];
 	[tmp1 release];
-	[sum setZ: [GFP2 subtract: tmp0 and: i]];
+	[sum setZ: [GFP2 subtract: tmp0 and: i with: pFGInt]];
 	[tmp0 release];
 
-	[sum setT: [GFP2 square: [sum z] withInvertedP: invertedP andPrecision: precision]];
+	[sum setT: [GFP2 square: [sum z] with: pFGInt withInvertedP: invertedP andPrecision: precision]];
 
 	GFP2 *c0 = [[sum z] mutableCopy];
-	[c0 multiplyByFGInt: [g1Point y] withInvertedP: invertedP andPrecision: precision];
-	[c0 shiftLeft];
+	[c0 multiplyByFGInt: [g1Point y] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[c0 shiftLeftWith: pFGInt];
 
 	GFP2 *b0 = [l1 mutableCopy];
-	[b0 multiplyByFGInt: [g1Point x] withInvertedP: invertedP andPrecision: precision];
-	[b0 shiftLeft];
+	[b0 multiplyByFGInt: [g1Point x] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[b0 shiftLeftWith: pFGInt];
 	[b0 changeSign];
 
-	tmp0 = [GFP2 add: [sum z] and: [g2q y]];
-	tmp1 = [GFP2 square: tmp0 withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 add: [sum z] and: [g2q y] with: pFGInt];
+	tmp1 = [GFP2 square: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
-	tmp0 = [GFP2 subtract: cachedR2 and: tmp1];
+	tmp0 = [GFP2 subtract: cachedR2 and: tmp1 with: pFGInt];
 	[tmp1 release];
-	tmp1 = [GFP2 add: tmp0 and: [sum t]];
+	tmp1 = [GFP2 add: tmp0 and: [sum t] with: pFGInt];
 	[tmp0 release];
-	tmp0 = [GFP2 multiply: l1 and: [g2q x] withInvertedP: invertedP andPrecision: precision];
-	[tmp0 shiftLeft];
-	GFP2 *a0 = [GFP2 add: tmp1 and: tmp0];
+	tmp0 = [GFP2 multiply: l1 and: [g2q x] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp0 shiftLeftWith: pFGInt];
+	GFP2 *a0 = [GFP2 add: tmp1 and: tmp0 with: pFGInt];
 	[tmp0 release];
 	[tmp1 release];
 
 
 	GFP6 *a2 = [[GFP6 alloc] init];
 	[a2 setC: [[GFP2 alloc] initZero]];
-	[a2 setB: [a0 retain]];
-	[a2 setA: [b0 retain]];
-	GFP6 *tmp6 = [GFP6 multiply: a2 and: [*f b] withInvertedP: invertedP andPrecision: precision];
+	[a2 setB: [a0 mutableCopy]];
+	[a2 setA: [b0 mutableCopy]];
+	GFP6 *tmp6 = [GFP6 multiply: a2 and: [*f b] with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[a2 release];
 	a2 = tmp6;
 	tmp6 = [[*f a] mutableCopy];
-	[tmp6 multiplyByGFP2: c0 withInvertedP: invertedP andPrecision: precision];
+	[tmp6 multiplyByGFP2: c0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	GFP6 *tmp7 = [[GFP6 alloc] init];
-	[tmp7 setA: [GFP2 add: b0 and: c0]];
-	[tmp7 setB: [a0 retain]];
+	[tmp7 setA: [GFP2 add: b0 and: c0 with: pFGInt]];
+	[tmp7 setB: [a0 mutableCopy]];
 	[tmp7 setC: [[GFP2 alloc] initZero]];
 
-	GFP6 *tmp8 = [GFP6 add: [*f a] and: [*f b]];
+	GFP6 *tmp8 = [GFP6 add: [*f a] and: [*f b] with: pFGInt];
 	[[*f b] release];
 	[[*f a] release];
 	[*f setB: tmp8];
 	[*f setA: tmp6];
 
-	tmp6 = [GFP6 multiply: [*f b] and: tmp7 withInvertedP: invertedP andPrecision: precision];
+	tmp6 = [GFP6 multiply: [*f b] and: tmp7 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[[*f b] release];
 	[tmp7 release];
-	tmp7 = [GFP6 subtract: tmp6 and: a2];
+	tmp7 = [GFP6 subtract: tmp6 and: a2 with: pFGInt];
 	[tmp6 release];
-	[*f setB: [GFP6 subtract: tmp7 and: [*f a]]];
+	[*f setB: [GFP6 subtract: tmp7 and: [*f a] with: pFGInt]];
 	[tmp7 release];
-	[a2 multiplyByRoot];
-	tmp6 = [GFP6 add: [*f a] and: a2];
+	[a2 multiplyByRootWith: pFGInt];
+	tmp6 = [GFP6 add: [*f a] and: a2 with: pFGInt];
 	[[*f a] release];
 	[*f setA: tmp6];
 
@@ -2243,97 +2379,97 @@
 
 
 
-+(void) double: (G2Point **) g2p evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	GFP2 *a = [GFP2 square: [*g2p x] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *b = [GFP2 square: [*g2p y] withInvertedP: invertedP andPrecision: precision];
-	GFP2 *c = [GFP2 square: b withInvertedP: invertedP andPrecision: precision];
-	GFP2 *tmp0 = [GFP2 add: [*g2p x] and: b];
-	GFP2 *tmp1 = [GFP2 square: tmp0 withInvertedP: invertedP andPrecision: precision];
++(void) double: (G2Point **) g2p evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	GFP2 *a = [GFP2 square: [*g2p x] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *b = [GFP2 square: [*g2p y] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *c = [GFP2 square: b with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	GFP2 *tmp0 = [GFP2 add: [*g2p x] and: b with: pFGInt];
+	GFP2 *tmp1 = [GFP2 square: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
-	tmp0 = [GFP2 subtract: tmp1 and: a];
+	tmp0 = [GFP2 subtract: tmp1 and: a with: pFGInt];
 	[tmp1 release];
-	GFP2 *d = [GFP2 subtract: tmp0 and: c];
+	GFP2 *d = [GFP2 subtract: tmp0 and: c with: pFGInt];
 	[tmp0 release];
-	[d shiftLeft];
+	[d shiftLeftWith: pFGInt];
 	GFP2 *e = [a mutableCopy];
-	[e multiplyByInt: 3];
-	GFP2 *g = [GFP2 square: e withInvertedP: invertedP andPrecision: precision];
+	[e multiplyByInt: 3 with: pFGInt];
+	GFP2 *g = [GFP2 square: e with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	G2Point *sum = [[G2Point alloc] init];
-	tmp0 = [GFP2 subtract: g and: d];
-	[sum setX: [GFP2 subtract: tmp0 and: d]];
+	tmp0 = [GFP2 subtract: g and: d with: pFGInt];
+	[sum setX: [GFP2 subtract: tmp0 and: d with: pFGInt]];
 	[tmp0 release];
 
-	tmp0 = [GFP2 subtract: d and: [sum x]];
-	tmp1 = [GFP2 multiply: tmp0 and: e withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 subtract: d and: [sum x] with: pFGInt];
+	tmp1 = [GFP2 multiply: tmp0 and: e with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
 	tmp0 = [c mutableCopy];
-	[tmp0 multiplyByInt: 8];
-	[sum setY: [GFP2 subtract: tmp1 and: tmp0]];
+	[tmp0 multiplyByInt: 8 with: pFGInt];
+	[sum setY: [GFP2 subtract: tmp1 and: tmp0 with: pFGInt]];
 	[tmp0 release];
 	[tmp1 release];
 
-	tmp0 = [GFP2 add: [*g2p y] and: [*g2p z]];
-	tmp1 = [GFP2 square: tmp0 withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 add: [*g2p y] and: [*g2p z] with: pFGInt];
+	tmp1 = [GFP2 square: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
-	tmp0 = [GFP2 subtract: tmp1 and: b];
+	tmp0 = [GFP2 subtract: tmp1 and: b with: pFGInt];
 	[tmp1 release];
-	[sum setZ: [GFP2 subtract: tmp0 and: [*g2p t]]];
+	[sum setZ: [GFP2 subtract: tmp0 and: [*g2p t] with: pFGInt]];
 	[tmp0 release];
 
-	[sum setT: [GFP2 square: [sum z] withInvertedP: invertedP andPrecision: precision]];
+	[sum setT: [GFP2 square: [sum z] with: pFGInt withInvertedP: invertedP andPrecision: precision]];
 
-	GFP2 *c0 = [GFP2 multiply: [sum z] and: [*g2p t] withInvertedP: invertedP andPrecision: precision];
-	[c0 multiplyByFGInt: [g1Point y] withInvertedP: invertedP andPrecision: precision];
-	[c0 shiftLeft];
+	GFP2 *c0 = [GFP2 multiply: [sum z] and: [*g2p t] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[c0 multiplyByFGInt: [g1Point y] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[c0 shiftLeftWith: pFGInt];
 
-	GFP2 *b0 = [GFP2 multiply: [*g2p t] and: e withInvertedP: invertedP andPrecision: precision];
-	[b0 multiplyByFGInt: [g1Point x] withInvertedP: invertedP andPrecision: precision];
-	[b0 shiftLeft];
+	GFP2 *b0 = [GFP2 multiply: [*g2p t] and: e with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[b0 multiplyByFGInt: [g1Point x] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[b0 shiftLeftWith: pFGInt];
 	[b0 changeSign];
 
-	tmp0 = [GFP2 add: e and: [*g2p x]];
-	tmp1 = [GFP2 square: tmp0 withInvertedP: invertedP andPrecision: precision];
+	tmp0 = [GFP2 add: e and: [*g2p x] with: pFGInt];
+	tmp1 = [GFP2 square: tmp0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
-	tmp0 = [GFP2 subtract: tmp1 and: a];
+	tmp0 = [GFP2 subtract: tmp1 and: a with: pFGInt];
 	[tmp1 release];
-	tmp1 = [GFP2 subtract: tmp0 and: g];
+	tmp1 = [GFP2 subtract: tmp0 and: g with: pFGInt];
 	[tmp0 release];
-	[b multiplyByInt: 4];
-	GFP2 *a0 = [GFP2 subtract: tmp1 and: b];
+	[b multiplyByInt: 4 with: pFGInt];
+	GFP2 *a0 = [GFP2 subtract: tmp1 and: b with: pFGInt];
 	[tmp1 release];
 
 
 	GFP6 *a2 = [[GFP6 alloc] init];
 	[a2 setC: [[GFP2 alloc] initZero]];
-	[a2 setB: [a0 retain]];
-	[a2 setA: [b0 retain]];
-	GFP6 *tmp6 = [GFP6 multiply: a2 and: [*f b] withInvertedP: invertedP andPrecision: precision];
+	[a2 setB: [a0 mutableCopy]];
+	[a2 setA: [b0 mutableCopy]];
+	GFP6 *tmp6 = [GFP6 multiply: a2 and: [*f b] with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[a2 release];
 	a2 = tmp6;
 	tmp6 = [[*f a] mutableCopy];
-	[tmp6 multiplyByGFP2: c0 withInvertedP: invertedP andPrecision: precision];
+	[tmp6 multiplyByGFP2: c0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	GFP6 *tmp7 = [[GFP6 alloc] init];
-	[tmp7 setA: [GFP2 add: b0 and: c0]];
-	[tmp7 setB: [a0 retain]];
+	[tmp7 setA: [GFP2 add: b0 and: c0 with: pFGInt]];
+	[tmp7 setB: [a0 mutableCopy]];
 	[tmp7 setC: [[GFP2 alloc] initZero]];
 
-	GFP6 *tmp8 = [GFP6 add: [*f a] and: [*f b]];
+	GFP6 *tmp8 = [GFP6 add: [*f a] and: [*f b] with: pFGInt];
 	[[*f b] release];
 	[*f setB: tmp8];
 	[[*f a] release];
 	[*f setA: tmp6];
 
-	tmp6 = [GFP6 multiply: [*f b] and: tmp7 withInvertedP: invertedP andPrecision: precision];
+	tmp6 = [GFP6 multiply: [*f b] and: tmp7 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[[*f b] release];
 	[tmp7 release];
-	tmp7 = [GFP6 subtract: tmp6 and: a2];
+	tmp7 = [GFP6 subtract: tmp6 and: a2 with: pFGInt];
 	[tmp6 release];
-	[*f setB: [GFP6 subtract: tmp7 and: [*f a]]];
+	[*f setB: [GFP6 subtract: tmp7 and: [*f a] with: pFGInt]];
 	[tmp7 release];
-	[a2 multiplyByRoot];
-	tmp6 = [GFP6 add: [*f a] and: a2];
+	[a2 multiplyByRootWith: pFGInt];
+	tmp6 = [GFP6 add: [*f a] and: a2 with: pFGInt];
 	[[*f a] release];
 	[*f setA: tmp6];
 
@@ -2356,6 +2492,17 @@
 
 
 +(GFP12 *) optimalAtePairing: (G2Point *) q and: (G1Point *) p withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
+
+	GFP12 *result = [BN256 optimalAtePairing: q and: p with: pFGInt withInvertedP: invertedP andPrecision: precision];
+
+	[pFGInt release];
+
+	return result;
+}
++(GFP12 *) optimalAtePairing: (G2Point *) q and: (G1Point *) p with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	if ([q infinity] || [p infinity]) {
 		return [[GFP12 alloc] initOne];
 	}
@@ -2370,19 +2517,19 @@
 	[minusQ changeSign];
 	[r makeExtendedProjective];
 
-	GFP2 *cachedR2 = [GFP2 square: [q y] withInvertedP: invertedP andPrecision: precision];
+	GFP2 *cachedR2 = [GFP2 square: [q y] with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 
 	for ( int i = nafLength - 1; i > 0; --i ) {
-		tmpF = [GFP12 square: f withInvertedP: invertedP andPrecision: precision];
+		tmpF = [GFP12 square: f with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		[f release];
 		f = tmpF;
-		[BN256 double: &r evaluateLineIn: p andMultiply: &f withInvertedP: invertedP andPrecision: precision];
+		[BN256 double: &r evaluateLineIn: p andMultiply: &f with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 		if (naf6up2[i - 1] == 1) {
-			[BN256 add: &r and: q with: cachedR2 evaluateLineIn: p andMultiply: &f withInvertedP: invertedP andPrecision: precision];
+			[BN256 add: &r and: q with: cachedR2 evaluateLineIn: p andMultiply: &f with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		} else if (naf6up2[i - 1] == -1) {
-			[BN256 add: &r and: minusQ with: cachedR2 evaluateLineIn: p andMultiply: &f withInvertedP: invertedP andPrecision: precision];
+			[BN256 add: &r and: minusQ with: cachedR2 evaluateLineIn: p andMultiply: &f with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		}
 	}
 
@@ -2398,9 +2545,8 @@
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray4 length: cnstLength]];
 	[tmp setB: tmpFGInt];
-	// [tmp setP: [[tmp0 p] retain]];
-	[tmp setP: [[tmp0 p] mutableCopy]];
-	[q1 setX: [GFP2 multiply: tmp0 and: tmp withInvertedP: invertedP andPrecision: precision]];
+	// [tmp setP: [[tmp0 p] mutableCopy]];
+	[q1 setX: [GFP2 multiply: tmp0 and: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision]];
 	[tmp release];
 	[tmp0 release];
 	tmp0 = [[q y] mutableCopy];
@@ -2414,9 +2560,8 @@
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray6 length: cnstLength]];
 	[tmp setB: tmpFGInt];
-	// [tmp setP: [[tmp0 p] retain]];
-	[tmp setP: [[tmp0 p] mutableCopy]];
-	[q1 setY: [GFP2 multiply: tmp0 and: tmp withInvertedP: invertedP andPrecision: precision]];
+	// [tmp setP: [[tmp0 p] mutableCopy]];
+	[q1 setY: [GFP2 multiply: tmp0 and: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision]];
 	[tmp release];
 	[tmp0 release];
 
@@ -2425,18 +2570,17 @@
 	FGIntBase numberArray2[8] = iPlus3ToPsm1o3Number;
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
 	tmp = [[q x] mutableCopy];
-	[tmp multiplyByFGInt: tmpFGInt withInvertedP: invertedP andPrecision: precision];
+	[tmp multiplyByFGInt: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpFGInt release];
 	[q2 setX: tmp];
-	// [q2 setY: [[q y] retain]];
 	[q2 setY: [[q y] mutableCopy]];
 
 	[cachedR2 release];
-	cachedR2 = [GFP2 square: [q1 y] withInvertedP: invertedP andPrecision: precision];
-	[BN256 add: &r and: q1 with: cachedR2 evaluateLineIn: p andMultiply: &f withInvertedP: invertedP andPrecision: precision];
+	cachedR2 = [GFP2 square: [q1 y] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[BN256 add: &r and: q1 with: cachedR2 evaluateLineIn: p andMultiply: &f with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[cachedR2 release];
-	cachedR2 = [GFP2 square: [q2 y] withInvertedP: invertedP andPrecision: precision];
-	[BN256 add: &r and: q2 with: cachedR2 evaluateLineIn: p andMultiply: &f withInvertedP: invertedP andPrecision: precision];
+	cachedR2 = [GFP2 square: [q2 y] with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[BN256 add: &r and: q2 with: cachedR2 evaluateLineIn: p andMultiply: &f with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	[r release];
 	[minusQ release];
@@ -2463,42 +2607,42 @@
 
 	GFP12 *t1 = [f mutableCopy];
 	[[t1 b] changeSign];
-	GFP12 *fInv = [f invertWithInvertedP: invertedP andPrecision: precision];
-	tmpF = [GFP12 multiply: t1 and: fInv withInvertedP: invertedP andPrecision: precision];
+	GFP12 *fInv = [f invertWith: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmpF = [GFP12 multiply: t1 and: fInv with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[t1 release];
 	[fInv release];
 	t1 = tmpF;
 
 	GFP12 *t2 = [t1 mutableCopy];
-	[t2 frobenius2WithInvertedP: invertedP andPrecision: precision];
+	[t2 frobenius2With: pFGInt withInvertedP: invertedP andPrecision: precision];
 	tmpF = [GFP12 multiply: t1 and: t2 withInvertedP: invertedP andPrecision: precision];
 	[t1 release];
 	t1 = tmpF;
 
 	GFP12 *fp = [t1 mutableCopy], *fp2 = [t1 mutableCopy], *fp3;
-	[fp frobeniusWithInvertedP: invertedP andPrecision: precision];
-	[fp2 frobenius2WithInvertedP: invertedP andPrecision: precision];
+	[fp frobeniusWith: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[fp2 frobenius2With: pFGInt withInvertedP: invertedP andPrecision: precision];
 	fp3 = [fp2 mutableCopy];
-	[fp3 frobeniusWithInvertedP: invertedP andPrecision: precision];
+	[fp3 frobeniusWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	GFP12 *fu, *fu2, *fu3;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray1[2] = {3965223681u, 1517727386u};
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray1 length: 8]];
-	fu = [GFP12 raise: t1 toThePower: tmpFGInt withInvertedP: invertedP andPrecision: precision];
-	fu2 = [GFP12 raise: fu toThePower: tmpFGInt withInvertedP: invertedP andPrecision: precision];
-	fu3 = [GFP12 raise: fu2 toThePower: tmpFGInt withInvertedP: invertedP andPrecision: precision];
+	fu = [GFP12 raise: t1 toThePower: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	fu2 = [GFP12 raise: fu toThePower: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	fu3 = [GFP12 raise: fu2 toThePower: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpFGInt release];
 
 	GFP12 *y3 = [fu mutableCopy], *fu2p = [fu2 mutableCopy], *fu3p = [fu3 mutableCopy], *y2;
-	[y3 frobeniusWithInvertedP: invertedP andPrecision: precision];
-	[fu2p frobeniusWithInvertedP: invertedP andPrecision: precision];
-	[fu3p frobeniusWithInvertedP: invertedP andPrecision: precision];
+	[y3 frobeniusWith: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[fu2p frobeniusWith: pFGInt withInvertedP: invertedP andPrecision: precision];
+	[fu3p frobeniusWith: pFGInt withInvertedP: invertedP andPrecision: precision];
 	y2 = [fu2 mutableCopy];
-	[y2 frobenius2WithInvertedP: invertedP andPrecision: precision];
+	[y2 frobenius2With: pFGInt withInvertedP: invertedP andPrecision: precision];
 
-	GFP12 *y0 = [GFP12 multiply: fp and: fp2 withInvertedP: invertedP andPrecision: precision];
-	tmpF = [GFP12 multiply: y0 and: fp3 withInvertedP: invertedP andPrecision: precision];
+	GFP12 *y0 = [GFP12 multiply: fp and: fp2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmpF = [GFP12 multiply: y0 and: fp3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[y0 release];
 	y0 = tmpF;
 
@@ -2509,35 +2653,35 @@
 	[y3 conjugate];
 	[y4 conjugate];
 
-	GFP12 *y6 = [GFP12 multiply: fu3 and: fu3p withInvertedP: invertedP andPrecision: precision];
+	GFP12 *y6 = [GFP12 multiply: fu3 and: fu3p with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[y6 conjugate];
 
-	GFP12 *t0 = [GFP12 square: y6 withInvertedP: invertedP andPrecision: precision];
-	tmpF = [GFP12 multiply: t0 and: y4 withInvertedP: invertedP andPrecision: precision];
+	GFP12 *t0 = [GFP12 square: y6 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmpF = [GFP12 multiply: t0 and: y4 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[t0 release];
-	t0 = [GFP12 multiply: tmpF and: y5 withInvertedP: invertedP andPrecision: precision];
+	t0 = [GFP12 multiply: tmpF and: y5 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[t1 release];
-	t1 = [GFP12 multiply: y3 and: y5 withInvertedP: invertedP andPrecision: precision];
-	tmpF = [GFP12 multiply: t0 and: t1 withInvertedP: invertedP andPrecision: precision];
+	t1 = [GFP12 multiply: y3 and: y5 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmpF = [GFP12 multiply: t0 and: t1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[t1 release];
 	t1 = tmpF;
-	tmpF = [GFP12 multiply: t0 and: y2 withInvertedP: invertedP andPrecision: precision];
+	tmpF = [GFP12 multiply: t0 and: y2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[t0 release];
 	t0 = tmpF;
-	tmpF = [GFP12 square: t1 withInvertedP: invertedP andPrecision: precision];
+	tmpF = [GFP12 square: t1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[t1 release];
-	t1 = [GFP12 multiply: t0 and: tmpF withInvertedP: invertedP andPrecision: precision];
+	t1 = [GFP12 multiply: t0 and: tmpF with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpF release];
-	tmpF = [GFP12 square: t1 withInvertedP: invertedP andPrecision: precision];
+	tmpF = [GFP12 square: t1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[t1 release];
 	t1 = tmpF;
 	[t0 release];
-	t0 = [GFP12 multiply: t1 and: y1 withInvertedP: invertedP andPrecision: precision];
-	tmpF = [GFP12 multiply: t1 and: y0 withInvertedP: invertedP andPrecision: precision];
+	t0 = [GFP12 multiply: t1 and: y1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	tmpF = [GFP12 multiply: t1 and: y0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[t1 release];
 	t1 = tmpF;
-	tmpF = [GFP12 square: t0 withInvertedP: invertedP andPrecision: precision];
-	f = [GFP12 multiply: t1 and: tmpF withInvertedP: invertedP andPrecision: precision];
+	tmpF = [GFP12 square: t0 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	f = [GFP12 multiply: t1 and: tmpF with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	[t0 release];
 	[t1 release];
@@ -2569,34 +2713,38 @@
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
 	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
-	GFP12 *result = [BN256 optimalAtePairing: q and: p withInvertedP: invertedP andPrecision: precision];
+	GFP12 *result = [BN256 optimalAtePairing: q and: p with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[invertedP release];
+	[pFGInt release];
 
 	return result;
 }
 
 
 +(BOOL) testPairing {
-	FGInt *p = [[FGInt alloc] initWithoutNumber];
-	FGIntBase numberArray0[] = pNumber;
-	[p setNumber: [[NSMutableData alloc] initWithBytes: numberArray0 length: cnstLength]];
 	FGIntBase precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
 	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
+	FGIntBase numberArrayP[] = pNumber;
+	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
 	FGInt *tmpFGInt1 = [[FGInt alloc] initWithRandomNumberOfBitSize: precision - 1], 
 			*tmpFGInt2 = [[FGInt alloc] initWithRandomNumberOfBitSize: precision - 1], 
 			*tmpFGInt3 = [[FGInt alloc] initWithRandomNumberOfBitSize: precision - 1];
 	G1Point *g1gen = [[G1Point alloc] initGenerator];
-	G1Point *g1_1 = [G1Point add: g1gen kTimes: tmpFGInt1 withInvertedP: invertedP andPrecision: precision];
-	G1Point *g1_2 = [G1Point add: g1gen kTimes: tmpFGInt2 withInvertedP: invertedP andPrecision: precision];
-	G1Point *g1_3 = [G1Point add: g1gen kTimes: tmpFGInt3 withInvertedP: invertedP andPrecision: precision];
+	G1Point *g1_1 = [G1Point add: g1gen kTimes: tmpFGInt1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	G1Point *g1_2 = [G1Point add: g1gen kTimes: tmpFGInt2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	G1Point *g1_3 = [G1Point add: g1gen kTimes: tmpFGInt3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	G2Point *g2gen = [[G2Point alloc] initGenerator];
-	G2Point *g2_1 = [G2Point add: g2gen kTimes: tmpFGInt1 withInvertedP: invertedP andPrecision: precision];
-	G2Point *g2_2 = [G2Point add: g2gen kTimes: tmpFGInt2 withInvertedP: invertedP andPrecision: precision];
-	G2Point *g2_3 = [G2Point add: g2gen kTimes: tmpFGInt3 withInvertedP: invertedP andPrecision: precision];
+	G2Point *g2_1 = [G2Point add: g2gen kTimes: tmpFGInt1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	G2Point *g2_2 = [G2Point add: g2gen kTimes: tmpFGInt2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+	G2Point *g2_3 = [G2Point add: g2gen kTimes: tmpFGInt3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	GFP12 *gfp12_1, *gfp12_2, *gfp12_3, *tmpGFP12;
 
@@ -2605,43 +2753,43 @@
 	// g2_1 = [[G2Point alloc] unMarshal: [g2_1 marshal]];
 	// g1_2 = [[G1Point alloc] unMarshal: [g1_2 marshal]];
 	date1 = [NSDate date];
-	tmpGFP12 = [BN256 optimalAtePairing: g2_1 and: g1_2 withInvertedP: invertedP andPrecision: precision];
+	tmpGFP12 = [BN256 optimalAtePairing: g2_1 and: g1_2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	NSLog(@"1st pairing took %fms", timePassed_ms1);
-	gfp12_1 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt3 withInvertedP: invertedP andPrecision: precision];
+	gfp12_1 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpGFP12 release];
 
 	// g2_2 = [[G2Point alloc] unMarshal: [g2_2 marshal]];
 	// g1_3 = [[G1Point alloc] unMarshal: [g1_3 marshal]];
 	date1 = [NSDate date];
-	tmpGFP12 = [BN256 optimalAtePairing: g2_2 and: g1_3 withInvertedP: invertedP andPrecision: precision];
+	tmpGFP12 = [BN256 optimalAtePairing: g2_2 and: g1_3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	NSLog(@"2nd pairing took %fms", timePassed_ms1);
-	gfp12_2 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt1 withInvertedP: invertedP andPrecision: precision];
+	gfp12_2 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpGFP12 release];
 
 	// g2_3 = [[G2Point alloc] unMarshal: [g2_3 marshal]];
 	// g1_1 = [[G1Point alloc] unMarshal: [g1_1 marshal]];
 	date1 = [NSDate date];
-	tmpGFP12 = [BN256 optimalAtePairing: g2_3 and: g1_1 withInvertedP: invertedP andPrecision: precision];
+	tmpGFP12 = [BN256 optimalAtePairing: g2_3 and: g1_1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	NSLog(@"3rd pairing took %fms", timePassed_ms1);
-	gfp12_3 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt2 withInvertedP: invertedP andPrecision: precision];
+	gfp12_3 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpGFP12 release];
 
 	// gfp12_1 = [[GFP12 alloc] unMarshal: [gfp12_1 marshal]];
 	// gfp12_2 = [[GFP12 alloc] unMarshal: [gfp12_2 marshal]];
 	// gfp12_3 = [[GFP12 alloc] unMarshal: [gfp12_3 marshal]];
 
-	GFP12 *gfp12 = [GFP12 subtract: gfp12_1 and: gfp12_2], 
-			*gfp13 = [GFP12 subtract: gfp12_1 and: gfp12_3], 
-			*gfp23 = [GFP12 subtract: gfp12_3 and: gfp12_2];
+	GFP12 *gfp12 = [GFP12 subtract: gfp12_1 and: gfp12_2 with: pFGInt], 
+			*gfp13 = [GFP12 subtract: gfp12_1 and: gfp12_3 with: pFGInt], 
+			*gfp23 = [GFP12 subtract: gfp12_3 and: gfp12_2 with: pFGInt];
 
-	NSLog(@"%@", [gfp12 toBase10String]);
-	NSLog(@"%@", [gfp23 toBase10String]);
-	NSLog(@"%@", [gfp13 toBase10String]);
+	// NSLog(@"%@", [gfp12 toBase10String]);
+	// NSLog(@"%@", [gfp23 toBase10String]);
+	// NSLog(@"%@", [gfp13 toBase10String]);
 
-	[p release];
+	[pFGInt release];
 	[invertedP release];
 	[g1gen release];
 	[g2gen release];

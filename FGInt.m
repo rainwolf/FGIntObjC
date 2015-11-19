@@ -154,11 +154,20 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 -(id) initWithRandomNumberAtMost: (FGInt *) atMost {
-    FGInt *randomFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: [atMost bitSize]];
+    FGInt *randomFGInt = nil;
+    int i = 10;
 
-    if (!([FGInt compareAbsoluteValueOf: randomFGInt with: atMost] == smaller)) {
-        [randomFGInt subtractWith: atMost];
-    }
+    do {
+        if (randomFGInt) {
+            [randomFGInt release];
+        }
+        randomFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: [atMost bitSize]];
+
+        if ([FGInt compareAbsoluteValueOf: randomFGInt with: atMost] != smaller) {
+            [randomFGInt subtractWith: atMost];
+        }
+        --i;
+    } while ((i > 0) && ([randomFGInt isZero]));
 
     return randomFGInt;
 }

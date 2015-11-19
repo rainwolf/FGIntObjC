@@ -25,27 +25,28 @@
 
 
 @interface GFP2 : NSObject <NSMutableCopying> {
-	FGInt *a, *b, *p;
+	FGInt *a, *b;
 }
-@property (assign, readwrite) FGInt *a, *b, *p;
+@property (assign, readwrite) FGInt *a, *b;
 
 -(id) initOne;
 -(id) initZero;
 -(id) unMarshal: (NSData *) marshalData;
+-(void) dealloc;
 -(void) changeSign;
 -(void) conjugate;
 -(BOOL) isZero;
-+(GFP2 *) add: (GFP2 *) p1 and: (GFP2 *) p2;
-+(GFP2 *) subtract: (GFP2 *) p1 and: (GFP2 *) p2;
-+(GFP2 *) multiply: (GFP2 *) p1 and: (GFP2 *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(GFP2 *) square: (GFP2 *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(GFP2 *) multiplyByResiduePlus3: (GFP2 *) p1;
--(void) shiftLeft;
--(void) shiftRight;
--(void) multiplyByInt: (unsigned char) c;
--(void) multiplyByFGInt: (FGInt *) fGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(GFP2 *) invertWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(GFP2 *) raise: (GFP2 *) gfp2 toThePower: (FGInt *) fGIntN withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP2 *) add: (GFP2 *) p1 and: (GFP2 *) p2 with: (FGInt *) pFGInt;
++(GFP2 *) subtract: (GFP2 *) p1 and: (GFP2 *) p2 with: (FGInt *) pFGInt;
++(GFP2 *) multiply: (GFP2 *) p1 and: (GFP2 *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP2 *) square: (GFP2 *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP2 *) multiplyByResiduePlus3: (GFP2 *) p1 with: (FGInt *) pFGInt;
+-(void) shiftLeftWith: (FGInt *) pFGInt;
+-(void) shiftRightWith: (FGInt *) pFGInt;
+-(void) multiplyByInt: (unsigned char) c with: (FGInt  *) p;
+-(void) multiplyByFGInt: (FGInt *) fGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(GFP2 *) invertWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP2 *) raise: (GFP2 *) gfp2 toThePower: (FGInt *) fGIntN with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 -(NSString *) toBase10String;
 -(NSData *) marshal;
 
@@ -61,19 +62,20 @@
 -(id) initOne;
 -(id) initZero;
 -(id) unMarshal: (NSData *) marshalData;
+-(void) dealloc;
 -(void) changeSign;
 -(BOOL) isZero;
-+(GFP6 *) add: (GFP6 *) p1 and: (GFP6 *) p2;
-+(GFP6 *) subtract: (GFP6 *) p1 and: (GFP6 *) p2;
-+(GFP6 *) multiply: (GFP6 *) p1 and: (GFP6 *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(GFP6 *) square: (GFP6 *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(GFP6 *) multiplyByRoot;
--(void) shiftLeft;
--(void) multiplyByFGInt: (FGInt *) fGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(void) multiplyByGFP2: (GFP2 *) gfp2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(void) frobeniusWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(void) frobenius2WithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(GFP6 *) invertWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP6 *) add: (GFP6 *) p1 and: (GFP6 *) p2 with: (FGInt *) pFGInt;
++(GFP6 *) subtract: (GFP6 *) p1 and: (GFP6 *) p2 with: (FGInt *) pFGInt;
++(GFP6 *) multiply: (GFP6 *) p1 and: (GFP6 *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP6 *) square: (GFP6 *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(GFP6 *) multiplyByRootWith: (FGInt *) pFGInt;
+-(void) shiftLeftWith: (FGInt *) pFGInt;
+-(void) multiplyByFGInt: (FGInt *) fGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(void) multiplyByGFP2: (GFP2 *) gfp2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(void) frobeniusWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(void) frobenius2With: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(GFP6 *) invertWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 -(NSString *) toBase10String;
 -(NSData *) marshal;
 
@@ -90,19 +92,21 @@
 -(id) initOne;
 -(id) initZero;
 -(id) unMarshal: (NSData *) marshalData;
+-(void) dealloc;
 -(void) conjugate;
 -(void) changeSign;
 -(BOOL) isZero;
-+(GFP12 *) add: (GFP12 *) p1 and: (GFP12 *) p2;
-+(GFP12 *) subtract: (GFP12 *) p1 and: (GFP12 *) p2;
-+(GFP12 *) multiply: (GFP12 *) p1 and: (GFP12 *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(void) multiplyByFGInt: (FGInt *) fGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(GFP12 *) square: (GFP12 *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(void) frobeniusWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(void) frobenius2WithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(GFP12 *) invertWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP12 *) add: (GFP12 *) p1 and: (GFP12 *) p2 with: (FGInt *) pFGInt;
++(GFP12 *) subtract: (GFP12 *) p1 and: (GFP12 *) p2 with: (FGInt *) pFGInt;
++(GFP12 *) multiply: (GFP12 *) p1 and: (GFP12 *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(void) multiplyByFGInt: (FGInt *) fGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP12 *) square: (GFP12 *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(void) frobeniusWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(void) frobenius2With: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(GFP12 *) invertWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 -(GFP12 *) invert;
 +(GFP12 *) raise: (GFP12 *) gfp12 toThePower: (FGInt *) fGIntN withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP12 *) raise: (GFP12 *) gfp12 toThePower: (FGInt *) fGIntN with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 -(NSString *) toBase10String;
 -(NSData *) marshal;
 
@@ -121,15 +125,17 @@
 -(id) initGenerator;
 -(id) initRandomPoint;
 -(id) unMarshal: (NSData *) marshalData;
+-(void) dealloc;
 -(void) changeSign;
 -(void) makeAffine;
 -(void) makeProjective;
 -(void) makeExtendedProjective;
 +(G2Point *) add: (G2Point *) p1 and: (G2Point *) p2;
-+(G2Point *) projectiveAdd: (G2Point *) p1 and: (G2Point *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(G2Point *) projectiveDouble: (G2Point *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(void) makeAffineWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(G2Point *) projectiveAdd: (G2Point *) p1 and: (G2Point *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(G2Point *) projectiveDouble: (G2Point *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(void) makeAffineWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(G2Point *) add: (G2Point *) g2Point kTimes: (FGInt *) kFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(G2Point *) add: (G2Point *) g2Point kTimes: (FGInt *) kFGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(G2Point *) add: (G2Point *) g2Point kTimes: (FGInt *) kFGInt;
 +(G2Point *) addGeneratorKTimes: (FGInt *) kFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(G2Point *) addGeneratorKTimes: (FGInt *) kFGInt;
@@ -140,23 +146,24 @@
 
 
 @interface G1Point : NSObject <NSMutableCopying> {
-	FGInt *x, *y, *z, *p;
+	FGInt *x, *y, *z;
 	BOOL infinity;
 }
-@property (assign, readwrite) FGInt *x, *y, *z, *p;
+@property (assign, readwrite) FGInt *x, *y, *z;
 @property (assign, readwrite) BOOL infinity;
 
--(id) initInfinityWithP: (FGInt *) pFGInt;
+-(id) initInfinity;
 -(id) initGenerator;
 -(id) initRandomPoint;
 -(id) unMarshal: (NSData *) marshalData;
+-(void) dealloc;
 -(void) changeSign;
 -(void) makeProjective;
 +(G1Point *) add: (G1Point *) p1 and: (G1Point *) p2;
-+(G1Point *) projectiveAdd: (G1Point *) p1 and: (G1Point *) p2 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(G1Point *) projectiveDouble: (G1Point *) p1 withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
--(void) makeAffineWithInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(G1Point *) add: (G1Point *) g1Point kTimes: (FGInt *) kFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(G1Point *) projectiveAdd: (G1Point *) p1 and: (G1Point *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(G1Point *) projectiveDouble: (G1Point *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
+-(void) makeAffineWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(G1Point *) add: (G1Point *) g1Point kTimes: (FGInt *) kFGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(G1Point *) add: (G1Point *) g1Point kTimes: (FGInt *) kFGInt;
 +(G1Point *) addGeneratorKTimes: (FGInt *) kFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(G1Point *) addGeneratorKTimes: (FGInt *) kFGInt;
@@ -175,9 +182,10 @@
 @interface BN256 : NSObject
 
 
-+(void) add: (G2Point **) g2p and: (G2Point *) g2q with: (GFP2 *) cachedR2 evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(void) double: (G2Point **) g2p evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(void) add: (G2Point **) g2p and: (G2Point *) g2q with: (GFP2 *) cachedR2 evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(void) double: (G2Point **) g2p evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(GFP12 *) optimalAtePairing: (G2Point *) q and: (G1Point *) p withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
++(GFP12 *) optimalAtePairing: (G2Point *) q and: (G1Point *) p with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(GFP12 *) optimalAtePairing: (G2Point *) q and: (G1Point *) p;
 +(BOOL) testPairing;
 
