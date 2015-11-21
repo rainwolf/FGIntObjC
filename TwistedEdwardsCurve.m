@@ -209,6 +209,7 @@
         	tmpFGInt = [FGInt multiplyModulo25638: beta and: sqrtMinusOne];
         	[beta release];
         	beta = tmpFGInt;
+            [sqrtMinusOne release];
         }
         [t1 release];
         [u release];

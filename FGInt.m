@@ -465,7 +465,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             [number setLength: 4];
         }
         if (([number length] % 4) != 0) {
-            [number increaseLengthBy: 4 - ([number length] % 4)];
+            [number setLength: 4 * (([number length] + 3) / 4)];
         }
         FGIntOverflow length = [number length]/4;
         FGIntBase* numberArray = [number mutableBytes];
@@ -665,25 +665,16 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 -(BOOL) isZero {
-    if ([number length] > 4) {
-        FGIntBase* numberArray = [number mutableBytes];
-        FGIntIndex i = [number length]/4 - 1;
-        while ((i >= 0) && (numberArray[i] == 0)) {
-            --i;
-        }
-        if (i < 0) {
-            return YES;
-        } else {
-            return NO;
-        }
+    FGIntBase* numberArray = [number mutableBytes];
+    FGIntIndex i = [number length]/4 - 1;
+    while ((i >= 0) && (numberArray[i] == 0)) {
+        --i;
+    }
+    if (i < 0) {
+        return YES;
     } else {
-        FGIntBase* numberArray = [number mutableBytes];
-        if (numberArray[0] == 0) {
-            return YES;
-        } else {
-            return NO;
-        }
-    } 
+        return NO;
+    }
 }
 -(BOOL) isOne {
     if ([number length] > 4) {
@@ -1104,7 +1095,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(void) shiftLeftBy32 {
     FGIntBase* numberArray = [number mutableBytes];
-    if (([number length] != 4) || (numberArray[0] != 0)) {
+    if (![self isZero]) {
         NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: 4];
         [tmpNumber appendData: number];
         [number release];
@@ -1117,7 +1108,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     FGIntBase* numberArray = [number mutableBytes];
     if (length == 1) {
         numberArray[0] = 0;
-        sign = YES;
+        // sign = YES;
     } else {
         NSMutableData *shiftedNumber = [[NSMutableData alloc] initWithBytes: &numberArray[1] length: (length - 1)*4];
         [number release];
@@ -1127,7 +1118,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(void) shiftLeftBy32Times: (FGIntOverflow) n {
     FGIntBase* numberArray = [number mutableBytes];
-    if ((([number length] != 4) || (numberArray[0] != 0)) && (n > 0)) {
+    if ((![self isZero]) && (n > 0)) {
         NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: 4*n];
         [tmpNumber appendData: number];
         [number release];
@@ -1140,8 +1131,8 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 -(void) shiftRightBy32Times: (FGIntOverflow) n {
     FGIntOverflow length = [number length]/4;
     if (n >= length) {
-        [number setLength: 0];
-        [number setLength: 4];
+        [number release];
+        number = [[NSMutableData alloc] initWithLength: 4];
         sign = YES;
     } else {
         FGIntBase* numberArray = [number mutableBytes];
@@ -1179,9 +1170,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         numberArray[i] = (FGIntBase) (mod | (tmpInt >> 1));
         mod = tmpInt << 31;
     }
-    if ((numberArray[length - 1] == 0) && (length == 1)) {
-        sign = YES;
-    }
+    // if ((numberArray[length - 1] == 0) && (length == 1)) {
+    //     sign = YES;
+    // }
     if ((numberArray[length - 1] == 0) && (length > 1)) {
         [number setLength: (length - 1)*4];
     }
@@ -1196,9 +1187,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     if (by32Times != 0) {
         FGIntOverflow length = [number length]/4;
         if (by32Times >= length) {
-            [number setLength: 0];
-            [number setLength: 4];
-            sign = YES;
+            [number release];
+            number = [[NSMutableData alloc] initWithLength: 4];
+            // sign = YES;
         } else {
             FGIntBase* numberArray = [number mutableBytes];
             NSMutableData *shiftedNumber = [[NSMutableData alloc] initWithBytes: &numberArray[by32Times] length: (length - by32Times)*4];
@@ -1216,9 +1207,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             numberArray[i] = (FGIntBase) (mod | (tmpInt >> byMod32));
             mod = tmpInt << (32 - byMod32);
         }
-        if ((numberArray[length - 1] == 0) && (length == 1)) {
-            sign = YES;
-        }
+        // if ((numberArray[length - 1] == 0) && (length == 1)) {
+        //     sign = YES;
+        // }
         if ((numberArray[length - 1] == 0) && (length > 1)) {
             [number setLength: (length - 1)*4];
         }

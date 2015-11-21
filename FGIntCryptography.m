@@ -4779,7 +4779,8 @@ This header may not be removed.
 -(id) copyWithZone: (NSZone *) zone {
     Ed25519SHA512 *newKeys = [[Ed25519SHA512 allocWithZone: zone] init];
 
-
+    [newKeys setSecretKey: [secretKey copy]];
+    [newKeys setPublicKey: [publicKey mutableCopy]];
 
     return newKeys;
 }
@@ -4844,14 +4845,14 @@ This header may not be removed.
 
 
 -(NSData *) signNSData: (NSData *) plainText {
-    NSMutableData *hashData = (NSMutableData *) [FGIntXtra SHA512: secretKey];
+    NSData *hashData = [FGIntXtra SHA512: secretKey];
     NSMutableData *tmpData = [[NSMutableData alloc] initWithBytes: [hashData bytes] length: 32];
     FGInt *secretKeyFGInt = [[FGInt alloc] initWithNSDataToEd25519FGInt: tmpData];
     int result = SecRandomCopyBytes(kSecRandomDefault, [tmpData length], [tmpData mutableBytes]);
     [tmpData release];
 
     NSMutableData *r = [[NSMutableData alloc] initWithData:[hashData subdataWithRange: NSMakeRange(32, 32)]];
-    result = SecRandomCopyBytes(kSecRandomDefault, [hashData length], [hashData mutableBytes]);
+    result = SecRandomCopyBytes(kSecRandomDefault, [hashData length], (unsigned char *) [hashData bytes]);
     [hashData release];
     [r appendData: plainText];
     tmpData = (NSMutableData *) [FGIntXtra SHA512: r];
@@ -4870,7 +4871,7 @@ This header may not be removed.
     tmpData = [signatureData mutableCopy];
     [tmpData appendData: [publicKey to25519NSData]];
     [tmpData appendData: plainText];
-    hashData = (NSMutableData *) [FGIntXtra SHA512: tmpData];
+    hashData = [FGIntXtra SHA512: tmpData];
     FGInt *hashFGInt = [[FGInt alloc] initWithNSData: hashData];
     [tmpData release];
 
