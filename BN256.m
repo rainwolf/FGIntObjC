@@ -317,10 +317,14 @@
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
 	NSMutableData *result = [[NSMutableData alloc] init];
 	FGInt *tmp = [FGInt longDivisionMod: b by: pFGInt];
+	[b release];
+	b = tmp;
 	NSData *tmpData = [tmp toBigEndianNSDataOfLength: cnstLength];
 	[result appendData: tmpData];
 	[tmpData release];
 	tmp = [FGInt longDivisionMod: a by: pFGInt];
+	[a release];
+	a = tmp;
 	tmpData = [tmp toBigEndianNSDataOfLength: cnstLength];
 	[result appendData: tmpData];
 	[tmpData release];
@@ -643,11 +647,11 @@
 	GFP2 *tmp = [[GFP2 alloc] init];
 	FGIntBase numberArray1[8] = iPlus3To2Pm2o3aNumber;
 	FGInt *tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray1 length: cnstLength freeWhenDone: NO]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray1 length: cnstLength]];
 	[tmp setA: tmpFGInt];
 	FGIntBase numberArray2[8] = iPlus3To2Pm2o3bNumber;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray2 length: cnstLength freeWhenDone: NO]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
 	[tmp setB: tmpFGInt];
 
 	GFP2 *tmp0 = [GFP2 multiply: c and: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
@@ -658,11 +662,11 @@
 	tmp = [[GFP2 alloc] init];
 	FGIntBase numberArray3[8] = iPlus3ToPm1o3aNumber;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray3 length: cnstLength freeWhenDone: NO]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray3 length: cnstLength]];
 	[tmp setA: tmpFGInt];
 	FGIntBase numberArray4[8] = iPlus3ToPm1o3bNumber;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray4 length: cnstLength freeWhenDone: NO]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray4 length: cnstLength]];
 	[tmp setB: tmpFGInt];
 
 	tmp0 = [GFP2 multiply: b and: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
@@ -674,13 +678,13 @@
 -(void) frobenius2With: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	FGIntBase numberArray1[8] = iPlus3To2Psm2o3Number;
 	FGInt *tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray1 length: cnstLength freeWhenDone: NO]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray1 length: cnstLength - 8]];
 	[c multiplyByFGInt: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpFGInt release];
 
 	FGIntBase numberArray2[8] = iPlus3ToPsm1o3Number;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray2 length: cnstLength freeWhenDone: NO]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
 	[b multiplyByFGInt: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpFGInt release];
 }
@@ -942,11 +946,11 @@
 	GFP2 *tmp = [[GFP2 alloc] init];
 	FGIntBase numberArray1[8] = iPlus3ToPm1o6aNumber;
 	FGInt *tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray1 length: cnstLength freeWhenDone: NO]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray1 length: cnstLength]];
 	[tmp setA: tmpFGInt];
 	FGIntBase numberArray2[8] = iPlus3ToPm1o6bNumber;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray2 length: cnstLength freeWhenDone: NO]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray2 length: cnstLength]];
 	[tmp setB: tmpFGInt];
 
 	[b multiplyByGFP2: tmp with: pFGInt withInvertedP: invertedP andPrecision: precision];
@@ -959,7 +963,7 @@
 
 	FGIntBase numberArray[8] = iPlus3ToPsm1o6Number;
 	FGInt *tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytesNoCopy: numberArray length: cnstLength freeWhenDone: NO]];
+	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
 	[b multiplyByFGInt: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmpFGInt release];
 }
@@ -989,7 +993,7 @@
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: invertedLength]];
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength]];
@@ -1254,7 +1258,7 @@
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: invertedLength]];
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
@@ -1478,7 +1482,7 @@
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: invertedLength]];
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
@@ -1551,7 +1555,7 @@
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: invertedLength]];
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
@@ -1583,7 +1587,7 @@
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: invertedLength]];
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
@@ -1777,7 +1781,7 @@
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: invertedLength]];
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
@@ -2111,7 +2115,7 @@
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: invertedLength]];
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
@@ -2141,7 +2145,7 @@
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: invertedLength]];
 
     G1Point *result = [G1Point add: generator kTimes: kFGInt withInvertedP: invertedP andPrecision: precision];
 
@@ -2191,7 +2195,8 @@
 
 	FGInt *tmp;
 	if (![x sign]) {
-		tmp = [FGInt add: pFGInt and: x];
+		tmp = [FGInt longDivisionMod: x by: pFGInt];
+		// tmp = [FGInt add: pFGInt and: x];
 	} else {
 		tmp = x;
 	}
@@ -2205,7 +2210,8 @@
 
 	// tmpData = [y toBigEndianNSDataOfLength: cnstLength];
 	if (![x sign]) {
-		tmp = [FGInt add: pFGInt and: y];
+		tmp = [FGInt longDivisionMod: y by: pFGInt];
+		// tmp = [FGInt add: pFGInt and: y];
 	} else {
 		tmp = y;
 	}
@@ -2263,6 +2269,7 @@
 	GFP2 *l1 = [GFP2 subtract: tmp0 and: [*g2p y] with: pFGInt];
 	[tmp0 release];
 	if ([h isZero] && [l1 isZero]) {
+		NSLog(@"kitteeeh");
 		[b release];
 		[d release];
 		[h release];
@@ -2627,7 +2634,7 @@
 
 	GFP12 *fu, *fu2, *fu3;
 	tmpFGInt = [[FGInt alloc] initWithoutNumber];
-	FGIntBase numberArray1[2] = {3965223681u, 1517727386u};
+	FGIntBase numberArray1[] = {3965223681u, 1517727386u};
 	[tmpFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArray1 length: 8]];
 	fu = [GFP12 raise: t1 toThePower: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	fu2 = [GFP12 raise: fu toThePower: tmpFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
@@ -2712,7 +2719,7 @@
 	FGIntOverflow precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: invertedLength]];
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
@@ -2729,7 +2736,7 @@
 	FGIntBase precision = precisionBits;
 	FGInt *invertedP = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArray[] = invertedPnumber;
-	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: cnstLength + 4]];
+	[invertedP setNumber: [[NSMutableData alloc] initWithBytes: numberArray length: invertedLength]];
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
@@ -2746,36 +2753,50 @@
 	G2Point *g2_2 = [G2Point add: g2gen kTimes: tmpFGInt2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	G2Point *g2_3 = [G2Point add: g2gen kTimes: tmpFGInt3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
-	GFP12 *gfp12_1, *gfp12_2, *gfp12_3, *tmpGFP12;
+	__block GFP12 *gfp12_1, *gfp12_2, *gfp12_3;
+    dispatch_group_t d_group = dispatch_group_create();
+    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
 
 	NSDate *date1;
 	double timePassed_ms1;
 	// g2_1 = [[G2Point alloc] unMarshal: [g2_1 marshal]];
 	// g1_2 = [[G1Point alloc] unMarshal: [g1_2 marshal]];
-	date1 = [NSDate date];
-	tmpGFP12 = [BN256 optimalAtePairing: g2_1 and: g1_2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
-	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
-	NSLog(@"1st pairing took %fms", timePassed_ms1);
-	gfp12_1 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
-	[tmpGFP12 release];
+	dispatch_group_async(d_group, bg_queue, ^{
+		NSDate *date_1 = [NSDate date];
+		GFP12 *tmpGFP12 = [BN256 optimalAtePairing: g2_1 and: g1_2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+		double timePassed_ms_1 = [date_1 timeIntervalSinceNow] * -1000.0;
+		NSLog(@"1st pairing took %fms", timePassed_ms_1);
+		gfp12_1 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+		[tmpGFP12 release];
+    });
+
 
 	// g2_2 = [[G2Point alloc] unMarshal: [g2_2 marshal]];
 	// g1_3 = [[G1Point alloc] unMarshal: [g1_3 marshal]];
-	date1 = [NSDate date];
-	tmpGFP12 = [BN256 optimalAtePairing: g2_2 and: g1_3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
-	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
-	NSLog(@"2nd pairing took %fms", timePassed_ms1);
-	gfp12_2 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
-	[tmpGFP12 release];
+	dispatch_group_async(d_group, bg_queue, ^{
+		NSDate *date_2 = [NSDate date];
+		GFP12 *tmpGFP12 = [BN256 optimalAtePairing: g2_2 and: g1_3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+		double timePassed_ms_2 = [date_2 timeIntervalSinceNow] * -1000.0;
+		NSLog(@"2nd pairing took %fms", timePassed_ms_2);
+		gfp12_2 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+		[tmpGFP12 release];
+    });
+
 
 	// g2_3 = [[G2Point alloc] unMarshal: [g2_3 marshal]];
 	// g1_1 = [[G1Point alloc] unMarshal: [g1_1 marshal]];
-	date1 = [NSDate date];
-	tmpGFP12 = [BN256 optimalAtePairing: g2_3 and: g1_1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
-	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
-	NSLog(@"3rd pairing took %fms", timePassed_ms1);
-	gfp12_3 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
-	[tmpGFP12 release];
+	dispatch_group_async(d_group, bg_queue, ^{
+		NSDate *date_3 = [NSDate date];
+		GFP12 *tmpGFP12 = [BN256 optimalAtePairing: g2_3 and: g1_1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+		double timePassed_ms_3 = [date_3 timeIntervalSinceNow] * -1000.0;
+		NSLog(@"3rd pairing took %fms", timePassed_ms_3);
+		gfp12_3 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
+		[tmpGFP12 release];
+    });
+
+	dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
 
 	// gfp12_1 = [[GFP12 alloc] unMarshal: [gfp12_1 marshal]];
 	// gfp12_2 = [[GFP12 alloc] unMarshal: [gfp12_2 marshal]];

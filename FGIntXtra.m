@@ -7,21 +7,30 @@
 
 
 +(NSData *) SHA256HMACForKey: (NSData *) key AndData: (NSData *)data {
-    NSMutableData *hmac = [[NSMutableData alloc] initWithLength: CC_SHA256_DIGEST_LENGTH];
+    NSMutableData *hmac = [[NSMutableData alloc] initWithCapacity: CC_SHA256_DIGEST_LENGTH];
     CCHmac(kCCHmacAlgSHA256, [key bytes], [key length], [data bytes], [data length], [hmac mutableBytes]);
     return hmac;
 }
 
 +(NSData *) SHA256: (NSData *) plainText {
-    NSMutableData *hash = [[NSMutableData alloc] initWithLength: CC_SHA256_DIGEST_LENGTH];
-    CC_SHA256([plainText bytes], (unsigned int) [plainText length], [hash mutableBytes]);
-    return hash;
+    unsigned char hashBytes[CC_SHA256_DIGEST_LENGTH];
+    if (CC_SHA256([plainText bytes], (unsigned int) [plainText length], hashBytes)) {
+        return [[NSData alloc] initWithBytes: hashBytes length: CC_SHA256_DIGEST_LENGTH];
+    } else {
+        NSLog(@"Something went wrong calculating SHA256");
+        return nil;
+    }
 }
 
 +(NSData *) SHA512: (NSData *) plainText {
-    NSMutableData *hash = [[NSMutableData alloc] initWithLength: CC_SHA512_DIGEST_LENGTH];
-    CC_SHA512([plainText bytes], (unsigned int) [plainText length], [hash mutableBytes]);
-    return hash;
+    NSMutableData *hash = [[NSMutableData alloc] initWithCapacity: CC_SHA512_DIGEST_LENGTH];
+    if (CC_SHA512([plainText bytes], (unsigned int) [plainText length], [hash mutableBytes])) {
+        return hash;
+    } else {
+        [hash release];
+        NSLog(@"Something went wrong calculating SHA256");
+        return nil;
+    }
 }
 
 

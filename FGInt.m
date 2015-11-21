@@ -143,7 +143,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     FGIntBase* numberArray = [[randomFGInt number] mutableBytes];
     FGIntBase j = (bitSize % 32), firstNumberBase, firstBit;
     firstBit = (1u << 31) >> ((32 - j) % 32);
-    firstNumberBase = 4294967295 >> ((32 - j) % 32);
+    firstNumberBase = 4294967295u >> ((32 - j) % 32);
     length = [[randomFGInt number] length]/4;
     j = numberArray[length - 1];
     j = j & firstNumberBase;
@@ -163,9 +163,8 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         }
         randomFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: [atMost bitSize]];
 
-        if ([FGInt compareAbsoluteValueOf: randomFGInt with: atMost] != smaller) {
-            [randomFGInt subtractWith: atMost];
-        }
+        [randomFGInt reduceBySubtracting: atMost atMost: 1];
+
         --i;
     } while ((i > 0) && ([randomFGInt isZero]));
 
@@ -426,9 +425,10 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* provide an unsigned 32bit integer to initialize the FGInt */
 
 -(FGInt *) initWithFGIntBase: (FGIntBase) fGIntBase {
-    self = [self init];
-    number = [[NSMutableData alloc] initWithBytes: &fGIntBase length: 4];
-    [self setSign: YES];
+    if (self = [self init]) {
+        number = [[NSMutableData alloc] initWithBytes: &fGIntBase length: 4];
+        sign = YES;
+    }
         
     return self;
 }
@@ -459,18 +459,26 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* provide NSData to initialize the FGInt */
 
 -(FGInt *) initWithNSData: (NSData *) nsData {
-    NSMutableData *inputData = [[NSMutableData alloc] initWithData: nsData];
-    [FGInt verifyAdjustNumber: inputData];
-    FGIntOverflow length = [inputData length]/4;
-    FGIntBase* numberArray = [inputData mutableBytes];
-    while ((length > 1) && (numberArray[length - 1] == 0)) {
-        --length;
-    }
-    if (length*4 < [inputData length]) {
-        [inputData setLength: length*4];
+    if (self = [super init]) {
+        number = [[NSMutableData alloc] initWithData: nsData];
+        if ([number length] == 0) {
+            [number setLength: 4];
+        }
+        if (([number length] % 4) != 0) {
+            [number increaseLengthBy: 4 - ([number length] % 4)];
+        }
+        FGIntOverflow length = [number length]/4;
+        FGIntBase* numberArray = [number mutableBytes];
+        while ((length > 1) && (numberArray[length - 1] == 0)) {
+            --length;
+        }
+        if (length*4 < [number length]) {
+            [number setLength: length*4];
+        }
+        sign = YES;
     }
 
-    return [self initWithNumber: inputData];
+    return self;
 }
 
 -(FGInt *) initWithMPINSData: (NSData *) mpiNSData {
@@ -541,16 +549,31 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 -(FGInt *) initWithBigEndianNSData: (NSData *) bigEndianNSData {
-    FGIntOverflow byteLength = [bigEndianNSData length];
-    NSMutableData *inputData = [[NSMutableData alloc] init];
-    const unsigned char* bigEndianBytes = [bigEndianNSData bytes];
-    for ( FGIntIndex i = 0; i < byteLength; i++ ) {
-        [inputData appendBytes: &bigEndianBytes[byteLength - 1 - i] length: 1];
+    if (self = [super init]) {
+        FGIntOverflow byteLength = [bigEndianNSData length];
+        number = [[NSMutableData alloc] init];
+        unsigned char* bigEndianBytes = (unsigned char*) [bigEndianNSData bytes];
+        for ( FGIntIndex i = 0; i < byteLength; i++ ) {
+            [number appendBytes: &bigEndianBytes[byteLength - 1 - i] length: 1];
+        }
+        if ([number length] == 0) {
+            [number setLength: 4];
+        }
+        if (([number length] % 4) != 0) {
+            [number increaseLengthBy: 4 - ([number length] % 4)];
+        }
+        FGIntOverflow length = [number length]/4;
+        FGIntBase* numberArray = [number mutableBytes];
+        while ((length > 1) && (numberArray[length - 1] == 0)) {
+            --length;
+        }
+        if (length*4 < [number length]) {
+            [number setLength: length*4];
+        }
+        sign = YES;
     }
-    FGInt *fGInt = [[FGInt alloc] initWithNSData: inputData];
-    [fGInt verifyAdjust];
 
-    return fGInt;
+    return self;
 }
 
 -(NSData *) toBigEndianNSData {
@@ -570,7 +593,12 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     if (byteLength > length) {
         return nil;
     }
-    NSMutableData *bigEndianNSData = [[NSMutableData alloc] initWithLength: length - byteLength];
+    NSMutableData *bigEndianNSData;
+    if ((length - byteLength) > 0) {
+        bigEndianNSData = [[NSMutableData alloc] initWithLength: length - byteLength];
+    } else {
+        bigEndianNSData = [[NSMutableData alloc] init];
+    }
     unsigned char* numberBytes = [number mutableBytes];
     for ( FGIntIndex i = 0; i < byteLength; i++ ) {
         [bigEndianNSData appendBytes: &numberBytes[byteLength - 1 - i] length: 1];
@@ -777,10 +805,22 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* subtract fGInt1 with fGInt2 and return a FGInt */
 
 +(FGInt *) subtract: (FGInt *) fGInt1 and: (FGInt *) fGInt2 {
-    FGInt *result;
-    [fGInt2 changeSign];
-    result = [FGInt add: fGInt1 and: fGInt2];
-    [fGInt2 changeSign];
+    FGInt *result, *smallerFGInt;
+
+    if ([FGInt compareAbsoluteValueOf: fGInt1 with: fGInt2] == larger) {
+        result = [fGInt1 mutableCopy];
+        smallerFGInt = fGInt2;
+    } else {
+        result = [fGInt2 mutableCopy];
+        smallerFGInt = fGInt1;
+        [result setSign: ![fGInt2 sign]];
+    }
+
+    if ([fGInt1 sign] == [fGInt2 sign]) {
+        [result subtractWith: smallerFGInt];
+    } else {
+        [result addWith: smallerFGInt];
+    }
     return result;
 }
 
