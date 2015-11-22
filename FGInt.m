@@ -3401,6 +3401,54 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 
+-(void) findLargerPrime {
+    FGInt *two = [[FGInt alloc] initWithFGIntBase: 2];
+
+    FGInt *start = [self mutableCopy];
+    if ([start isEven]) {
+        [start increment];
+    }
+    FGInt *gapIncrement = [[FGInt alloc] initWithFGIntBase: 1];
+    [gapIncrement shiftLeftBy: [start bitSize] / 2];
+    FGInt *gap = [[FGInt alloc] initAsZero];
+
+    NSUInteger b = [[NSProcessInfo processInfo] activeProcessorCount];
+    NSMutableArray *candidates = [[NSMutableArray alloc] init];
+    __block BOOL found = NO;
+    __block FGInt *prime = nil;
+
+    dispatch_group_t d_group = dispatch_group_create();
+    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    for ( int i = 0; i < b; ++i ) {
+        [candidates addObject: [FGInt add: start and: gap]];
+        [gap addWith: gapIncrement];
+        dispatch_group_async(d_group, bg_queue, ^{
+            FGInt *primeCandidate = [candidates objectAtIndex: i];
+            while (!found) {
+                BOOL isPrime = [primeCandidate primalityTest: 5];
+                if (!isPrime) {
+                    [primeCandidate addWith: two];
+                } else {
+                    found = YES;
+                    prime = primeCandidate;
+                }
+            }
+        });
+    }
+    dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
+
+    [number release];
+    number = [[prime number] mutableCopy];
+
+    [candidates release];
+    [gap release];
+    [gapIncrement release];
+    [start release];
+    [two release];
+}
+
+
 -(void) findNearestLargerPrimeWithRabinMillerTests: (FGIntBase) numberOfTests {
     FGInt *two = [[FGInt alloc] initWithFGIntBase: 2];
     FGIntBase* numberArray = [number mutableBytes];
@@ -3416,6 +3464,52 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     [two release];
 }
 
+-(void) findLargerPrimeWithRabinMillerTests: (FGIntBase) numberOfTests {
+    FGInt *two = [[FGInt alloc] initWithFGIntBase: 2];
+
+    FGInt *start = [self mutableCopy];
+    if ([start isEven]) {
+        [start increment];
+    }
+    FGInt *gapIncrement = [[FGInt alloc] initWithFGIntBase: 1];
+    [gapIncrement shiftLeftBy: [start bitSize] / 2];
+    FGInt *gap = [[FGInt alloc] initAsZero];
+
+    NSUInteger b = [[NSProcessInfo processInfo] activeProcessorCount];
+    NSMutableArray *candidates = [[NSMutableArray alloc] init];
+    __block BOOL found = NO;
+    __block FGInt *prime = nil;
+
+    dispatch_group_t d_group = dispatch_group_create();
+    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    for ( int i = 0; i < b; ++i ) {
+        [candidates addObject: [FGInt add: start and: gap]];
+        [gap addWith: gapIncrement];
+        dispatch_group_async(d_group, bg_queue, ^{
+            FGInt *primeCandidate = [candidates objectAtIndex: i];
+            while (!found) {
+                BOOL isPrime = [primeCandidate primalityTest: numberOfTests];
+                if (!isPrime) {
+                    [primeCandidate addWith: two];
+                } else {
+                    found = YES;
+                    prime = primeCandidate;
+                }
+            }
+        });
+    }
+    dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
+
+    [number release];
+    number = [[prime number] mutableCopy];
+
+    [candidates release];
+    [gap release];
+    [gapIncrement release];
+    [start release];
+    [two release];
+}
 
 // /* Searches for a nearest prime number p larger than self, such that (p mod q = 1), make sure qFGInt is a prime number */
 
@@ -3436,6 +3530,60 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 //    [doubleQ release];
 //    return prime;
 //}
+
+-(void) findLargerDSAPrimeWith: (FGInt *) qFGInt {
+    FGInt *doubleQ = [qFGInt mutableCopy], *tmpFGInt;
+    [doubleQ shiftLeft];
+    FGInt *start = [self mutableCopy];
+    tmpFGInt = [FGInt mod: start by: qFGInt];
+    [start subtractWith: tmpFGInt];
+    [tmpFGInt release];
+    [start increment];
+    FGIntBase* numberArray = [[start number] mutableBytes];
+    if ((numberArray[0] % 2) == 0) {
+        [start addWith: qFGInt];
+    }
+
+    FGInt *gapIncrement = [qFGInt mutableCopy];
+    [gapIncrement shiftLeftBy: [self bitSize]/2 - [qFGInt bitSize]];
+    FGInt *gap = [[FGInt alloc] initAsZero];
+
+    NSUInteger b = [[NSProcessInfo processInfo] activeProcessorCount];
+    NSMutableArray *candidates = [[NSMutableArray alloc] init];
+    __block BOOL found = NO;
+    __block FGInt *prime = nil;
+
+    dispatch_group_t d_group = dispatch_group_create();
+    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    for ( int i = 0; i < b; ++i ) {
+        [candidates addObject: [FGInt add: start and: gap]];
+        [gap addWith: gapIncrement];
+        dispatch_group_async(d_group, bg_queue, ^{
+            FGInt *primeCandidate = [candidates objectAtIndex: i];
+            while (!found) {
+                BOOL isPrime = [primeCandidate primalityTest: 5];
+                if (!isPrime) {
+                    [primeCandidate addWith: doubleQ];
+                } else {
+                    found = YES;
+                    prime = primeCandidate;
+                }
+            }
+        });
+    }
+    dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
+
+    [number release];
+    number = [[prime number] mutableCopy];
+
+    [candidates release];
+    [gap release];
+    [gapIncrement release];
+    [start release];
+    [doubleQ release];
+}
+
 
 -(void) findNearestLargerDSAPrimeWith: (FGInt *) qFGInt {
     FGInt *doubleQ = [qFGInt mutableCopy], *tmpFGInt;

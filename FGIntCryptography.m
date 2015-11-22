@@ -74,12 +74,22 @@ This header may not be removed.
         FGIntOverflow halfBitLength = (bitLength / 2) + (bitLength % 2);
         FGInt *tmpFGInt;
 
-        qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: halfBitLength];
-        [qFGInt findNearestLargerPrime];
-    
+        __block FGInt *tmpP = [[FGInt alloc] initWithRandomNumberOfBitSize: halfBitLength];
         halfBitLength = bitLength - halfBitLength; 
-        pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: halfBitLength];
-        [pFGInt findNearestLargerPrime];
+        __block FGInt *tmpQ = [[FGInt alloc] initWithRandomNumberOfBitSize: halfBitLength];
+
+        dispatch_group_t d_group = dispatch_group_create();
+        dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+        dispatch_group_async(d_group, bg_queue, ^{
+            [tmpP findLargerPrime];
+        });
+        dispatch_group_async(d_group, bg_queue, ^{
+            [tmpQ findLargerPrime];
+        });
+        dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+        dispatch_release(d_group);
+        pFGInt = tmpP;
+        qFGInt = tmpQ;
 
 
         if ([FGInt compareAbsoluteValueOf: qFGInt with: pFGInt] == smaller) {
@@ -151,8 +161,8 @@ This header may not be removed.
         //     [numberBase setDigit: ([numberBase digit] & firstNumberBase) | firstBit];
         // }
 
-        [pFGInt findNearestLargerPrime];
-        [qFGInt findNearestLargerPrime];
+        [pFGInt findLargerPrime];
+        [qFGInt findLargerPrime];
         
         if ([FGInt compareAbsoluteValueOf: qFGInt with: pFGInt] == smaller) {
             tmpFGInt = qFGInt;
@@ -760,10 +770,10 @@ This header may not be removed.
         if (bitLength <= 480) qBitLength = (bitLength * 96) / 480;
         byteLength = (qBitLength / 8) + (((qBitLength % 8) == 0) ? 0 : 1);
         qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
-        [qFGInt findNearestLargerPrime];
+        [qFGInt findLargerPrime];
 
         primeFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
-        [primeFGInt findNearestLargerDSAPrimeWith: qFGInt];
+        [primeFGInt findLargerDSAPrimeWith: qFGInt];
 
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         secretKeyLength = qBitLength;
@@ -833,10 +843,10 @@ This header may not be removed.
         if (qBitLength <= 112) bitLength = (qBitLength * 640) / 112;
         if (qBitLength <= 96) bitLength = (qBitLength * 480) / 96;
         qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
-        [qFGInt findNearestLargerPrime];
+        [qFGInt findLargerPrime];
 
         primeFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
-        [primeFGInt findNearestLargerDSAPrimeWith: qFGInt];
+        [primeFGInt findLargerDSAPrimeWith: qFGInt];
     
         tmpFGInt = [[FGInt alloc] initWithNSData: secretKeyData];
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -1618,10 +1628,10 @@ This header may not be removed.
         if (bitLength <= 640) qBitLength = (bitLength * 112) / 640;
         if (bitLength <= 480) qBitLength = (bitLength * 96) / 480;
         qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
-        [qFGInt findNearestLargerPrime];
+        [qFGInt findLargerPrime];
 
         pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
-        [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
+        [pFGInt findLargerDSAPrimeWith: qFGInt];
 
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         secretKeyLength = qBitLength;
@@ -1681,10 +1691,10 @@ This header may not be removed.
         if (qBitLength <= 112) bitLength = (qBitLength * 640) / 112;
         if (qBitLength <= 96) bitLength = (qBitLength * 480) / 96;
         qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
-        [qFGInt findNearestLargerPrime];
+        [qFGInt findLargerPrime];
 
         pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
-        [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
+        [pFGInt findLargerDSAPrimeWith: qFGInt];
     
         tmpFGInt = [[FGInt alloc] initWithNSData: secretKeyData];
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
@@ -2313,10 +2323,10 @@ This header may not be removed.
         if (bitLength <= 640) qBitLength = (bitLength * 112) / 640;
         if (bitLength <= 480) qBitLength = (bitLength * 96) / 480;
         qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
-        [qFGInt findNearestLargerPrime];
+        [qFGInt findLargerPrime];
 
         pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
-        [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
+        [pFGInt findLargerDSAPrimeWith: qFGInt];
 
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];
         secretKeyLength = qBitLength;
@@ -2377,10 +2387,10 @@ This header may not be removed.
         if (qBitLength <= 112) bitLength = (qBitLength * 640) / 112;
         if (qBitLength <= 96) bitLength = (qBitLength * 480) / 96;
         qFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: qBitLength];
-        [qFGInt findNearestLargerPrime];
+        [qFGInt findLargerPrime];
 
         pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: bitLength];
-        [pFGInt findNearestLargerDSAPrimeWith: qFGInt];
+        [pFGInt findLargerDSAPrimeWith: qFGInt];
     
         tmpFGInt = [[FGInt alloc] initWithNSData: secretKeyData];
         FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0];

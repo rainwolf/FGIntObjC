@@ -2210,6 +2210,9 @@
     FGIntOverflow leastOrder;
 
     FGInt *pFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: gFpSize];
+    if ([pFGInt isEven]) {
+        [pFGInt increment];
+    }
 
     FGIntBase rmTests = 4;
     if (gFpSize < 460) rmTests = 7;
@@ -2218,27 +2221,73 @@
     if (gFpSize < 200) rmTests = 29;
     if (gFpSize < 160) rmTests = 37;
 
-    ECPoint *result = nil;
     leastOrder = gFpSize - 32;
     if (gFpSize < 511) leastOrder = gFpSize - 24;
     if (gFpSize < 384) leastOrder = gFpSize - 16;
     if (gFpSize < 256) leastOrder = gFpSize - 14;
     if (gFpSize < 224) leastOrder = gFpSize - 10;
 
-    while (!result) {
-        [pFGInt findNearestLargerPrimeWithRabinMillerTests: rmTests];
-        result = [ECPoint constructCurveAndPointMod: pFGInt ofLeastOrder: leastOrder];
-        if ([[result ellipticCurve] isSuperSingular]) {
-            [result release];
-            result = nil;
+    __block ECPoint *result = nil;
+
+
+    if (gFpSize > 512) {
+        FGInt *gapIncrement = [[FGInt alloc] initWithFGIntBase: 1];
+        [gapIncrement shiftLeftBy: [pFGInt bitSize] / 2];
+        FGInt *gap = [[FGInt alloc] initAsZero];
+
+        NSUInteger b = [[NSProcessInfo processInfo] activeProcessorCount];
+        NSMutableArray *candidates = [[NSMutableArray alloc] init];
+        __block BOOL found = NO;
+        __block FGInt *prime = nil;
+
+        dispatch_group_t d_group = dispatch_group_create();
+        dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+        for ( int i = 0; i < b; ++i ) {
+            [candidates addObject: [FGInt add: pFGInt and: gap]];
+            [gap addWith: gapIncrement];
+            dispatch_group_async(d_group, bg_queue, ^{
+                FGInt *primeCandidate = [candidates objectAtIndex: i];
+                while (!result) {
+                    [primeCandidate findNearestLargerPrimeWithRabinMillerTests: rmTests];
+                    ECPoint *threadResult = [ECPoint constructCurveAndPointMod: primeCandidate ofLeastOrder: leastOrder];
+                    if ([[threadResult ellipticCurve] isSuperSingular]) {
+                        [threadResult release];
+                        threadResult = nil;
+                    }
+                    if (threadResult) {
+                        if (![threadResult verifyFieldAndCurveOrderStrength]) {
+                            [threadResult release];
+                            threadResult = nil;
+                        } else {
+                            result = threadResult;
+                        }
+                    }
+                }
+            });
         }
-        if (result) {
-            if (![result verifyFieldAndCurveOrderStrength]) {
+        dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+        dispatch_release(d_group);
+
+        [candidates release];
+        [gap release];
+        [gapIncrement release];
+    } else {
+        while (!result) {
+            [pFGInt findNearestLargerPrimeWithRabinMillerTests: rmTests];
+            result = [ECPoint constructCurveAndPointMod: pFGInt ofLeastOrder: leastOrder];
+            if ([[result ellipticCurve] isSuperSingular]) {
                 [result release];
                 result = nil;
             }
+            if (result) {
+                if (![result verifyFieldAndCurveOrderStrength]) {
+                    [result release];
+                    result = nil;
+                }
+            }
         }
     }
+
     return result;
 }
 

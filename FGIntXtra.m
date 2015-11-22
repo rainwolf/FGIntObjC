@@ -27,7 +27,7 @@
     if (CC_SHA512([plainText bytes], (unsigned int) [plainText length], hashBytes)) {
         return [[NSData alloc] initWithBytes: hashBytes length: CC_SHA512_DIGEST_LENGTH];
     } else {
-        NSLog(@"Something went wrong calculating SHA256");
+        NSLog(@"Something went wrong calculating SHA512");
         return nil;
     }
 }

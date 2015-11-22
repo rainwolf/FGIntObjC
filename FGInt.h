@@ -156,9 +156,12 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(FGInt *) factorial;
 //-(FGInt *) findNearestLargerPrime;
 -(void) findNearestLargerPrime;
+-(void) findLargerPrime;
 -(void) findNearestLargerPrimeWithRabinMillerTests: (FGIntBase) numberOfTests;
+-(void) findLargerPrimeWithRabinMillerTests: (FGIntBase) numberOfTests;
 //-(FGInt *) findNearestLargerDSAPrimeWith: (FGInt *) qFGInt;
 -(void) findNearestLargerDSAPrimeWith: (FGInt *) qFGInt;
+-(void) findLargerDSAPrimeWith: (FGInt *) qFGInt;
 -(FGInt *) isNearlyPrimeAndAtLeast: (FGIntOverflow) leastSize;
 
 
