@@ -7,9 +7,9 @@
 
 
 +(NSData *) SHA256HMACForKey: (NSData *) key AndData: (NSData *)data {
-    NSMutableData *hmac = [[NSMutableData alloc] initWithCapacity: CC_SHA256_DIGEST_LENGTH];
-    CCHmac(kCCHmacAlgSHA256, [key bytes], [key length], [data bytes], [data length], [hmac mutableBytes]);
-    return hmac;
+    unsigned char hmacBytes[CC_SHA256_DIGEST_LENGTH];
+    CCHmac(kCCHmacAlgSHA256, [key bytes], [key length], [data bytes], [data length], hmacBytes);
+    return [[NSData alloc] initWithBytes: hmacBytes length: CC_SHA256_DIGEST_LENGTH];
 }
 
 +(NSData *) SHA256: (NSData *) plainText {
