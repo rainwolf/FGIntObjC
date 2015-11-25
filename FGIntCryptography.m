@@ -4465,7 +4465,8 @@ This header may not be removed.
         [gPoint setX: [[FGInt alloc] initWithRandomNumberOfBitSize: bits]];
         [gPoint setY: [[FGInt alloc] initWithFGIntBase: 0]];
         [gPoint setPointOrder: [[ec curveOrder] mutableCopy]];
-        [gPoint findNextECPoint];
+        BOOL stop = NO;
+        [gPoint findNextECPointWithStop: &stop];
         [self setSecretKeyAndComputeYPoint: [[FGInt alloc] initWithRandomNumberOfBitSize: bits]];
     }
     return self;

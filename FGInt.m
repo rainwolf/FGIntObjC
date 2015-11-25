@@ -227,7 +227,8 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 -(void) eraseAndRelease {
-    int result = SecRandomCopyBytes(kSecRandomDefault, [number length], [number mutableBytes]);
+//    int result = SecRandomCopyBytes(kSecRandomDefault, [number length], [number mutableBytes]);
+    SecRandomCopyBytes(kSecRandomDefault, [number length], [number mutableBytes]);
     [number release];
     [super dealloc];
 }
@@ -1094,7 +1095,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* bitwise shift of self by 32 */
 
 -(void) shiftLeftBy32 {
-    FGIntBase* numberArray = [number mutableBytes];
     if (![self isZero]) {
         NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: 4];
         [tmpNumber appendData: number];
@@ -1117,7 +1117,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 -(void) shiftLeftBy32Times: (FGIntOverflow) n {
-    FGIntBase* numberArray = [number mutableBytes];
     if ((![self isZero]) && (n > 0)) {
         NSMutableData *tmpNumber = [[NSMutableData alloc] initWithLength: 4*n];
         [tmpNumber appendData: number];
@@ -2916,6 +2915,108 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     return power;
 }
 
++(FGInt *) raise: (FGInt *) fGInt toThePower: (FGInt *) fGIntN montgomeryMod: (FGInt *) modFGInt withStop: (BOOL *) stop {
+    FGInt *tmpFGInt2, *tmpFGInt, *power, *rFGInt, *inverseBaseFGInt;
+    FGIntOverflow bLength = [[modFGInt number] length]/4, i, nLength = [[fGIntN number] length]/4,
+                    tmpLength;
+    int j;
+    FGIntBase head, tmp;
+    FGIntBase* modFGIntNumber = [[modFGInt number] mutableBytes];
+    FGIntBase* nFGIntNumber = [[fGIntN number] mutableBytes];
+    tmpLength = bLength + (((modFGIntNumber[bLength - 1] >> 31) == 0) ? 0 : 1);
+
+    power = [FGInt mod: fGInt by: modFGInt];
+    if ([power isZero]) {
+        return power;
+    }
+    [power release];
+    
+    rFGInt = [[FGInt alloc] initWithNZeroes: tmpLength];
+    FGIntBase* rNumber = [[rFGInt number] mutableBytes];
+    i = [[rFGInt number] length]/4;
+    if (tmpLength == bLength) {
+        head = 4294967295u;
+        tmp = modFGIntNumber[tmpLength - 1];
+        for ( j = 30; j >= 0; --j ) {
+            head >>= 1;
+            if ((tmp >> j) == 1) {
+                rNumber[i - 1] = 1 << (j + 1);
+                break;
+            }
+        }
+    } else {
+        rNumber[i - 1] = 1;
+        head = 4294967295u;
+    }
+
+    // tmpFGInt2 = [FGInt modularInverse: modFGInt mod: rFGInt];
+    tmpFGInt2 = [FGInt leftShiftModularInverse: modFGInt mod: rFGInt];
+    if (![tmpFGInt2 sign]) {
+        inverseBaseFGInt = tmpFGInt2;
+    } else {
+        inverseBaseFGInt = [rFGInt mutableCopy];
+        [inverseBaseFGInt subtractWith: tmpFGInt2];
+        [tmpFGInt2 release];
+    }
+    [inverseBaseFGInt makePositive];
+
+    power = [FGInt mod: rFGInt by: modFGInt];
+    tmpFGInt = [FGInt multiply: fGInt and: power];
+    tmpFGInt2 = [FGInt mod: tmpFGInt by: modFGInt];
+    [tmpFGInt release];
+    
+    for( FGIntIndex i = 0; (i < nLength - 1) && !(*stop); i++ ) {
+        tmp = nFGIntNumber[i];
+        for( j = 0; (j < 32) && !(*stop); ++j ) {
+            if ((tmp % 2) == 1) {
+                tmpFGInt = [FGInt multiply: power and: tmpFGInt2];
+                [power release];
+                // power = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+                power = [FGInt montgomeryMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+                [tmpFGInt release];
+            }
+            tmpFGInt = [FGInt square: tmpFGInt2];
+            [tmpFGInt2 release];
+            // tmpFGInt2 = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+            tmpFGInt2 = [FGInt montgomeryMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+            [tmpFGInt release];
+            tmp >>= 1;
+            // if (*stop) {
+            //     break;
+            // }
+        }
+        // if (*stop) {
+        //     break;
+        // }
+    }
+    tmp = nFGIntNumber[nLength - 1];
+    while ((tmp != 0)  && !(*stop)) {
+        if ((tmp % 2) == 1) {
+            tmpFGInt = [FGInt multiply: power and: tmpFGInt2];
+            [power release];
+            // power = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+            power = [FGInt montgomeryMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+            [tmpFGInt release];
+        }
+        tmp >>= 1;
+        if (tmp != 0) {
+            tmpFGInt = [FGInt square: tmpFGInt2];
+            [tmpFGInt2 release];
+            // tmpFGInt2 = [FGInt mMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+            tmpFGInt2 = [FGInt montgomeryMod: tmpFGInt withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+            [tmpFGInt release];
+        }
+        // if (*stop) {
+        //     break;
+        // }
+    }
+    power = [FGInt montgomeryMod: power withBase: modFGInt andInverseBase: inverseBaseFGInt withLength: bLength andHead: head];
+    
+    [tmpFGInt2 release];
+    
+    return power;
+}
+
 // work in progress, maybe 
 
 +(FGInt *) leftShiftModularInverse: (FGInt *) fGInt mod: (FGInt *) modFGInt {
@@ -3074,6 +3175,25 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     return isPrime;
 }
 
+-(BOOL) trialDivisionWithStop: (BOOL *) stop  {
+    FGIntOverflow length = [number length]/4;
+    FGIntBase* numberArray = [number mutableBytes];
+    if ((numberArray[0] % 2) == 0) {
+        return NO;
+    }
+    BOOL isPrime = YES;
+    FGIntBase i = 0;
+    while (isPrime && (i < 1228) && !(*stop)) {
+        isPrime = ([self modFGIntByInt: primes[i]] != 0);
+        if ((!isPrime) && (length == 1) && (numberArray[0] == primes[i])) {
+            isPrime = YES;
+            break;
+        }
+        ++i;
+    }
+    return (isPrime && !(*stop));
+}
+
 
 
 /* Compute the coefficients from the Bezout-Bachet theorem, fGInt1 * aFGInt + fGInt2 * bFGInt = gcd(fGInt1, fGInt2) */
@@ -3165,8 +3285,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                         if ([FGInt compareAbsoluteValueOf: zFGInt with: pMinusOne] == equal) 
                             j = b;
                     } else {
-                        if (([FGInt compareAbsoluteValueOf: zFGInt with: pMinusOne] != equal) && ( j >= b))
+                        if (([FGInt compareAbsoluteValueOf: zFGInt with: pMinusOne] != equal) && ( j >= b)) {
                             isPrime = NO;
+                        }
                     }
                 }
             }
@@ -3177,6 +3298,60 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     [pMinusOne release];
     [mFGInt release];
     return isPrime;
+}
+
+
+-(BOOL) rabinMillerTest: (FGIntBase) numberOfTests withStop: (BOOL *) stop {
+    BOOL isPrime = YES;
+    FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *pMinusOne = [FGInt subtract: self and: one], *mFGInt = [pMinusOne mutableCopy],
+            *zFGInt, *tmpFGInt;
+    FGIntOverflow i = 0, j, b = 0;
+    FGIntBase* mFGIntNumber = [[mFGInt number] mutableBytes];
+    
+    while ((mFGIntNumber[0] % 2) == 0) {
+        if (mFGIntNumber[0] == 0) {
+            b += 32;
+            [mFGInt shiftRightBy32];
+        } else {
+            ++b;
+            [mFGInt shiftRight];
+        }
+        mFGIntNumber = [[mFGInt number] mutableBytes];
+    }
+    
+    while ((i < numberOfTests) && isPrime && !(*stop)) {
+        ++i;
+        tmpFGInt = [[FGInt alloc] initWithFGIntBase: primes[arc4random() % 1228]];
+        zFGInt = [FGInt raise: tmpFGInt toThePower: mFGInt montgomeryMod: self withStop: stop];
+        [tmpFGInt release];
+        j = 0;
+        if (([FGInt compareAbsoluteValueOf: zFGInt with: one] != equal) && ([FGInt compareAbsoluteValueOf: zFGInt with: pMinusOne] != equal)) { 
+            while (isPrime && (j < b) && !(*stop)) {
+                if ((j > 0) && ([FGInt compareAbsoluteValueOf: zFGInt with: one] == equal)) 
+                    isPrime = NO;
+                else {
+                    ++j;
+                    if ((j < b) && ([FGInt compareAbsoluteValueOf: zFGInt with: pMinusOne] != equal)) {
+                        tmpFGInt = [FGInt square: zFGInt];
+                        [zFGInt release];
+                        zFGInt = [FGInt mod: tmpFGInt by: self];
+                        [tmpFGInt release];
+                        if ([FGInt compareAbsoluteValueOf: zFGInt with: pMinusOne] == equal) 
+                            j = b;
+                    } else {
+                        if (([FGInt compareAbsoluteValueOf: zFGInt with: pMinusOne] != equal) && ( j >= b)) {
+                            isPrime = NO;
+                        }
+                    }
+                }
+            }
+        }
+        [zFGInt release];
+    }
+    [one release];
+    [pMinusOne release];
+    [mFGInt release];
+    return (isPrime && !(*stop));
 }
 
 
@@ -3194,6 +3369,20 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             return YES;
         } else {
             return [self rabinMillerTest: numberOfTests];
+        }
+    } else {
+        return NO;
+    }
+}
+
+-(BOOL) primalityTest: (FGIntBase) numberOfTests withStop: (BOOL *) stop {
+    if ([self trialDivisionWithStop: stop]) {
+        FGIntOverflow length = [number length]/4;
+        FGIntBase* numberArray = [number mutableBytes];
+        if ((length == 1) && (numberArray[0] < 9974)) {
+            return YES;
+        } else {
+            return [self rabinMillerTest: numberOfTests withStop: stop];
         }
     } else {
         return NO;
@@ -3266,8 +3455,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
                 [tmpFGInt4 release];
                 [tmpFGInt5 shiftRightBy: 2];
 
-                tmpNumber = [[tmpFGInt5 number] mutableBytes];
-                if ((tmpNumber[0] % 2) != 0) {
+                // tmpNumber = [[tmpFGInt5 number] mutableBytes];
+                // if ((tmpNumber[0] % 2) != 0) {
+                if (![tmpFGInt5 isEven]) {
                     legendre *= (-1);
                 }
                 [tmpFGInt5 release];
@@ -3286,6 +3476,63 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 
+-(int) legendreSymbolMod: (FGInt *) pFGInt withStop: (BOOL *) stop {
+    FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *zero = [[FGInt alloc] initWithFGIntBase: 0], 
+        *tmpFGInt = [FGInt mod: self by: pFGInt];
+    if ([FGInt compareAbsoluteValueOf: zero with: tmpFGInt] == equal) {
+        [tmpFGInt release];
+        [one release];
+        [zero release];
+        return 0;
+    } else {
+        [tmpFGInt release];
+        FGInt *tmpFGInt1 = [pFGInt mutableCopy], *tmpFGInt2 = [self mutableCopy], *tmpFGInt3, *tmpFGInt4, *tmpFGInt5;
+        int legendre = 1;
+        FGIntBase* tmpNumber;
+
+        while (([FGInt compareAbsoluteValueOf: tmpFGInt1 with: one] != equal) && !(*stop)) {
+            tmpNumber = [[tmpFGInt2 number] mutableBytes];
+            if ((tmpNumber[0] % 2) == 0) {
+                tmpFGInt3 = [FGInt square: tmpFGInt1];
+                [tmpFGInt3 decrement];
+                [tmpFGInt3 shiftRightBy: 3];
+                tmpNumber = [[tmpFGInt3 number] mutableBytes];
+                if ((tmpNumber[0] % 2) != 0) {
+                    legendre *= (-1);
+                }
+                [tmpFGInt3 release];
+                [tmpFGInt2 shiftRight];
+            } else {
+                tmpFGInt3 = [FGInt subtract: tmpFGInt1 and: one];
+                tmpFGInt4 = [FGInt subtract: tmpFGInt2 and: one];
+                tmpFGInt5 = [FGInt multiply: tmpFGInt3 and: tmpFGInt4];
+                [tmpFGInt3 release];
+                [tmpFGInt4 release];
+                [tmpFGInt5 shiftRightBy: 2];
+
+                tmpNumber = [[tmpFGInt5 number] mutableBytes];
+                if ((tmpNumber[0] % 2) != 0) {
+                    legendre *= (-1);
+                }
+                [tmpFGInt5 release];
+                tmpFGInt3 = [FGInt mod: tmpFGInt1 by: tmpFGInt2];
+                [tmpFGInt1 release];
+                tmpFGInt1 = tmpFGInt2;
+                tmpFGInt2 = tmpFGInt3;
+            }
+        }
+        [tmpFGInt1 release];
+        [tmpFGInt2 release];
+        [one release];
+        [zero release];
+        if (*stop) {
+            legendre = -1;
+        }
+        return legendre;
+    }
+}
+
+
 
 /* Compute a square root modulo a prime number
   SquareRoot^2 mod Prime = Square
@@ -3298,8 +3545,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         
     FGIntOverflow a = 0, i, j;
 
-    while ([nFGInt legendreSymbolMod: pFGInt] != -1) 
+    while ([nFGInt legendreSymbolMod: pFGInt] != -1) {
         [nFGInt increment];
+    }
     [sFGInt decrement];
     FGIntBase* sFGIntNumber = [[sFGInt number] mutableBytes];
     while ((sFGIntNumber[0] % 2) == 0) {
@@ -3338,8 +3586,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             rFGInt = [FGInt mod: tempFGInt by: pFGInt];
             [tempFGInt release];
         }
-        if (i >= a - 2) 
+        if (i >= a - 2) {
             break;
+        }
         tempFGInt = [FGInt square: bFGInt];
         [bFGInt release];
         bFGInt = [FGInt mod: tempFGInt by: pFGInt];
@@ -3352,6 +3601,77 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     [tmpFGInt release];
     [tmpFGInt1 release];
     [tmpFGInt2 release];
+    return rFGInt;
+}
+
+
++(FGInt *) squareRootOf: (FGInt *) fGInt mod: (FGInt *) pFGInt withStop: (BOOL *) stop {
+    FGInt *one = [[FGInt alloc] initWithFGIntBase: 1], *nFGInt = [[FGInt alloc] initWithFGIntBase: 2], 
+            *sFGInt = [pFGInt mutableCopy], *bFGInt, *rFGInt, *tmpFGInt, *tmpFGInt1, 
+            *tmpFGInt2 = [[FGInt alloc] init], *tempFGInt;
+        
+    FGIntOverflow a = 0, i, j;
+
+    while (!(*stop) && ([nFGInt legendreSymbolMod: pFGInt withStop: stop] != -1)) {
+        [nFGInt increment];
+    }
+    [sFGInt decrement];
+    FGIntBase* sFGIntNumber = [[sFGInt number] mutableBytes];
+    while ((sFGIntNumber[0] % 2) == 0) {
+        if (sFGIntNumber[0] == 0) {
+            a += 32;
+            [sFGInt shiftRightBy32];
+        } else {
+            ++a;
+            [sFGInt shiftRight];
+        }
+        sFGIntNumber = [[sFGInt number] mutableBytes];
+    }
+    bFGInt = [FGInt raise: nFGInt toThePower: sFGInt montgomeryMod: pFGInt withStop: stop];
+    tmpFGInt = [FGInt add: sFGInt and: one];
+    [tmpFGInt shiftRight];
+    rFGInt = [FGInt raise: fGInt toThePower: tmpFGInt montgomeryMod: pFGInt withStop: stop];
+    tmpFGInt1 = [FGInt modularInverse: fGInt mod: pFGInt];
+    for ( i = 0; (i < a - 1) && !(*stop); ++i ) {
+        tempFGInt = [FGInt square: rFGInt];
+        [tmpFGInt2 release];
+        tmpFGInt2 = [FGInt mod: tempFGInt by: pFGInt];
+        [tempFGInt release];
+        tempFGInt = [FGInt multiply: tmpFGInt1 and: tmpFGInt2];
+        [tmpFGInt release];
+        tmpFGInt = [FGInt mod: tempFGInt by: pFGInt];
+        [tempFGInt release];
+        for ( j = 0; (j < a - i - 2) && !(*stop); ++j ) {
+            tempFGInt = [FGInt square: tmpFGInt];
+            [tmpFGInt release];
+            tmpFGInt = [FGInt mod: tempFGInt by: pFGInt];
+            [tempFGInt release];
+        }
+        if ([FGInt compareAbsoluteValueOf: tmpFGInt with: one] != equal) {
+            tempFGInt = [FGInt multiply: rFGInt and: bFGInt];
+            [rFGInt release];
+            rFGInt = [FGInt mod: tempFGInt by: pFGInt];
+            [tempFGInt release];
+        }
+        if (i >= a - 2) {
+            break;
+        }
+        tempFGInt = [FGInt square: bFGInt];
+        [bFGInt release];
+        bFGInt = [FGInt mod: tempFGInt by: pFGInt];
+        [tempFGInt release];
+    }
+    [one release];
+    [nFGInt release];
+    [sFGInt release];
+    [bFGInt release];
+    [tmpFGInt release];
+    [tmpFGInt1 release];
+    [tmpFGInt2 release];
+    if (*stop) {
+        [rFGInt release];
+        rFGInt = nil;
+    }
     return rFGInt;
 }
 
@@ -3425,7 +3745,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         dispatch_group_async(d_group, bg_queue, ^{
             FGInt *primeCandidate = [candidates objectAtIndex: i];
             while (!found) {
-                BOOL isPrime = [primeCandidate primalityTest: 5];
+                BOOL isPrime = [primeCandidate primalityTest: 5 withStop: &found];
                 if (!isPrime) {
                     [primeCandidate addWith: two];
                 } else {
@@ -3488,7 +3808,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         dispatch_group_async(d_group, bg_queue, ^{
             FGInt *primeCandidate = [candidates objectAtIndex: i];
             while (!found) {
-                BOOL isPrime = [primeCandidate primalityTest: numberOfTests];
+                BOOL isPrime = [primeCandidate primalityTest: numberOfTests withStop: &found];
                 if (!isPrime) {
                     [primeCandidate addWith: two];
                 } else {
@@ -3561,7 +3881,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         dispatch_group_async(d_group, bg_queue, ^{
             FGInt *primeCandidate = [candidates objectAtIndex: i];
             while (!found) {
-                BOOL isPrime = [primeCandidate primalityTest: 5];
+                BOOL isPrime = [primeCandidate primalityTest: 5 withStop: &found];
                 if (!isPrime) {
                     [primeCandidate addWith: doubleQ];
                 } else {

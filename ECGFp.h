@@ -43,19 +43,20 @@
 +(ECPoint *) projectiveDouble: (ECPoint *) ecPoint aEqualsMinus3: (BOOL) is3 withInvertedPrime: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(ECPoint *) projectiveAdd: (ECPoint *) ecPoint1 and: (ECPoint *) ecPoint2 aEqualsMinus3: (BOOL) is3 withInvertedPrime: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt;
++(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt withStop: (BOOL *) stop;
 +(ECPoint *) add: (ECPoint *) ecPoint1 k1Times: (FGInt *) k1FGInt and: (ECPoint *) ecPoint2 k2Times: (FGInt *) k2FGInt;
 +(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt withNISTprime: (tag) nistPrimeTag;
 +(ECPoint *) add: (ECPoint *) ecPoint1 k1Times: (FGInt *) k1FGInt and: (ECPoint *) ecPoint2 k2Times: (FGInt *) k2FGInt withNISTprime: (tag) nistPrimeTag;
 +(ECPoint *) invert: (ECPoint *) ecPoint;
 +(ECPoint *) inbedNSData: (NSData *) data onEllipticCurve: (EllipticCurve *) ellipticC;
 -(NSData *) extractInbeddedNSData;
--(void) findNextECPoint;
+-(void) findNextECPointWithStop: (BOOL *) stop;
 +(EllipticCurve *) constructCurveWithCMD: (unsigned char) cmd;
-+(NSDictionary *) is: (FGInt *) dFGInt aCMDmod: (FGInt *) pFGInt;
++(NSDictionary *) is: (FGInt *) dFGInt aCMDmod: (FGInt *) pFGInt withStop: (BOOL *) stop;
 +(unsigned char) findNextCMD: (unsigned char) cmd mod: (FGInt *) pFGInt;
-+(NSArray *) possibleCurveOrderMod: (FGInt *) pFGInt;
-+(ECPoint *) constructCurveAndPointWithOrder: (FGInt *) rFGInt andCMD: (unsigned char) cmd andCurve: (EllipticCurve *) ellipticC;
-+(ECPoint *) constructCurveAndPointMod: (FGInt *) pFGInt ofLeastOrder: (FGIntOverflow) leastBitSize;
++(NSArray *) possibleCurveOrderMod: (FGInt *) pFGInt withStop: (BOOL *) stop;
++(ECPoint *) constructCurveAndPointWithOrder: (FGInt *) rFGInt andCMD: (unsigned char) cmd andCurve: (EllipticCurve *) ellipticC withStop: (BOOL *) stop;
++(ECPoint *) constructCurveAndPointMod: (FGInt *) pFGInt ofLeastOrder: (FGIntOverflow) leastBitSize withStop: (BOOL *) stop;
 -(BOOL) verifyFieldAndCurveOrderStrength;
 +(ECPoint *) generateSecureCurveAndPointOfSize: (FGIntOverflow) gFpSize;
 

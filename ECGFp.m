@@ -1320,6 +1320,73 @@
 }
 
 
++(ECPoint *) add: (ECPoint *) ecPoint kTimes: (FGInt *) kFGInt withStop: (BOOL *) stop {
+    if (*stop) {
+        return nil;
+    }
+    ECPoint *result = [[ECPoint alloc] initInfinityWithEllpiticCurve: [ecPoint ellipticCurve]], *tmpECPoint, *tmpECPoint1;
+
+    FGInt *pFGInt = [[[ecPoint ellipticCurve] p] mutableCopy];
+    FGIntOverflow precision = [pFGInt bitSize];
+    FGInt *invertedP = [FGInt newtonInversion: pFGInt withPrecision: precision];
+
+    [pFGInt decrement];
+    [pFGInt decrement];
+    [pFGInt decrement];
+    BOOL aEqualsMinus3 = ([FGInt compareAbsoluteValueOf: [[ecPoint ellipticCurve] a] with: pFGInt] == equal);
+    [pFGInt release];
+    FGIntOverflow kLength = [[kFGInt number] length]/4, i, j;
+    FGIntBase tmp;
+    FGIntBase* kFGIntNumber = [[kFGInt number] mutableBytes];
+    
+    tmpECPoint1 = [ecPoint retain];
+    [tmpECPoint1 makeProjective];
+    [result makeProjective];
+
+
+
+    for( i = 0; (i < kLength - 1) && !(*stop); i++ ) {
+        tmp = kFGIntNumber[i];
+        for( j = 0; j < 32; ++j ) {
+            if ((tmp % 2) == 1) {
+                // tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+                tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
+                [result release];
+                result = tmpECPoint;
+            }
+            // tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
+            [tmpECPoint1 release];
+            tmpECPoint1 = tmpECPoint;
+            tmp >>= 1;
+        }
+    }
+    tmp = kFGIntNumber[kLength - 1];
+    while ((tmp != 0) && !(*stop)) {
+        if ((tmp % 2) == 1) {
+            // tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+            tmpECPoint = [ECPoint projectiveAdd: result and: tmpECPoint1 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
+            [result release];
+            result = tmpECPoint;
+        }
+        tmp >>= 1;
+        if (tmp != 0) {
+            // tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3];
+            tmpECPoint = [ECPoint projectiveDouble: tmpECPoint1 aEqualsMinus3: aEqualsMinus3 withInvertedPrime: invertedP andPrecision: precision];
+            [tmpECPoint1 release];
+            tmpECPoint1 = tmpECPoint;
+        }
+    }
+    [invertedP release];
+
+    [tmpECPoint1 makeAffine];
+    [tmpECPoint1 release];
+    [result makeAffine];
+
+    return result;
+}
+
+
 +(ECPoint *) add: (ECPoint *) ecPoint1 k1Times: (FGInt *) k1FGInt and: (ECPoint *) ecPoint2 k2Times: (FGInt *) k2FGInt {
     if ([[k2FGInt number] length] > [[k1FGInt number] length]) {
         return [ECPoint add: ecPoint2 k1Times: k2FGInt and: ecPoint1 k2Times: k1FGInt];
@@ -1625,7 +1692,7 @@
     }
 
     NSMutableData *tmpData = [[NSMutableData alloc] init];
-    FGIntBase padLength = byteLength - 1 - [data length] - 2;
+    FGIntBase padLength = (FGIntBase) byteLength - 1 - (FGIntBase) [data length] - 2;
     unsigned char aBuffer[2];
     [tmpData setLength: padLength];
     [tmpData appendData: data];
@@ -1700,7 +1767,7 @@
 }
 
 
--(void) findNextECPoint {
+-(void) findNextECPointWithStop: (BOOL *) stop {
     FGInt *x3, *tmpFGInt, *ax;
     EllipticCurve *ellipticC = [self ellipticCurve];
     BOOL tryAgain;
@@ -1720,13 +1787,13 @@
         [x3 release];
         x3 = [FGInt mod: ax by: [ellipticC p]];
         [ax release];
-        if ([x3 legendreSymbolMod: [ellipticC p]] != 1) {
+        if ([x3 legendreSymbolMod: [ellipticC p] withStop: stop] != 1) {
             [x3 release];
             tryAgain = YES;
         }
-    } while (tryAgain);
+    } while (tryAgain && !(*stop));
     [y release];
-    [self setY: [FGInt squareRootOf: x3 mod: [ellipticC p]]];
+    [self setY: (*stop?nil:[FGInt squareRootOf: x3 mod: [ellipticC p] withStop: stop])];
     [x3 release];
     [self setInfinity: NO];
 }
@@ -1781,16 +1848,19 @@
 }
 
 
-+(NSDictionary *) is: (FGInt *) dFGInt aCMDmod: (FGInt *) pFGInt {
++(NSDictionary *) is: (FGInt *) dFGInt aCMDmod: (FGInt *) pFGInt withStop: (BOOL *) stop {
     FGInt *tmpFGInt, *tmpD, *tmpFGInt1, *tmpFGInt2, *aFGInt, *bFGInt, *cFGInt, *u1, *u2, *s11, *s121, *s22, *vFGInt = nil, *wFGInt = nil;
     tmpFGInt = [FGInt subtract: pFGInt and: dFGInt];
 
-    if ([tmpFGInt legendreSymbolMod: pFGInt] == -1) {
+    if (*stop || ([tmpFGInt legendreSymbolMod: pFGInt withStop: stop] == -1)) {
         [tmpFGInt release];
         return nil;
     }
     
-    bFGInt = [FGInt squareRootOf: tmpFGInt mod: pFGInt];
+    bFGInt = [FGInt squareRootOf: tmpFGInt mod: pFGInt withStop: stop];
+    if (*stop) {
+        return nil;
+    }
     [tmpFGInt release];
     aFGInt = [pFGInt mutableCopy];
     tmpFGInt = [FGInt square: bFGInt];
@@ -1807,7 +1877,7 @@
     tmpFGInt = [bFGInt mutableCopy];
     [tmpFGInt shiftLeft];
     
-    while (([FGInt compareAbsoluteValueOf: tmpFGInt with: aFGInt] == larger) || ([FGInt compareAbsoluteValueOf: aFGInt with: cFGInt] == larger)) {
+    while ((([FGInt compareAbsoluteValueOf: tmpFGInt with: aFGInt] == larger) || ([FGInt compareAbsoluteValueOf: aFGInt with: cFGInt] == larger)) && !(*stop)) {
         tmpFGInt1 = [FGInt add: tmpFGInt and: cFGInt];
         [tmpFGInt release];
         tmpFGInt2 = [cFGInt mutableCopy];
@@ -1848,6 +1918,9 @@
         tmpFGInt = [bFGInt mutableCopy];
         [tmpFGInt shiftLeft];
         [tmpD release];
+    }
+    if (*stop) {
+        return nil;
     }
     [tmpFGInt release];
     [s11 release];
@@ -1950,28 +2023,27 @@
 }
 
 
-+(NSArray *) possibleCurveOrderMod: (FGInt *) pFGInt {
++(NSArray *) possibleCurveOrderMod: (FGInt *) pFGInt withStop: (BOOL *) stop {
     NSMutableArray *result = nil;
     BOOL found = NO;
     unsigned char cmd = 0;
-    while (!found) {
+    while (!found && !(*stop)) {
         cmd = [ECPoint findNextCMD: cmd mod: pFGInt];
         if (cmd == 0) {
             return nil;
         }
         FGInt *dFGInt = [[FGInt alloc] initWithFGIntBase: cmd];
         [dFGInt changeSign];
-        int cmdL = [dFGInt legendreSymbolMod: pFGInt];
+        int cmdL = [dFGInt legendreSymbolMod: pFGInt withStop: stop];
         [dFGInt changeSign];
-        if (cmdL != -1) {
+        if ((cmdL != -1) && !(*stop)) {
             if (cmd > 2) {
-                cmdL = [pFGInt legendreSymbolMod: dFGInt];
-            }
-            else {
+                cmdL = [pFGInt legendreSymbolMod: dFGInt withStop: stop];
+            } else {
                 cmdL = 1;
             }
-            if (cmdL != -1) {
-                NSDictionary *isCMD = [ECPoint is: dFGInt aCMDmod: pFGInt];
+            if ((cmdL != -1) && !(*stop)) {
+                NSDictionary *isCMD = [ECPoint is: dFGInt aCMDmod: pFGInt withStop: stop];
                 if (isCMD) {
                     found = YES;
                 }
@@ -2043,20 +2115,25 @@
         }
         [dFGInt release];
     }
+
+    if (*stop) {
+        [result release];
+        result = nil;
+    }
     return result;
 }
 
 
-+(ECPoint *) constructCurveAndPointWithOrder: (FGInt *) rFGInt andCMD: (unsigned char) cmd andCurve: (EllipticCurve *) ellipticC {
++(ECPoint *) constructCurveAndPointWithOrder: (FGInt *) rFGInt andCMD: (unsigned char) cmd andCurve: (EllipticCurve *) ellipticC withStop: (BOOL *) stop {
     BOOL constructed = NO;
     ECPoint *tmpG, *result = nil;
-    FGInt *tmpFGInt, *tmpA, *tmpB, *xFGInt, *tmpX, *aFGInt = [ellipticC a], *bFGInt = [ellipticC b], *pFGInt = [ellipticC p];
+    FGInt *tmpFGInt, *tmpA, *tmpB, *xFGInt = nil, *tmpX, *aFGInt = [ellipticC a], *bFGInt = [ellipticC b], *pFGInt = [ellipticC p];
     xFGInt = [[FGInt alloc] initWithFGIntBase: 1];
 
     NSDictionary *tmpDiv = [FGInt divide: [ellipticC curveOrder] by: rFGInt];
     FGInt *kFGInt = [[tmpDiv objectForKey: quotientKey] retain];
     [tmpDiv release];
-    while (!constructed) {
+    while (!constructed && !(*stop)) {
         switch (cmd) {
             case 1:
                 tmpB = [[FGInt alloc] initWithFGIntBase: 0];
@@ -2094,33 +2171,44 @@
         [tmpG setEllipticCurve: ec];
         [ec release];
         
-        [tmpG findNextECPoint];
-        result = [ECPoint add: tmpG kTimes: kFGInt];
-        while ( [result infinity] ) {
-            [tmpG findNextECPoint];
+        do  {
+            [tmpG findNextECPointWithStop: stop];
             [result release];
-            result = [ECPoint add: tmpG kTimes: kFGInt];
+            result = [ECPoint add: tmpG kTimes: kFGInt withStop: stop];
+        } while ( [result infinity] );
+        [tmpG release];
+        if (*stop) {
+            break;
         }
-        tmpG = [ECPoint add: result kTimes: rFGInt];
+        tmpG = [ECPoint add: result kTimes: rFGInt withStop: stop];
+        if (*stop) {
+            [tmpG release];
+            break;
+        }
         if ( [tmpG infinity] ) {
             constructed = YES;
             [result setPointOrder: [rFGInt retain]];
         } else {
             [result release];
+            result = nil;
         }
         [tmpG release];
         [xFGInt increment];
     }
     [kFGInt release];
     [xFGInt release];
+    if (*stop) {
+        [result release];
+        result = nil;
+    }
     return result;
 }
 
 
 
-+(ECPoint *) constructCurveAndPointMod: (FGInt *) pFGInt ofLeastOrder: (FGIntOverflow) leastBitSize {
-    NSArray *orders = [ECPoint possibleCurveOrderMod: pFGInt];
-    if (!orders) {
++(ECPoint *) constructCurveAndPointMod: (FGInt *) pFGInt ofLeastOrder: (FGIntOverflow) leastBitSize withStop: (BOOL *) stop {
+    NSArray *orders = [ECPoint possibleCurveOrderMod: pFGInt withStop: stop];
+    if (!orders || *stop) {
         return nil;
     } 
     unsigned char cmd = [[orders objectAtIndex: 0] unsignedCharValue];
@@ -2128,53 +2216,56 @@
     [ec setP: [pFGInt retain]];
     ECPoint *result = nil;
     FGInt *rFGInt = [[orders objectAtIndex: 1] isNearlyPrimeAndAtLeast: leastBitSize];
-    if (rFGInt) {
+    if (rFGInt && !(*stop)) {
         [ec setCurveOrder: [[orders objectAtIndex: 1] retain]];
-        result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec];
+        result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec withStop: stop];
         [rFGInt release];
     }
-    if (!result) {
+    if (!result && !(*stop)) {
         rFGInt = [[orders objectAtIndex: 2] isNearlyPrimeAndAtLeast: leastBitSize];
         if (rFGInt) {
             [ec setCurveOrder: [[orders objectAtIndex: 2] retain]];
-            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec];
+            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec withStop: stop];
             [rFGInt release];
         }
     }
-    if ((!result) && ((cmd == 1) || (cmd == 3))) {
+    if ((!result) && ((cmd == 1) || (cmd == 3)) && !(*stop)) {
         rFGInt = [[orders objectAtIndex: 3] isNearlyPrimeAndAtLeast: leastBitSize];
         if (rFGInt) {
             [ec setCurveOrder: [[orders objectAtIndex: 3] retain]];
-            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec];
+            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec withStop: stop];
             [rFGInt release];
         }
     }
-    if ((!result) && ((cmd == 1) || (cmd == 3))) {
+    if ((!result) && ((cmd == 1) || (cmd == 3)) && !(*stop)) {
         rFGInt = [[orders objectAtIndex: 4] isNearlyPrimeAndAtLeast: leastBitSize];
         if (rFGInt) {
             [ec setCurveOrder: [[orders objectAtIndex: 4] retain]];
-            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec];
+            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec withStop: stop];
             [rFGInt release];
         }
     }
-    if ((!result) && (cmd == 3)) {
+    if ((!result) && (cmd == 3) && !(*stop)) {
         rFGInt = [[orders objectAtIndex: 5] isNearlyPrimeAndAtLeast: leastBitSize];
         if (rFGInt) {
             [ec setCurveOrder: [[orders objectAtIndex: 5] retain]];
-            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec];
+            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec withStop: stop];
             [rFGInt release];
         }
     }
-    if ((!result) && (cmd == 3)) {
+    if ((!result) && (cmd == 3) && !(*stop)) {
         rFGInt = [[orders objectAtIndex: 6] isNearlyPrimeAndAtLeast: leastBitSize];
         if (rFGInt) {
             [ec setCurveOrder: [[orders objectAtIndex: 6] retain]];
-            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec];
+            result = [ECPoint constructCurveAndPointWithOrder: rFGInt andCMD: cmd andCurve: ec withStop: stop];
             [rFGInt release];
         }
     }
     [orders release];
     [ec release];
+    if (*stop) {
+        return nil;
+    } 
     return result;
 }
 
@@ -2230,63 +2321,49 @@
     __block ECPoint *result = nil;
 
 
-    if (gFpSize > 512) {
-        FGInt *gapIncrement = [[FGInt alloc] initWithFGIntBase: 1];
-        [gapIncrement shiftLeftBy: [pFGInt bitSize] / 2];
-        FGInt *gap = [[FGInt alloc] initAsZero];
+    FGInt *gapIncrement = [[FGInt alloc] initWithFGIntBase: 1];
+    [gapIncrement shiftLeftBy: [pFGInt bitSize] / 2];
+    FGInt *gap = [[FGInt alloc] initAsZero];
 
-        NSUInteger b = [[NSProcessInfo processInfo] activeProcessorCount];
-        NSMutableArray *candidates = [[NSMutableArray alloc] init];
-        __block BOOL found = NO;
-        __block FGInt *prime = nil;
+    NSUInteger b = [[NSProcessInfo processInfo] activeProcessorCount];
+    NSMutableArray *candidates = [[NSMutableArray alloc] init];
+    __block BOOL found = NO;
 
-        dispatch_group_t d_group = dispatch_group_create();
-        dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-        for ( int i = 0; i < b; ++i ) {
-            [candidates addObject: [FGInt add: pFGInt and: gap]];
-            [gap addWith: gapIncrement];
-            dispatch_group_async(d_group, bg_queue, ^{
-                FGInt *primeCandidate = [candidates objectAtIndex: i];
-                while (!result) {
-                    [primeCandidate findNearestLargerPrimeWithRabinMillerTests: rmTests];
-                    ECPoint *threadResult = [ECPoint constructCurveAndPointMod: primeCandidate ofLeastOrder: leastOrder];
-                    if ([[threadResult ellipticCurve] isSuperSingular]) {
+    dispatch_group_t d_group = dispatch_group_create();
+    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    for ( int i = 0; i < b; ++i ) {
+        [candidates addObject: [FGInt add: pFGInt and: gap]];
+        [gap addWith: gapIncrement];
+        dispatch_group_async(d_group, bg_queue, ^{
+            FGInt *primeCandidate = [candidates objectAtIndex: i];
+            while (!found) {
+                [primeCandidate findNearestLargerPrimeWithRabinMillerTests: rmTests];
+                ECPoint *threadResult = nil;
+                if (!found) {
+                    threadResult = [ECPoint constructCurveAndPointMod: primeCandidate ofLeastOrder: leastOrder withStop: &found];
+                }
+                if ([[threadResult ellipticCurve] isSuperSingular] || found) {
+                    [threadResult release];
+                    threadResult = nil;
+                }
+                if (threadResult && !found) {
+                    if (![threadResult verifyFieldAndCurveOrderStrength]) {
                         [threadResult release];
                         threadResult = nil;
-                    }
-                    if (threadResult) {
-                        if (![threadResult verifyFieldAndCurveOrderStrength]) {
-                            [threadResult release];
-                            threadResult = nil;
-                        } else {
-                            result = threadResult;
-                        }
+                    } else {
+                        found = YES;
+                        result = threadResult;
                     }
                 }
-            });
-        }
-        dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
-        dispatch_release(d_group);
-
-        [candidates release];
-        [gap release];
-        [gapIncrement release];
-    } else {
-        while (!result) {
-            [pFGInt findNearestLargerPrimeWithRabinMillerTests: rmTests];
-            result = [ECPoint constructCurveAndPointMod: pFGInt ofLeastOrder: leastOrder];
-            if ([[result ellipticCurve] isSuperSingular]) {
-                [result release];
-                result = nil;
             }
-            if (result) {
-                if (![result verifyFieldAndCurveOrderStrength]) {
-                    [result release];
-                    result = nil;
-                }
-            }
-        }
+        });
     }
+    dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+    dispatch_release(d_group);
+
+    [candidates release];
+    [gap release];
+    [gapIncrement release];
 
     return result;
 }
