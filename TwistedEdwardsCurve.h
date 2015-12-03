@@ -4,7 +4,7 @@
 @interface TwistedEdwardsCurve : NSObject <NSMutableCopying> {
     FGInt *a, *d, *p; //, *curveOrder;
 }
-@property (assign, readwrite) FGInt *a, *d, *p; //, *curveOrder;
+@property (assign, readwrite) FGInt *a, *d, *p;
 @end
 
 
@@ -12,10 +12,10 @@
 
 
 @interface TECPoint : NSObject <NSMutableCopying> {
-    FGInt *x, *y, *projectiveZ, *extendedT; //, *pointOrder;
+    FGInt *x, *y, *projectiveZ, *extendedT; 
     TwistedEdwardsCurve *tec;
 }
-@property (assign, readwrite) FGInt *x, *y, *projectiveZ, *extendedT; //, *pointOrder;
+@property (assign, readwrite) FGInt *x, *y, *projectiveZ, *extendedT;
 @property (retain, readwrite) TwistedEdwardsCurve *tec;
 
 -(id) initEd25519BasePoint;
@@ -26,8 +26,6 @@
 -(void) makeProjective25519;
 -(void) makeAffine;
 -(void) makeAffine25519;
-+(TECPoint *) projectiveDouble: (TECPoint *) tecPoint;
-+(TECPoint *) projectiveAdd: (TECPoint *) tecPoint1 and: (TECPoint *) tecPoint2;
 +(TECPoint *) add: (TECPoint *) tecPoint kTimes: (FGInt *) kTimes;
 +(TECPoint *) addEd25519: (TECPoint *) tecPoint kTimes: (FGInt *) kTimes;
 +(TECPoint *) add: (TECPoint *) tecPoint1 k1Times: (FGInt *) k1FGInt and: (TECPoint *) tecPoint2 k2Times: (FGInt *) k2FGInt;

@@ -80,11 +80,7 @@
 @property (retain, readwrite) NSData *message;
 @property (retain, readwrite) NSData *signature;
 
-+(NSData *) hash: (NSData *) plaintext;
 +(NSData *) sign: (NSData *) digest withMemberKey: (BBSMemberKey *) memberKey;
-+(G1Point *) r1245: (G1Point *) g1 and: (G1Point *) g2 addKtimes: (FGInt *) k andLtimes: (FGInt *) l  with: (FGInt *) pFGInt withOrder: (FGInt *) order andInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(GFP12 *) sAdd: (FGInt *) s1 and: (FGInt *) s2 andRaise: (GFP12 *) gfp12 with: (FGInt *) pFGInt withOrder: (FGInt *) order andInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(GFP12 *) pair: (G2Point *) g2 and: (G1Point *) g1 multiply: (GFP12 *) gfp12 andRaiseTo: (FGInt *) exp with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(BOOL) verifySignature: (NSData *) signature ofDigest: (NSData *) digest withGroupKey: (BBSGroup *) groupKey;
 +(NSData *) openSignature: (NSData *) signature withPrivateKey: (BBSPrivateKey *) privateKey;
 +(void) testBBSsig;

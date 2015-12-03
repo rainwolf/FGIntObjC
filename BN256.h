@@ -132,8 +132,6 @@
 -(void) makeProjective;
 -(void) makeExtendedProjective;
 +(G2Point *) add: (G2Point *) p1 and: (G2Point *) p2;
-+(G2Point *) projectiveAdd: (G2Point *) p1 and: (G2Point *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(G2Point *) projectiveDouble: (G2Point *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 -(void) makeAffineWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(G2Point *) add: (G2Point *) g2Point kTimes: (FGInt *) kFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(G2Point *) add: (G2Point *) g2Point kTimes: (FGInt *) kFGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
@@ -161,8 +159,6 @@
 -(void) changeSign;
 -(void) makeProjective;
 +(G1Point *) add: (G1Point *) p1 and: (G1Point *) p2;
-+(G1Point *) projectiveAdd: (G1Point *) p1 and: (G1Point *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(G1Point *) projectiveDouble: (G1Point *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 -(void) makeAffineWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(G1Point *) add: (G1Point *) g1Point kTimes: (FGInt *) kFGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(G1Point *) add: (G1Point *) g1Point kTimes: (FGInt *) kFGInt;
@@ -183,8 +179,6 @@
 @interface BN256 : NSObject
 
 
-+(void) add: (G2Point **) g2p and: (G2Point *) g2q with: (GFP2 *) cachedR2 evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
-+(void) double: (G2Point **) g2p evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(GFP12 *) optimalAtePairing: (G2Point *) q and: (G1Point *) p withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(GFP12 *) optimalAtePairing: (G2Point *) q and: (G1Point *) p with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision;
 +(GFP12 *) optimalAtePairing: (G2Point *) q and: (G1Point *) p;

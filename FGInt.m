@@ -154,28 +154,43 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 }
 
 -(id) initWithRandomNumberAtMost: (FGInt *) atMost {
-    FGInt *randomFGInt = nil;
-    int i = 10;
+    if (self = [super init]) {
+        FGInt *randomFGInt = nil;
+        int i = 10;
 
-    do {
-        if (randomFGInt) {
-            [randomFGInt release];
-        }
-        randomFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: [atMost bitSize]];
+        do {
+            if (randomFGInt) {
+                [randomFGInt release];
+            }
+            randomFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: [atMost bitSize]];
 
-        [randomFGInt reduceBySubtracting: atMost atMost: 1];
+            [randomFGInt reduceBySubtracting: atMost atMost: 1];
 
-        --i;
-    } while ((i > 0) && ([randomFGInt isZero]));
+            --i;
+        } while ((i > 0) && ([randomFGInt isZero]));
 
-    return randomFGInt;
+        number = [[randomFGInt number] retain];
+
+        sign = YES;
+
+        [randomFGInt release];
+    }
+    return self;
 }
 
 
 -(FGInt *) initWithCurve25519SecretKey {
-    FGInt *secretKeyFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: 252];
-    [secretKeyFGInt shiftLeftBy: 3];
-    return secretKeyFGInt;
+    if (self = [super init]) {
+        FGInt *secretKeyFGInt = [[FGInt alloc] initWithRandomNumberOfBitSize: 252];
+        [secretKeyFGInt shiftLeftBy: 3];
+
+        number = [[secretKeyFGInt number] mutableCopy];
+
+        sign = YES;
+
+        [secretKeyFGInt release];
+    }
+    return self;
 }
 
 
@@ -594,12 +609,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     if (byteLength > length) {
         return nil;
     }
-    NSMutableData *bigEndianNSData;
-    if ((length - byteLength) > 0) {
-        bigEndianNSData = [[NSMutableData alloc] initWithLength: length - byteLength];
-    } else {
-        bigEndianNSData = [[NSMutableData alloc] init];
-    }
+    NSMutableData *bigEndianNSData = [[NSMutableData alloc] initWithLength: length - byteLength];
     unsigned char* numberBytes = [number mutableBytes];
     for ( FGIntIndex i = 0; i < byteLength; i++ ) {
         [bigEndianNSData appendBytes: &numberBytes[byteLength - 1 - i] length: 1];
@@ -5219,20 +5229,13 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 
++(void) doubleAdd25519of: (FGInt **) x1 andZ1: (FGInt **) z1 andX2: (FGInt **) x2 andZ2: (FGInt **) z2 withBasePoint: (FGInt *) x0 {
 
-
-+(NSMutableDictionary *) doubleAdd25519of: (FGInt *) x1 andZ1: (FGInt *) z1 andX2: (FGInt *) x2 andZ2: (FGInt *) z2 withBasePoint: (FGInt *) x0 {
-    NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
-
-    if ([z1 isZero]) {
-        [result setObject: x1 forKey: @"dX"];
-        [result setObject: z1 forKey: @"dZ"];
-        [result setObject: x2 forKey: @"sX"];
-        [result setObject: z2 forKey: @"sZ"];
-        return result;
+    if ([*z1 isZero]) {
+        return;
     }
 
-    FGInt *x1mz1 = [FGInt subtractModulo25638: x1 and: z1], *x1pz1 = [FGInt addModulo25638: x1 and: z1];
+    FGInt *x1mz1 = [FGInt subtractModulo25638: *x1 and: *z1], *x1pz1 = [FGInt addModulo25638: *x1 and: *z1];
     FGInt *s1 = [FGInt squareModulo25638: x1pz1], *s2 = [FGInt squareModulo25638: x1mz1];
     FGInt *dX = [FGInt multiplyModulo25638: s1 and: s2];
     FGInt *t1A = [FGInt subtractModulo25638: s1 and: s2], *t1 = [t1A mutableCopy];
@@ -5246,19 +5249,19 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     [t2 release];
 
 
-    if ([z2 isZero]) {
+    if ([*z2 isZero]) {
         [x1pz1 release];
         [x1mz1 release];
-        [result setObject: dX forKey: @"dX"];
-        [dX release];
-        [result setObject: dZ forKey: @"dZ"];
-        [dZ release];
-        [result setObject: x1 forKey: @"sX"];
-        [result setObject: z1 forKey: @"sZ"];
-        return result;
+        [*x2 release];
+        *x2 = *x1;
+        [*z2 release];
+        *z2 = *z1;
+        *x1 = dX;
+        *z1 = dZ;
+        return;
     }
 
-    FGInt *x2mz2 = [FGInt subtractModulo25638: x2 and: z2], *x2pz2 = [FGInt addModulo25638: x2 and: z2];
+    FGInt *x2mz2 = [FGInt subtractModulo25638: *x2 and: *z2], *x2pz2 = [FGInt addModulo25638: *x2 and: *z2];
     t1 = [FGInt multiplyModulo25638: x2pz2 and: x1mz1];
     t2 = [FGInt multiplyModulo25638: x2mz2 and: x1pz1];
     [x1pz1 release];
@@ -5276,22 +5279,18 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     FGInt *sZ = [FGInt multiplyModulo25638: s1 and: x0];
     [s1 release];
 
-
-    [result setObject: dX forKey: @"dX"];
-    [dX release];
-    [result setObject: dZ forKey: @"dZ"];
-    [dZ release];
-    [result setObject: sX forKey: @"sX"];
-    [sX release];
-    [result setObject: sZ forKey: @"sZ"];
-    [sZ release];
-
-    return result;
+    [*x1 release];
+    *x1 = dX;
+    [*z1 release];
+    *z1 = dZ;
+    [*x2 release];
+    *x2 = sX;
+    [*z2 release];
+    *z2 = sZ;
 }
 
 
 +(FGInt *) addBasePointOnCurve25519: (FGInt *) x0 kTimes: (FGInt *) kTimes {
-    NSMutableDictionary *intermediateResult; 
     FGInt *x1 = [[FGInt alloc] initWithFGIntBase: 1], *z1 = [[FGInt alloc] initAsZero];
     FGInt *x2 = [x0 mutableCopy], *z2 = [[FGInt alloc] initWithFGIntBase: 1];
 
@@ -5305,27 +5304,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     }
     while (j >= 0) {
         if ((tmp & (1 << j)) == 0) {
-            intermediateResult = [FGInt doubleAdd25519of: x1 andZ1: z1 andX2: x2 andZ2: z2 withBasePoint: x0];
-            [x2 release];
-            [z2 release];
-            [x1 release];
-            [z1 release];
-            x1 = [[intermediateResult objectForKey: @"dX"] retain];
-            z1 = [[intermediateResult objectForKey: @"dZ"] retain];
-            x2 = [[intermediateResult objectForKey: @"sX"] retain];
-            z2 = [[intermediateResult objectForKey: @"sZ"] retain];
-            [intermediateResult release];
+            [FGInt doubleAdd25519of: &x1 andZ1: &z1 andX2: &x2 andZ2: &z2 withBasePoint: x0];
         } else {
-            intermediateResult = [FGInt doubleAdd25519of: x2 andZ1: z2 andX2: x1 andZ2: z1 withBasePoint: x0];
-            [x2 release];
-            [z2 release];
-            [x1 release];
-            [z1 release];
-            x2 = [[intermediateResult objectForKey: @"dX"] retain];
-            z2 = [[intermediateResult objectForKey: @"dZ"] retain];
-            x1 = [[intermediateResult objectForKey: @"sX"] retain];
-            z1 = [[intermediateResult objectForKey: @"sZ"] retain];
-            [intermediateResult release];
+            [FGInt doubleAdd25519of: &x2 andZ1: &z2 andX2: &x1 andZ2: &z1 withBasePoint: x0];
         }
         --j;
     }
@@ -5333,27 +5314,9 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         tmp = kFGIntNumber[i];
         for( j = 31; j >= 0; --j ) {
             if ((tmp & (1 << j)) == 0) {
-                intermediateResult = [FGInt doubleAdd25519of: x1 andZ1: z1 andX2: x2 andZ2: z2 withBasePoint: x0];
-                [x2 release];
-                [z2 release];
-                [x1 release];
-                [z1 release];
-                x1 = [[intermediateResult objectForKey: @"dX"] retain];
-                z1 = [[intermediateResult objectForKey: @"dZ"] retain];
-                x2 = [[intermediateResult objectForKey: @"sX"] retain];
-                z2 = [[intermediateResult objectForKey: @"sZ"] retain];
-                [intermediateResult release];
+                [FGInt doubleAdd25519of: &x1 andZ1: &z1 andX2: &x2 andZ2: &z2 withBasePoint: x0];
             } else {
-                intermediateResult = [FGInt doubleAdd25519of: x2 andZ1: z2 andX2: x1 andZ2: z1 withBasePoint: x0];
-                [x2 release];
-                [z2 release];
-                [x1 release];
-                [z1 release];
-                x2 = [[intermediateResult objectForKey: @"dX"] retain];
-                z2 = [[intermediateResult objectForKey: @"dZ"] retain];
-                x1 = [[intermediateResult objectForKey: @"sX"] retain];
-                z1 = [[intermediateResult objectForKey: @"sZ"] retain];
-                [intermediateResult release];
+                [FGInt doubleAdd25519of: &x2 andZ1: &z2 andX2: &x1 andZ2: &z1 withBasePoint: x0];
             }
         }
     }

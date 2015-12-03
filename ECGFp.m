@@ -716,8 +716,7 @@
     [t4 release];
     t2 = [FGInt mod: tmpFGInt by: pFGInt];
     [tmpFGInt release];
-    FGIntBase* numberArray = [[t2 number] mutableBytes];
-    if ((numberArray[0] & 1) == 0) {
+    if ([t2 isEven]) {
         [t2 shiftRight];
     } else {
         [t2 addWith: pFGInt];
@@ -971,9 +970,8 @@
     t2 = [FGInt subtract: t5 and: t4];
     [t5 release];
     [t4 release];
-    [t2 reduceBySubtracting: pFGInt atMost: 1];    
-    FGIntBase* numberArray = [[t2 number] mutableBytes];
-    if ((numberArray[0] & 1) == 0) {
+    [t2 reduceBySubtracting: pFGInt atMost: 1];
+    if ([t2 isEven]) {
         [t2 shiftRight];
     } else {
         [t2 addWith: pFGInt];
@@ -1234,8 +1232,7 @@
     [t4 release];
     t2 = [tmpFGInt modNISTprime: nistFGInt andTag: nistPrimeTag];
     [tmpFGInt release];
-    FGIntBase* numberArray = [[t2 number] mutableBytes];
-    if ((numberArray[0] & 1) == 0) {
+    if ([t2 isEven]) {
         [t2 shiftRight];
     } else {
         [t2 addWith: nistFGInt];
