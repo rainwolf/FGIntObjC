@@ -129,6 +129,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 +(NSDictionary *) barrettDivision: (FGInt *) fGInt by: (FGInt *) divisorFGInt;
 +(FGInt *) barrettMod: (FGInt *) fGInt by: (FGInt *) divisorFGInt;
 +(FGInt *) barrettMod: (FGInt *) fGInt by: (FGInt *) divisorFGInt with: (FGInt *) invertedDivisor andPrecision: (FGIntOverflow) precision;
++(FGInt *) barrett: (FGInt *) fGInt modulo: (FGInt *) divisorFGInt with: (FGInt *) invertedDivisor andPrecision: (FGIntOverflow) precision;
 +(FGInt *) barrettModBis: (FGInt *) fGInt by: (FGInt *) divisorFGInt with: (FGInt *) invertedDivisor andPrecision: (FGIntOverflow) precision;
 +(FGInt *) longDivisionMod: (FGInt *) fGInt by: (FGInt *) divisorFGInt;
 +(FGInt *) longDivisionModBis: (FGInt *) fGInt by: (FGInt *) divisorFGInt;

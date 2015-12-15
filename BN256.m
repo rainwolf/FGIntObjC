@@ -108,16 +108,16 @@
 +(GFP2 *) multiply: (GFP2 *) p1 and: (GFP2 *) p2 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP2 *product = [[GFP2 alloc] init];
 
-	FGInt *tmp = [FGInt multiply: [p1 a] and: [p2 a]];
+	FGInt *tmp = [FGInt pencilPaperMultiply: [p1 a] and: [p2 a]];
 	FGInt *v0 = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
 	[tmp release];
-	tmp = [FGInt multiply: [p1 b] and: [p2 b]];
+	tmp = [FGInt pencilPaperMultiply: [p1 b] and: [p2 b]];
 	FGInt *v1 = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision],
 		*tmp1 = [[FGInt add: [p1 a] and: [p1 b]] reduceBySubtracting: pFGInt atMost: 1], 
 		*tmp2 = [[FGInt add: [p2 a] and: [p2 b]] reduceBySubtracting: pFGInt atMost: 1];
 	[tmp release];
 
-	tmp = [FGInt multiply: tmp1 and: tmp2];
+	tmp = [FGInt pencilPaperMultiply: tmp1 and: tmp2];
 	[tmp2 release];
 	[tmp1 release];
 	FGInt *tmp0 = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
@@ -137,11 +137,11 @@
 +(GFP2 *) square: (GFP2 *) p1 with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
 	GFP2 *square = [[GFP2 alloc] init];
 
-	FGInt *tmp = [FGInt multiply: [p1 a] and: [p1 b]],
+	FGInt *tmp = [FGInt pencilPaperMultiply: [p1 a] and: [p1 b]],
 		*tmp1 = [[FGInt add: [p1 a] and: [p1 b]] reduceBySubtracting: pFGInt atMost: 1], *tmp2 = [[FGInt subtract: [p1 a] and: [p1 b]] reduceBySubtracting: pFGInt atMost: 1];
 	FGInt *v0 = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
 	[tmp release];
-	tmp = [FGInt multiply: tmp1 and: tmp2];
+	tmp = [FGInt pencilPaperMultiply: tmp1 and: tmp2];
 	[tmp1 release];
 	[tmp2 release];
 
@@ -195,11 +195,11 @@
 }
 
 -(void) multiplyByFGInt: (FGInt *) fGInt with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	FGInt *tmp = [FGInt multiply: a and: fGInt];
+	FGInt *tmp = [FGInt pencilPaperMultiply: a and: fGInt];
 	[a release];
 	a = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
 	[tmp release];
-	tmp = [FGInt multiply: b and: fGInt];
+	tmp = [FGInt pencilPaperMultiply: b and: fGInt];
 	[b release];
 	b = [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision];
 	[tmp release];
@@ -207,11 +207,11 @@
 
 
 -(GFP2 *) invertWith: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	FGInt *tmp1 = [FGInt square: a];
+	FGInt *tmp1 = [FGInt pencilPaperSquare: a];
 	FGInt* tmp2 = [FGInt barrettMod: tmp1 by: pFGInt with: invertedP andPrecision: precision];
 	[tmp1 release];
 
-	tmp1 = [FGInt square: b];
+	tmp1 = [FGInt pencilPaperSquare: b];
 	FGInt* tmp = [FGInt barrettMod: tmp1 by: pFGInt with: invertedP andPrecision: precision];
 	[tmp1 release];
 
@@ -222,13 +222,13 @@
 	FGInt *denominator = [FGInt invert: tmp moduloPrime: pFGInt];
 	[tmp release];
 
-	tmp = [FGInt multiply: a and: denominator];
+	tmp = [FGInt pencilPaperMultiply: a and: denominator];
 
 	GFP2 *inverted = [[GFP2 alloc] init];
 	[inverted setA: [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision]];
 	[tmp release];
 
-	tmp = [FGInt multiply: b and: denominator];
+	tmp = [FGInt pencilPaperMultiply: b and: denominator];
 	[tmp changeSign];
 	[inverted setB: [FGInt barrettMod: tmp by: pFGInt with: invertedP andPrecision: precision]];
 	[tmp release];
@@ -1023,8 +1023,8 @@
     GFP12 *tmp1, *tmp;
     FGIntBase* nFGIntNumber = [[fGIntN number] mutableBytes];
 
-    // tmp1 = [gfp12 retain];
-    tmp1 = [gfp12 mutableCopy];
+    tmp1 = [gfp12 retain];
+    // tmp1 = [gfp12 mutableCopy];
 
     for( FGIntIndex i = 0; i < nLength - 1; i++ ) {
         tmpWord = nFGIntNumber[i];
@@ -1560,7 +1560,7 @@
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
-	G2Point *result = [G2Point add: g2Point kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precisionBits];
+	G2Point *result = [G2Point add: g2Point kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	[pFGInt release];
 	[invertedP release];
@@ -1816,30 +1816,30 @@
 	FGInt *tmpBarrett;
 
 
-	tmpBarrett = [FGInt square: [p1 z]];
+	tmpBarrett = [FGInt pencilPaperSquare: [p1 z]];
 	FGInt *z1z1 =  [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
-	tmpBarrett = [FGInt square: [p2 z]];
+	tmpBarrett = [FGInt pencilPaperSquare: [p2 z]];
 	FGInt *z2z2 = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
-	tmpBarrett = [FGInt multiply: z2z2 and: [p1 x]];
+	tmpBarrett = [FGInt pencilPaperMultiply: z2z2 and: [p1 x]];
 	FGInt *u1 = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
-	tmpBarrett = [FGInt multiply: z1z1 and: [p2 x] ];
+	tmpBarrett = [FGInt pencilPaperMultiply: z1z1 and: [p2 x] ];
 	FGInt *u2 = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 
-	tmpBarrett = [FGInt multiply: [p1 y] and: [p2 z]];
+	tmpBarrett = [FGInt pencilPaperMultiply: [p1 y] and: [p2 z]];
 	FGInt *tmp = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
-	tmpBarrett = [FGInt multiply: tmp and: z2z2];	
+	tmpBarrett = [FGInt pencilPaperMultiply: tmp and: z2z2];	
 	FGInt *s1 = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp release];
-	tmpBarrett = [FGInt multiply: [p2 y] and: [p1 z]];
+	tmpBarrett = [FGInt pencilPaperMultiply: [p2 y] and: [p1 z]];
 	tmp = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
-	tmpBarrett = [FGInt multiply: tmp and: z1z1];
+	tmpBarrett = [FGInt pencilPaperMultiply: tmp and: z1z1];
 	FGInt *s2 =  [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp release];
@@ -1849,11 +1849,11 @@
 	tmp = [h mutableCopy];
 	[tmp shiftLeft];
 	[tmp reduceBySubtracting: p atMost: 1];
-	tmpBarrett = [FGInt square: tmp];
+	tmpBarrett = [FGInt pencilPaperSquare: tmp];
 	FGInt *i = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp release];
-	tmpBarrett = [FGInt multiply: i and: h];
+	tmpBarrett = [FGInt pencilPaperMultiply: i and: h];
 	FGInt *j = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	FGInt *r = [FGInt subtract: s2 and: s1];
@@ -1873,11 +1873,11 @@
 	}
 	[r shiftLeft];
 	[r reduceBySubtracting: p atMost: 4];
-	tmpBarrett = [FGInt multiply: u1 and: i];
+	tmpBarrett = [FGInt pencilPaperMultiply: u1 and: i];
 	FGInt *v = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 
-	tmpBarrett = [FGInt square: r];
+	tmpBarrett = [FGInt pencilPaperSquare: r];
 	FGInt *tmp1 = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	tmp = [FGInt subtract: tmp1 and: j];
@@ -1891,11 +1891,11 @@
 
 	tmp1 = [FGInt subtract: v and: [sum x]];
 	[tmp1 reduceBySubtracting: p atMost: 1];
-	tmpBarrett = [FGInt multiply: r and: tmp1];
+	tmpBarrett = [FGInt pencilPaperMultiply: r and: tmp1];
 	tmp = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp1 release];
-	tmpBarrett = [FGInt multiply: s1 and: j];
+	tmpBarrett = [FGInt pencilPaperMultiply: s1 and: j];
 	tmp1 = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp1 shiftLeft];
@@ -1907,7 +1907,7 @@
 
 	tmp1 = [FGInt add: [p1 z] and: [p2 z]];
 	[tmp1 reduceBySubtracting: p atMost: 1];
-	tmpBarrett = [FGInt square: tmp1];
+	tmpBarrett = [FGInt pencilPaperSquare: tmp1];
 	tmp = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp1 release];
@@ -1917,7 +1917,7 @@
 	tmp = [FGInt subtract: tmp1 and: z2z2];
 	[tmp reduceBySubtracting: p atMost: 1];
 	[tmp1 release];
-	tmpBarrett = [FGInt multiply: tmp and: h];
+	tmpBarrett = [FGInt pencilPaperMultiply: tmp and: h];
 	[sum setZ: [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision]];
 	[tmpBarrett release];
 	[tmp release];
@@ -1959,19 +1959,19 @@
 	// 	p = [[FGInt alloc] initWithBase10String: @"65000549695646603732796438742359905742825358107623003571877145026864184071783"];
 	// }
 
-	tmpBarrett = [FGInt square: [p1 x]];
+	tmpBarrett = [FGInt pencilPaperSquare: [p1 x]];
 	FGInt *a = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
-	tmpBarrett = [FGInt square: [p1 y]];
+	tmpBarrett = [FGInt pencilPaperSquare: [p1 y]];
 	FGInt *b = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
-	tmpBarrett = [FGInt square: b];
+	tmpBarrett = [FGInt pencilPaperSquare: b];
 	FGInt *c = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 
 	FGInt *tmp1 = [FGInt add: [p1 x] and: b];
 	[tmp1 reduceBySubtracting: p atMost: 1];
-	tmpBarrett = [FGInt square: tmp1];
+	tmpBarrett = [FGInt pencilPaperSquare: tmp1];
 	FGInt *tmp = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp1 release];
@@ -1983,7 +1983,7 @@
 	[d reduceBySubtracting: p atMost: 5];
 	[a multiplyByInt: 3];
 	[a reduceBySubtracting: p atMost: 3];
-	tmpBarrett = [FGInt square: a]; 
+	tmpBarrett = [FGInt pencilPaperSquare: a]; 
 	FGInt *f = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 
@@ -1996,7 +1996,7 @@
 	[c multiplyByInt: 8];
 	tmp1 = [FGInt subtract: d and: [sum x]];
 	[tmp1 reduceBySubtracting: p atMost: 1];
-	tmpBarrett = [FGInt multiply: tmp1 and: a];
+	tmpBarrett = [FGInt pencilPaperMultiply: tmp1 and: a];
 	tmp = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp1 release];
@@ -2005,7 +2005,7 @@
 	[sum setY: tmp1];
 	[tmp release];
 
-	tmpBarrett = [FGInt multiply: [p1 y] and: [p1 z]];
+	tmpBarrett = [FGInt pencilPaperMultiply: [p1 y] and: [p1 z]];
 	tmp = [FGInt barrettMod: tmpBarrett by: p with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp shiftLeft];
@@ -2029,20 +2029,20 @@
 		return;
 	}
 	FGInt *tmp = [FGInt invert: z moduloPrime: pFGInt];
-	FGInt *tmpBarrett = [FGInt square: tmp];
+	FGInt *tmpBarrett = [FGInt pencilPaperSquare: tmp];
 	FGInt *tmp1 = [FGInt barrettMod: tmpBarrett by: pFGInt with: invertedP andPrecision: precision];
 	[tmpBarrett release];
-	tmpBarrett = [FGInt multiply: x and: tmp1];
+	tmpBarrett = [FGInt pencilPaperMultiply: x and: tmp1];
 	FGInt *tmp2 = [FGInt barrettMod: tmpBarrett by: pFGInt with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[x release];
 	x = tmp2;
-	tmpBarrett = [FGInt multiply: tmp and: tmp1];
+	tmpBarrett = [FGInt pencilPaperMultiply: tmp and: tmp1];
 	tmp2 = [FGInt barrettMod: tmpBarrett by: pFGInt with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp1 release];
 	[tmp release];
-	tmpBarrett = [FGInt multiply: y and: tmp2];
+	tmpBarrett = [FGInt pencilPaperMultiply: y and: tmp2];
 	tmp =  [FGInt barrettMod: tmpBarrett by: pFGInt with: invertedP andPrecision: precision];
 	[tmpBarrett release];
 	[tmp2 release];
@@ -2120,7 +2120,7 @@
 	FGIntBase numberArrayP[] = pNumber;
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
-	G1Point *result = [G1Point add: g1Point kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precisionBits];
+	G1Point *result = [G1Point add: g1Point kTimes: kFGInt with: pFGInt withInvertedP: invertedP andPrecision: precision];
 
 	[pFGInt release];
 	[invertedP release];
@@ -2181,13 +2181,13 @@
 		return [[NSMutableData alloc] initWithLength: 2*cnstLength];
 	}
 	if ((x == nil) || (y == nil)) {
+        NSLog(@"uh-oh");
 		return nil;
-		NSLog(@"uh-oh");
 	}
 
-	if (![x sign] || ![y sign]) {
-		NSLog(@"uh-oh");
-	}
+	// if (![x sign] || ![y sign]) {
+	// 	NSLog(@"uh-oh");
+	// }
 
 	FGInt *pFGInt = [[FGInt alloc] initWithoutNumber];
 	FGIntBase numberArrayP[] = pNumber;
@@ -2209,7 +2209,7 @@
 	[tmpData release];
 
 	// tmpData = [y toBigEndianNSDataOfLength: cnstLength];
-	if (![x sign]) {
+	if (![y sign]) {
 		tmp = [FGInt longDivisionMod: y by: pFGInt];
 		// tmp = [FGInt add: pFGInt and: y];
 	} else {
@@ -2248,7 +2248,7 @@
 //		g1Point is constant, xq,yq and where the line is evaluated in
 
 +(void) add: (G2Point **) g2p and: (G2Point *) g2q with: (GFP2 *) cachedR2 evaluateLineIn: (G1Point *) g1Point andMultiply: (GFP12 **) f with: (FGInt *) pFGInt withInvertedP: (FGInt *) invertedP andPrecision: (FGIntOverflow) precision {
-	GFP2 *tmp0, *tmp1, *tmp2;
+	GFP2 *tmp0, *tmp1;
 
 	GFP2 *b = [GFP2 multiply: [g2q x] and: [*g2p t] with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	tmp0 = [GFP2 add: [*g2p z] and: [g2q y] with: pFGInt];
@@ -2334,8 +2334,10 @@
 
 	GFP6 *a2 = [[GFP6 alloc] init];
 	[a2 setC: [[GFP2 alloc] initZero]];
-	[a2 setB: [a0 mutableCopy]];
-	[a2 setA: [b0 mutableCopy]];
+	// [a2 setB: [a0 mutableCopy]];
+	// [a2 setA: [b0 mutableCopy]];
+	[a2 setB: [a0 retain]];
+	[a2 setA: [b0 retain]];
 	GFP6 *tmp6 = [GFP6 multiply: a2 and: [*f b] with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[a2 release];
 	a2 = tmp6;
@@ -2410,7 +2412,8 @@
 	tmp0 = [GFP2 subtract: d and: [sum x] with: pFGInt];
 	tmp1 = [GFP2 multiply: tmp0 and: e with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[tmp0 release];
-	tmp0 = [c mutableCopy];
+	// tmp0 = [c mutableCopy];
+	tmp0 = [c retain];
 	[tmp0 multiplyByInt: 8 with: pFGInt];
 	[sum setY: [GFP2 subtract: tmp1 and: tmp0 with: pFGInt]];
 	[tmp0 release];
@@ -2449,8 +2452,10 @@
 
 	GFP6 *a2 = [[GFP6 alloc] init];
 	[a2 setC: [[GFP2 alloc] initZero]];
-	[a2 setB: [a0 mutableCopy]];
-	[a2 setA: [b0 mutableCopy]];
+	// [a2 setB: [a0 mutableCopy]];
+	// [a2 setA: [b0 mutableCopy]];
+	[a2 setB: [a0 retain]];
+	[a2 setA: [b0 retain]];
 	GFP6 *tmp6 = [GFP6 multiply: a2 and: [*f b] with: pFGInt withInvertedP: invertedP andPrecision: precision];
 	[a2 release];
 	a2 = tmp6;
@@ -2459,7 +2464,8 @@
 
 	GFP6 *tmp7 = [[GFP6 alloc] init];
 	[tmp7 setA: [GFP2 add: b0 and: c0 with: pFGInt]];
-	[tmp7 setB: [a0 mutableCopy]];
+	// [tmp7 setB: [a0 mutableCopy]];
+	[tmp7 setB: [a0 retain]];
 	[tmp7 setC: [[GFP2 alloc] initZero]];
 
 	GFP6 *tmp8 = [GFP6 add: [*f a] and: [*f b] with: pFGInt];
@@ -2758,15 +2764,15 @@
     dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
 
-	NSDate *date1;
-	double timePassed_ms1;
+//	NSDate *date1;
+//	double timePassed_ms1;
 	// g2_1 = [[G2Point alloc] unMarshal: [g2_1 marshal]];
 	// g1_2 = [[G1Point alloc] unMarshal: [g1_2 marshal]];
 	dispatch_group_async(d_group, bg_queue, ^{
 		NSDate *date_1 = [NSDate date];
 		GFP12 *tmpGFP12 = [BN256 optimalAtePairing: g2_1 and: g1_2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		double timePassed_ms_1 = [date_1 timeIntervalSinceNow] * -1000.0;
-		NSLog(@"1st pairing took %fms", timePassed_ms_1);
+		NSLog(@"1st pairing and exponentiation took %fms", timePassed_ms_1);
 		gfp12_1 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		[tmpGFP12 release];
     });
@@ -2778,7 +2784,7 @@
 		NSDate *date_2 = [NSDate date];
 		GFP12 *tmpGFP12 = [BN256 optimalAtePairing: g2_2 and: g1_3 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		double timePassed_ms_2 = [date_2 timeIntervalSinceNow] * -1000.0;
-		NSLog(@"2nd pairing took %fms", timePassed_ms_2);
+		NSLog(@"2nd pairing and exponentiation took %fms", timePassed_ms_2);
 		gfp12_2 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		[tmpGFP12 release];
     });
@@ -2790,7 +2796,7 @@
 		NSDate *date_3 = [NSDate date];
 		GFP12 *tmpGFP12 = [BN256 optimalAtePairing: g2_3 and: g1_1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		double timePassed_ms_3 = [date_3 timeIntervalSinceNow] * -1000.0;
-		NSLog(@"3rd pairing took %fms", timePassed_ms_3);
+		NSLog(@"3rd pairing and exponentiation took %fms", timePassed_ms_3);
 		gfp12_3 = [GFP12 raise: tmpGFP12 toThePower: tmpFGInt2 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		[tmpGFP12 release];
     });
@@ -2825,6 +2831,8 @@
 	[tmpFGInt3 release];
 
 	BOOL result = ([gfp13 isZero] && [gfp23 isZero] && [gfp12 isZero]);
+
+	NSLog(@" Pairing test was %@successful \n\n", result?@"":@"not ");
 	[gfp12 release];
 	[gfp13 release];
 	[gfp23 release];

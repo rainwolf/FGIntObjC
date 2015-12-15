@@ -720,7 +720,6 @@
 		[tmp0 reduceBySubtracting: order atMost: 1];
 		FGInt *tmp1 = [FGInt subtract: order and: tmp0];
 		[tmp0 release];
-		GFP12 *tmp0GFP12, *tmp1GFP12;
 		tmp0_r3 = [GFP12 raise: [[memberKey group] ehw] toThePower: tmp1 with: pFGInt withInvertedP: invertedP andPrecision: precision];
 		[tmp1 release];
     });
@@ -962,7 +961,6 @@
 	[pFGInt setNumber: [[NSMutableData alloc] initWithBytes: numberArrayP length: cnstLength]];
 
 
-	FGInt *tmp0;
 	__block G1Point *r1, *r2, *r4, *r5;
 	__block GFP12 *tmp0_r3, *tmp1_r3, *tmp2_r3, *tmp3_r3;
     dispatch_group_t d_group = dispatch_group_create();
@@ -1144,7 +1142,7 @@
 	privateKey = [[BBSPrivateKey alloc] unMarshal: [privateKey marshal]];
 	[privateKey setGroup: group];
 
-	NSData *digest = [FGIntXtra SHA256: [[[NSString alloc] initWithString:@"hello world                                "] dataUsingEncoding: NSASCIIStringEncoding]];
+	NSData *digest = [FGIntXtra SHA256: [[[NSString alloc] initWithString:@"hello world"] dataUsingEncoding: NSASCIIStringEncoding]];
 	date1 = [NSDate date];
 	NSData *signature = [BBSsig sign: digest withMemberKey: memberKey];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
