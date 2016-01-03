@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <Security/SecRandom.h>
 #import <CommonCrypto/CommonHMAC.h>
+#import <CommonCrypto/CommonKeyDerivation.h>
 #import "FGInt.h"
 
 
@@ -15,6 +16,6 @@
 +(NSData *) hexStringToNSData: (NSString *) str;
 +(NSString *) dataToBase32String: (NSData *) data;
 +(NSData *) base32StringToNSData: (NSString *) str;
-
++(NSData *) scryptPassphrase: (NSString *) passphrase withSalt: (NSData *) salt cost: (unsigned long long) cost parallelism: (unsigned int) parallelism blockSize: (unsigned int) blocksize keyLength: (unsigned int) keyLength;
 
 @end

@@ -1,9 +1,6 @@
 
 #import <Foundation/Foundation.h>
-#import "FGIntXtra.h"
-#import "FGIntCryptography.h"
-#import "NaCl.h"
-#import "BBSsig.h"
+#import "FGIntObjC.h"
 
 
 

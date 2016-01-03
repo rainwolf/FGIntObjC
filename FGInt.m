@@ -252,7 +252,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(id) mutableCopyWithZone: (NSZone *) zone {
     FGInt *newFGInt = [[FGInt allocWithZone: zone] initWithoutNumber];
-    // FGInt *newFGInt = [[FGInt alloc] initWithoutNumber];
 
     [newFGInt setSign: sign];
     [newFGInt setNumber: [number mutableCopy]];
@@ -389,7 +388,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 -(FGInt *) initWithBase10String: (NSString *) base10String {
     @autoreleasepool{
 
-        self = [self init];
+        self = [super init];
     
         FGIntOverflow nlength = [base10String length];
         FGIntBase tmpBase;
@@ -441,7 +440,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 /* provide an unsigned 32bit integer to initialize the FGInt */
 
 -(FGInt *) initWithFGIntBase: (FGIntBase) fGIntBase {
-    if (self = [self init]) {
+    if (self = [super init]) {
         number = [[NSMutableData alloc] initWithBytes: &fGIntBase length: 4];
         sign = YES;
     }
@@ -463,7 +462,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(FGInt *) initWithNSString: (NSString *) string {
     @autoreleasepool{
-        self = [self init];
+        self = [super init];
 
         NSData *stringBytes = [string dataUsingEncoding:NSUTF8StringEncoding];
 
@@ -526,16 +525,16 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 
 -(FGInt *) initWithNSDataToEd25519FGInt: (NSData *) nsData {
-    NSMutableData *inputData = [[NSMutableData alloc] initWithData: nsData];
-    [inputData setLength: 32];
-    unsigned char* numberArray = [inputData mutableBytes];
-    numberArray[31] = numberArray[31] | 64;
-    numberArray[31] = numberArray[31] & 127;
-    numberArray[0] = numberArray[0] & 248;
-
-    FGInt *new = [[FGInt alloc] initWithNumber: inputData];
-    [inputData release];
-    return new;
+    if (self = [super init]) {
+        number = [[NSMutableData alloc] initWithData: nsData];
+        [number setLength: 32];
+        unsigned char* numberArray = [number mutableBytes];
+        numberArray[31] = numberArray[31] | 64;
+        numberArray[31] = numberArray[31] & 127;
+        numberArray[0] = numberArray[0] & 248;
+        sign = YES;
+    }
+    return self;
 }
 
 
@@ -965,7 +964,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 +(FGInt *) pencilPaperSquare: (FGInt *) fGInt {
     FGIntOverflow length1 = [[fGInt number] length]/4, tempMod, mod, overflow,
-              squareLength = 2 * length1, j, k, tempInt;
+              squareLength = 2 * length1, tempInt;
     FGIntBase* fGIntNumber = [[fGInt number] mutableBytes];
 
     FGInt *square = [[FGInt alloc] initWithNZeroes: squareLength];
@@ -976,7 +975,6 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
         tempMod = (FGIntOverflow) tempInt*tempInt + squareNumber[2*i];
         squareNumber[2*i] = (FGIntBase) tempMod;
         mod = (tempMod >> 32);
-        j = 0;
         for( FGIntIndex j = i + 1; j < length1; j++ ) {
             tempMod = (FGIntOverflow) tempInt * fGIntNumber[j];
             overflow = tempMod >> 63;
@@ -984,23 +982,22 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
             squareNumber[i + j] = (FGIntBase) tempMod;
             mod = (overflow << 32) | (tempMod >> 32);
         }
-        k = 0;
-        while (mod != 0) {
-            tempMod = (FGIntOverflow) squareNumber[i + length1 + k] + mod;
-            squareNumber[i + length1 + k] = (FGIntBase) tempMod;
+        if (mod != 0) {
+            tempMod = (FGIntOverflow) squareNumber[i + length1] + mod;
+            squareNumber[i + length1] = (FGIntBase) tempMod;
             mod = tempMod >> 32;
-            ++k;
+            if (mod != 0) {
+                tempMod = (FGIntOverflow) squareNumber[i + length1 + 1] + mod;
+                squareNumber[i + length1 + 1] = (FGIntBase) tempMod;
+                mod = tempMod >> 32;
+            }
         }
     }
 
     if ((squareLength > 1) && (squareNumber[squareLength - 1] == 0)) {
-    // while ((squareLength > 1) && (squareNumber[squareLength - 1] == 0)) {
         --squareLength;
         [[square number] setLength: squareLength*4];
     }
-    // if (squareLength < 2*length1) {
-    //     [[square number] setLength: squareLength*4];
-    // }
     return square;
 }
 
