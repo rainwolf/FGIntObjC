@@ -125,6 +125,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
 -(id) initWithoutNumber {
     if (self = [super init]) {
+        number = nil;
         sign = YES;
     }
     return self;
@@ -417,6 +418,7 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
         NSMutableData *zeroNumber = [[NSMutableData alloc] initWithLength: 4];
 
+        number = [[NSMutableData alloc] init];
         while (![base10Number isEqualToData: zeroNumber]) {
             tmpBase = [self divideByFGIntBaseMaxBis: base10Number];
             [number appendData: [NSData dataWithBytes: &tmpBase length: sizeof(tmpBase)]];
@@ -3296,8 +3298,8 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     
     [one release];
 
-    [bezoutBachetCoefficients setObject: aFGInt forKey:aKey];
-    [bezoutBachetCoefficients setObject: bFGInt forKey:bKey];
+    [bezoutBachetCoefficients setObject: aFGInt forKey:A_KEY];
+    [bezoutBachetCoefficients setObject: bFGInt forKey:B_KEY];
     [aFGInt release];
     [bFGInt release];
     

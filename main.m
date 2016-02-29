@@ -402,6 +402,12 @@ int main (int argc, const char * argv[]) {
 
 
 
+        NSLog(@" Scrypt Test Vector 1 %@", [FGIntXtra scryptPassphrase: @"" withSalt: [@"" dataUsingEncoding:NSASCIIStringEncoding] cost: 16 parallelism: 1 blockSize: 1 keyLength: 64]);
+        NSLog(@" Scrypt Test Vector 2 %@", [FGIntXtra scryptPassphrase: @"password" withSalt: [@"NaCl" dataUsingEncoding:NSASCIIStringEncoding] cost: 1024 parallelism: 16 blockSize: 8 keyLength: 64]);
+        NSLog(@" Scrypt Test Vector 3 %@", [FGIntXtra scryptPassphrase: @"pleaseletmein" withSalt: [@"SodiumChloride" dataUsingEncoding:NSASCIIStringEncoding] cost: 16384 parallelism: 1 blockSize: 8 keyLength: 64]);
+        NSLog(@" Scrypt Test Vector 4 %@ \n \n", [FGIntXtra scryptPassphrase: @"pleaseletmein" withSalt: [@"SodiumChloride" dataUsingEncoding:NSASCIIStringEncoding] cost: 1048576 parallelism: 1 blockSize: 8 keyLength: 64]);
+
+
     }
     return 0;
 }

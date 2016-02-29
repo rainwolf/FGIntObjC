@@ -614,9 +614,7 @@
         NSLog(@"secretKeyNSData is corrupt for %s at line %d. Expected 64 bytes but received %lu", __PRETTY_FUNCTION__, __LINE__, [secretKeyNSData length]);
     }
     secretKey = [[NSData alloc] initWithBytes: [secretKeyNSData bytes] length: 32];
-    NSData *tmpData = [secretKeyNSData subdataWithRange: NSMakeRange(32,32)];
-    publicKey = [[Ed25519Point alloc] initFromCompressed25519NSDataWithoutCurve: tmpData];
-    [tmpData release];
+    publicKey = [[Ed25519Point alloc] initFromCompressed25519NSDataWithoutCurve: [secretKeyNSData subdataWithRange: NSMakeRange(32,32)]];
 }
 -(void) setSecretKeyWithBase64NSString: (NSString *) secretKeyBase64NSString {
     [self setSecretKeyWithNSData: [FGInt convertBase64ToNSData: secretKeyBase64NSString]];

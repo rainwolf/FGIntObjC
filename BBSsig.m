@@ -190,7 +190,7 @@
 
 
 -(id) unMarshal: (NSData *) marshalData {
-	if ([marshalData length] != (4*2 + 2*4)*cnstLength) {
+	if ([marshalData length] != (4*2 + 2*4)*cnstLength && [marshalData length] != (4*2 + 2*4 + 12*3)*cnstLength) {
 		return nil;
 	}
     if (self = [super init]) {
@@ -215,30 +215,39 @@
 		[tmpData release];
 
 		__block GFP12 *tmpEHW, *tmpEHG2, *tmpMG1G2;
-	    dispatch_group_t d_group = dispatch_group_create();
-	    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
-		dispatch_group_async(d_group, bg_queue, ^{
-			GFP12 *tmp = [BN256 optimalAtePairing: g2 and: g1];
-			tmpMG1G2 = [tmp invert];
-			[tmp release];
-	    });
-		dispatch_group_async(d_group, bg_queue, ^{
-			tmpEHW = [BN256 optimalAtePairing: w and: h];
-	    });
-		dispatch_group_async(d_group, bg_queue, ^{
-			tmpEHG2 = [BN256 optimalAtePairing: g2 and: h];
-	    });
-		dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
-	    dispatch_release(d_group);
+		if ([marshalData length] == (4*2 + 2*4)*cnstLength) {
+		    dispatch_group_t d_group = dispatch_group_create();
+		    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
+			dispatch_group_async(d_group, bg_queue, ^{
+				GFP12 *tmp = [BN256 optimalAtePairing: g2 and: g1];
+				tmpMG1G2 = [tmp invert];
+				[tmp release];
+		    });
+			dispatch_group_async(d_group, bg_queue, ^{
+				tmpEHW = [BN256 optimalAtePairing: w and: h];
+		    });
+			dispatch_group_async(d_group, bg_queue, ^{
+				tmpEHG2 = [BN256 optimalAtePairing: g2 and: h];
+		    });
+			dispatch_group_wait(d_group, DISPATCH_TIME_FOREVER);
+		    dispatch_release(d_group);
+		} else {
+	    	tmpData = [[NSMutableData alloc] initWithBytes: &bytes[16*cnstLength] length: 12*cnstLength];
+	    	tmpEHW = [[GFP12 alloc] unMarshal: tmpData];
+			[tmpData release];
+	    	tmpData = [[NSMutableData alloc] initWithBytes: &bytes[28*cnstLength] length: 12*cnstLength];
+	    	tmpEHG2 = [[GFP12 alloc] unMarshal: tmpData];
+			[tmpData release];
+	    	tmpData = [[NSMutableData alloc] initWithBytes: &bytes[30*cnstLength] length: 12*cnstLength];
+	    	tmpMG1G2 = [[GFP12 alloc] unMarshal: tmpData];
+			[tmpData release];
+		}
 
 		ehw = tmpEHW;
 		ehg2 = tmpEHG2;
 		minusEg1g2 = tmpMG1G2;
-		// minusEg1g2 = [tmpMG1G2 invert];
-
-		// [tmpMG1G2 release];
-
     }
     return self;
 }
@@ -266,6 +275,42 @@
 	[result appendData: tmpData];
 	[tmpData release];
 	tmpData = [w marshal];
+	[result appendData: tmpData];
+	[tmpData release];
+
+	return result;
+}
+
+-(NSData *) extendedMarshal {
+	if ((g1 == nil) || (h == nil) || (u == nil) || v == (nil) || (g2 == nil) || (w == nil) || (ehw == nil) || (ehg2 == nil) || (minusEg1g2 == nil)) {
+		return nil;
+	}
+	NSMutableData *result = [[NSMutableData alloc] init];
+	NSData *tmpData = [g1 marshal];
+	[result appendData: tmpData];
+	[tmpData release];
+	tmpData = [h marshal];
+	[result appendData: tmpData];
+	[tmpData release];
+	tmpData = [u marshal];
+	[result appendData: tmpData];
+	[tmpData release];
+	tmpData = [v marshal];
+	[result appendData: tmpData];
+	[tmpData release];
+	tmpData = [g2 marshal];
+	[result appendData: tmpData];
+	[tmpData release];
+	tmpData = [w marshal];
+	[result appendData: tmpData];
+	[tmpData release];
+	tmpData = [ehw marshal];
+	[result appendData: tmpData];
+	[tmpData release];
+	tmpData = [ehg2 marshal];
+	[result appendData: tmpData];
+	[tmpData release];
+	tmpData = [minusEg1g2 marshal];
 	[result appendData: tmpData];
 	[tmpData release];
 
@@ -370,7 +415,7 @@
 
 
 -(id) unMarshal: (NSData *) marshalData {
-	if ([marshalData length] != 3*cnstLength) {
+	if ([marshalData length] != 3*cnstLength && [marshalData length] != (3*cnstLength + (4*2 + 2*4 + 12*3)*cnstLength)) {
 		return nil;
 	}
     if (self = [super init]) {
@@ -381,6 +426,12 @@
     	tmpData = [[NSMutableData alloc] initWithBytes: &bytes[cnstLength] length: 2*cnstLength];
     	a = [[G1Point alloc] unMarshal: tmpData];
 		[tmpData release];
+        if ([marshalData length] == (3*cnstLength + (4*2 + 2*4 + 12*3)*cnstLength)) {
+            tmpData = [[NSMutableData alloc] initWithBytes: &bytes[3*cnstLength] length: (4*2 + 2*4 + 12*3)*cnstLength];
+            group = [[BBSGroup alloc] unMarshal:tmpData];
+            [tmpData release];
+        }
+        
     }
     return self;
 }
@@ -388,18 +439,37 @@
 
 
 -(NSData *) marshal {
-	if ((x == nil) || (a == nil)) {
-		return nil;
-	}
-	NSMutableData *result = [[NSMutableData alloc] init];
-	NSData *tmpData = [x toBigEndianNSDataOfLength: cnstLength];
-	[result appendData: tmpData];
-	[tmpData release];
-	tmpData = [a marshal];
-	[result appendData: tmpData];
-	[tmpData release];
+    if ((x == nil) || (a == nil)) {
+        return nil;
+    }
+    NSMutableData *result = [[NSMutableData alloc] init];
+    NSData *tmpData = [x toBigEndianNSDataOfLength: cnstLength];
+    [result appendData: tmpData];
+    [tmpData release];
+    tmpData = [a marshal];
+    [result appendData: tmpData];
+    [tmpData release];
+    
+    return result;
+}
 
-	return result;
+-(NSData *) extendedMarshal {
+    if ((x == nil) || (a == nil)) {
+        return nil;
+    }
+    NSMutableData *result = [[NSMutableData alloc] init];
+    NSData *tmpData = [x toBigEndianNSDataOfLength: cnstLength];
+    [result appendData: tmpData];
+    [tmpData release];
+    tmpData = [a marshal];
+    [result appendData: tmpData];
+    [tmpData release];
+    tmpData = [group extendedMarshal];
+    [result appendData: tmpData];
+    [tmpData release];
+    
+    
+    return result;
 }
 
 

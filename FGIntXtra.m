@@ -32,6 +32,16 @@
     }
 }
 
++(NSData *) randomDataOfLength: (long) length {
+    NSMutableData *tmpData = [[NSMutableData alloc] initWithLength: length];
+    int result = SecRandomCopyBytes(kSecRandomDefault, length, tmpData.mutableBytes);
+    if (result != 0) {
+        [tmpData release];
+        return nil;
+    } 
+    return tmpData;
+}
+
 
 
 +(void) incrementNSMutableData: (NSMutableData *) data {
@@ -124,7 +134,7 @@
 }
 
 +(NSData *) base32StringToNSData: (NSString *) str {
-    NSMutableString *mutableStr = [[NSMutableString alloc] initWithString: str];
+    NSMutableString *mutableStr = [[NSMutableString alloc] initWithString: [str uppercaseString]];
     @autoreleasepool{
         NSRange range;
         NSCharacterSet *invertedBase32Set = [[NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"] invertedSet];
@@ -173,10 +183,27 @@
     return result;
 }
 
++(NSString *) dataToBase64String: (NSData *) data {
+    return [data base64EncodedStringWithOptions: NSDataBase64Encoding64CharacterLineLength | NSDataBase64EncodingEndLineWithCarriageReturn | NSDataBase64EncodingEndLineWithLineFeed];
+}
++(NSData *) base64StringToNSData: (NSString *) str {
+    NSMutableString *mutableStr = [[NSMutableString alloc] initWithString: str];
+    @autoreleasepool{
+        NSRange range;
+        NSCharacterSet *invertedBase32Set = [[NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="] invertedSet];
+        range = [mutableStr rangeOfCharacterFromSet: invertedBase32Set];
+        while (range.location != NSNotFound) {
+            [mutableStr deleteCharactersInRange: range];
+            range = [mutableStr rangeOfCharacterFromSet: invertedBase32Set];
+        }
+    }
+    return [[NSData alloc] initWithBase64EncodedString: mutableStr options: 0];
+}
+
+
 static word rotateBy(word inputWord, int offSet) {
     return (inputWord << offSet) | (inputWord >> (32 - offSet));
 }
-
 static void quarterRound(word* const outputWord0, word* const outputWord1, word* const outputWord2, word* const outputWord3, 
     word* const inputWord0, word* const inputWord1, word* const inputWord2, word* const inputWord3) {
     
@@ -185,27 +212,23 @@ static void quarterRound(word* const outputWord0, word* const outputWord1, word*
     *outputWord3 = *inputWord3 ^ (rotateBy(*outputWord2 + *outputWord1, 13));
     *outputWord0 = *inputWord0 ^ (rotateBy(*outputWord3 + *outputWord2, 18));
 }
-
 static void rowRound(word* const outputWords, word* const inputWords) {
     quarterRound(&outputWords[0], &outputWords[1], &outputWords[2], &outputWords[3], &inputWords[0], &inputWords[1], &inputWords[2], &inputWords[3]);
     quarterRound(&outputWords[5], &outputWords[6], &outputWords[7], &outputWords[4], &inputWords[5], &inputWords[6], &inputWords[7], &inputWords[4]);
     quarterRound(&outputWords[10], &outputWords[11], &outputWords[8], &outputWords[9], &inputWords[10], &inputWords[11], &inputWords[8], &inputWords[9]);
     quarterRound(&outputWords[15], &outputWords[12], &outputWords[13], &outputWords[14], &inputWords[15], &inputWords[12], &inputWords[13], &inputWords[14]);
 }
-
 static void columnRound(word* const outputWords, word* const inputWords) {
     quarterRound(&outputWords[0], &outputWords[4], &outputWords[8], &outputWords[12], &inputWords[0], &inputWords[4], &inputWords[8], &inputWords[12]);
     quarterRound(&outputWords[5], &outputWords[9], &outputWords[13], &outputWords[1], &inputWords[5], &inputWords[9], &inputWords[13], &inputWords[1]);
     quarterRound(&outputWords[10], &outputWords[14], &outputWords[2], &outputWords[6], &inputWords[10], &inputWords[14], &inputWords[2], &inputWords[6]);
     quarterRound(&outputWords[15], &outputWords[3], &outputWords[7], &outputWords[11], &inputWords[15], &inputWords[3], &inputWords[7], &inputWords[11]);
 }
-
 static void doubleRound(word* outputWords, word* inputWords) {
     static word tmpWords[16];
     columnRound(tmpWords, inputWords);
     rowRound(outputWords, tmpWords);
 }
-
 static void salsa208(word* const outputWords, word* const inputWords) {
     word tmpWordsIn[16];
     memcpy(tmpWordsIn, inputWords, 64);
@@ -236,12 +259,8 @@ static void scryptBlockMix(unsigned char* bIn, unsigned char* bOut, unsigned int
         memcpy(&bOut[(i/2)*64 + blocksize*64], x, 64);
     }
 }
-
-
-
 static void scryptROMix(unsigned char* b, unsigned int blocksize, unsigned long long cost) {
     unsigned char x[128*blocksize];
-    // unsigned char v[128*cost*blocksize];
     unsigned char* v = malloc(128*cost*blocksize);
     unsigned char t[128*blocksize];
 
@@ -290,7 +309,6 @@ static void scryptROMix(unsigned char* b, unsigned int blocksize, unsigned long 
     unsigned char* derivedKeyBytes = [derivedKey mutableBytes];
     CCKeyDerivationPBKDF(kCCPBKDF2, [passphraseData bytes], [passphraseData length], priorBytes, parallelism*128*blocksize, kCCPRFHmacAlgSHA256, 1, derivedKeyBytes, keyLength);
     [prior release];
-    // [passphraseData release];
 
     return derivedKey;
 }

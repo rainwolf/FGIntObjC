@@ -35,6 +35,7 @@
 -(id) unMarshal: (NSData *) marshalData;
 -(void) dealloc;
 -(NSData *) marshal;
+-(NSData *) extendedMarshal;
 
 @end
 
@@ -54,6 +55,7 @@
 -(id) unMarshal: (NSData *) marshalData;
 -(void) dealloc;
 -(NSData *) marshal;
+-(NSData *) extendedMarshal;
 
 @end
 

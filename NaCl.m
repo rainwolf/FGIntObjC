@@ -172,6 +172,7 @@
 
 +(NSData *) curve25519PrivateKey: (NSData *) inData {
     NSMutableData *tmpData = [[NSMutableData alloc] initWithData:inData];
+    [tmpData setLength:32];
     unsigned char* numberArray = [tmpData mutableBytes];
     numberArray[31] = numberArray[31] | 64;
     numberArray[31] = numberArray[31] & 127;
