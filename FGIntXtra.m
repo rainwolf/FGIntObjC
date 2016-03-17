@@ -241,7 +241,6 @@ static void salsa208(word* const outputWords, word* const inputWords) {
         outputWords[i] = inputWords[i] + tmpWordsIn[i];
     }
 }
-
 static void scryptBlockMix(unsigned char* bIn, unsigned char* bOut, unsigned int blocksize) {
     unsigned char x[64];
     unsigned char t[64];

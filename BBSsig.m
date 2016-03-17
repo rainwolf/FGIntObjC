@@ -216,7 +216,7 @@
 
 		__block GFP12 *tmpEHW, *tmpEHG2, *tmpMG1G2;
 
-		if ([marshalData length] == (4*2 + 2*4)*cnstLength) {
+		if ([marshalData length] < (4*2 + 2*4 + 12*3)*cnstLength) {
 		    dispatch_group_t d_group = dispatch_group_create();
 		    dispatch_queue_t bg_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
@@ -240,7 +240,7 @@
 	    	tmpData = [[NSMutableData alloc] initWithBytes: &bytes[28*cnstLength] length: 12*cnstLength];
 	    	tmpEHG2 = [[GFP12 alloc] unMarshal: tmpData];
 			[tmpData release];
-	    	tmpData = [[NSMutableData alloc] initWithBytes: &bytes[30*cnstLength] length: 12*cnstLength];
+	    	tmpData = [[NSMutableData alloc] initWithBytes: &bytes[40*cnstLength] length: 12*cnstLength];
 	    	tmpMG1G2 = [[GFP12 alloc] unMarshal: tmpData];
 			[tmpData release];
 		}
@@ -703,13 +703,10 @@
 
 
 @implementation BBSsig
-@synthesize message;
-@synthesize signature;
+
 
 +(NSData *) hash: (NSData *) plaintext {
 	return [FGIntXtra SHA256: plaintext];
-	return [plaintext subdataWithRange: NSMakeRange(110,32)];
-	// return [[FGIntXtra SHA512: plaintext] subdataWithRange: NSMakeRange(10,32)];
 }
 
 
@@ -1146,7 +1143,6 @@
 	[cPrime release];
 	[pFGInt release];
 
-
 	return isValid;
 }
 
@@ -1231,7 +1227,7 @@
 	}
 
 	date1 = [NSDate date];
-	BOOL validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [privateKey group]];
+	BOOL validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [memberKey group]];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	NSLog(@"Signature verification: %@, and took %fms", validation?@"success":@"                                                       failed", timePassed_ms1);
 	// date1 = [NSDate date];
@@ -1293,7 +1289,7 @@
 	    NSLog(@"Signature generation (after processing revocation): success, and took %fms", timePassed_ms1);
 	}
 	date1 = [NSDate date];
-	validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [privateKey group]];
+	validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [[BBSGroup alloc] unMarshal:[[privateKey group] marshal]]];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	NSLog(@"Signature verification (after revocation): %@, and took %fms", validation?@"success":@"                                                       failed", timePassed_ms1);
 	validation = [memberKey updateWithRevocation: revocation];

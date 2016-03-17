@@ -16,6 +16,7 @@
 +(Ed25519Point *) addEd25519: (Ed25519Point *) tecPoint kTimes: (FGInt *) kTimes;
 +(Ed25519Point *) addEd25519BasePointkTimes: (FGInt *) kTimes;
 +(Ed25519Point *) addEd25519: (Ed25519Point *) tecPoint1 k1Times: (FGInt *) k1FGInt and: (Ed25519Point *) tecPoint2 k2Times: (FGInt *) k2FGInt;
+-(NSData *) toMontgomery25519X;
 
 @end
 
@@ -36,6 +37,7 @@
 @property (assign, readwrite) Ed25519Point *publicKey;
 
 -(void) generateNewSecretAndPublicKey;
+-(NSData *) secretKeyToCurve25519Key;
 -(NSData *) secretKeyToNSData;
 -(NSString *) secretKeyToBase64NSString;
 -(NSData *) publicKeyToNSData;

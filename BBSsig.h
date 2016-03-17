@@ -76,11 +76,7 @@
 @end
 
 
-@interface BBSsig : NSObject {
-	NSData *message, *signature;
-}
-@property (retain, readwrite) NSData *message;
-@property (retain, readwrite) NSData *signature;
+@interface BBSsig : NSObject 
 
 +(NSData *) sign: (NSData *) digest withMemberKey: (BBSMemberKey *) memberKey;
 +(BOOL) verifySignature: (NSData *) signature ofDigest: (NSData *) digest withGroupKey: (BBSGroup *) groupKey;

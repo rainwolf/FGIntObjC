@@ -225,6 +225,15 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
     }
     return self;
 }
+-(FGInt *) initAsOne {
+    if (self = [super init]) {
+        number = [[NSMutableData alloc] initWithLength: 4];
+        sign = YES;
+        FGIntBase* numberArray = [number mutableBytes];
+        numberArray[0] = 1u;
+    }
+    return self;
+}
 
 
 -(NSMutableData *) number {
@@ -5275,6 +5284,60 @@ unichar pgpBase64[65] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 
     number = [[tmpFGInt number] retain];
     [tmpFGInt release];
+}
+
+
++(FGInt *) invertMod25519: (FGInt *) fGInt {
+    FGInt *uFGInt = [fGInt mutableCopy], *vFGInt = [[FGInt alloc] initAsP25519], *pFGInt = [[FGInt alloc] initAsP25519];
+    [uFGInt mod25519];
+    FGInt *x1 = [[FGInt alloc] initWithFGIntBase: 1], *x2 = [[FGInt alloc] initAsZero], *tmpFGInt;
+    
+    
+    while ((![uFGInt isOne]) && (![vFGInt isOne])) {
+        while ([uFGInt isEven]) {
+            [uFGInt shiftRight];
+            if ([x1 isEven]) {
+                [x1 shiftRight];
+            } else {
+                [x1 addWith: pFGInt];
+                [x1 shiftRight];
+            }
+        }
+        while ([vFGInt isEven]) {
+            [vFGInt shiftRight];
+            if ([x2 isEven]) {
+                [x2 shiftRight];
+            } else {
+                [x2 addWith: pFGInt];
+                [x2 shiftRight];
+            }
+        }
+        if ([FGInt compareAbsoluteValueOf: uFGInt with: vFGInt] == smaller) {
+            [vFGInt subtractWith: uFGInt];
+            tmpFGInt = [FGInt subtract: x2 and: x1];
+            [x2 release];
+            x2 = tmpFGInt;
+        } else {
+            [uFGInt subtractWith: vFGInt];
+            tmpFGInt = [FGInt subtract: x1 and: x2];
+            [x1 release];
+            x1 = tmpFGInt;
+        }
+    }
+    if ([uFGInt isOne]) {
+        [uFGInt release];
+        [vFGInt release];
+        [x2 release];
+        [x1 mod25519];
+        return x1;
+    } else {
+        [uFGInt release];
+        [vFGInt release];
+        [x1 release];
+        [x2 mod25519];
+        return x2;
+    }
+    
 }
 
 

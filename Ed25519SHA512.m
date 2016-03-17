@@ -488,6 +488,26 @@
     return result;
 }
 
+-(NSData *) toMontgomery25519X {
+    FGInt *one = [[FGInt alloc] initWithFGIntBase: 1];
+    FGInt *oneMinusY = [FGInt subtractModulo25638:one and:y];
+    FGInt *oneMinusYInverted = [FGInt invertMod25519: oneMinusY];
+    FGInt *onePlusY = [FGInt addModulo25638:one and:y];
+    FGInt *result = [FGInt multiplyModulo25638:oneMinusYInverted and:onePlusY];
+    
+    [result mod25519];
+    [one release];
+    [oneMinusY release];
+    [oneMinusYInverted release];
+    [onePlusY release];
+    
+    NSData *resultData = [[result number] retain];
+    
+    [result release];
+    
+    return  resultData;
+}
+
 
 
 
@@ -568,25 +588,41 @@
     if (secretKey) {
         [secretKey release];
     }
-
+    
     NSMutableData *tmpData = [[NSMutableData alloc] initWithLength: 32];
     if (SecRandomCopyBytes(kSecRandomDefault, 32, tmpData.mutableBytes)) {
         [tmpData release];
         return;
     }
-
+    
     secretKey = (NSData *) tmpData;
-
+    
     NSMutableData *hashData = (NSMutableData *) [FGIntXtra SHA512: secretKey];
     tmpData = [[NSMutableData alloc] initWithBytes: [hashData bytes] length: 32];
     FGInt *secretKeyFGInt = [[FGInt alloc] initWithNSDataToEd25519FGInt: tmpData];
     // [tmpData release];
-
+    
     publicKey = [Ed25519Point addEd25519BasePointkTimes: secretKeyFGInt];
     [secretKeyFGInt eraseAndRelease];
-
+    
     SecRandomCopyBytes(kSecRandomDefault, [tmpData length], [tmpData mutableBytes]);
     [tmpData release];
+}
+
+-(NSData *) secretKeyToCurve25519Key {
+    if (secretKey == nil) {
+        return  nil;
+    }
+    
+    NSData *hashData = [FGIntXtra SHA512: secretKey];
+    NSMutableData *result = [[NSMutableData alloc] initWithBytes: [hashData bytes] length: 32];
+    [hashData release];
+    unsigned char* numberArray = [result mutableBytes];
+    numberArray[31] = numberArray[31] | 64;
+    numberArray[31] = numberArray[31] & 127;
+    numberArray[0] = numberArray[0] & 248;
+
+    return result;
 }
 
 

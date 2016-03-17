@@ -61,6 +61,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 -(FGInt *) initWithNZeroes: (FGIntOverflow) n;
 -(FGInt *) initAsP25519;
 -(FGInt *) initAsZero;
+-(FGInt *) initAsOne;
 -(id) initWithCapacity: (FGIntOverflow) capacity;
 -(id) initWithNumber: (NSMutableData *) initNumber;
 -(id) initWithoutNumber;
@@ -196,6 +197,7 @@ typedef enum {error, equal, smaller, larger} tCompare;
 +(FGInt *) multiplyModulo25638: (FGInt *) fGInt1 and: (FGInt *) fGInt2;
 +(FGInt *) squareModulo25638: (FGInt *) fGInt;
 -(void) mod25519;
++(FGInt *) invertMod25519: (FGInt *) fGInt;
 
 +(FGInt *) addBasePointOnCurve25519: (FGInt *) x0 kTimes: (FGInt *) kTimes;
 +(FGInt *) raise: (FGInt *) fGInt  toThePowerMod25519: (FGInt *) fGIntN;
