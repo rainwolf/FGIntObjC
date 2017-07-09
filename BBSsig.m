@@ -1289,7 +1289,7 @@
 	    NSLog(@"Signature generation (after processing revocation): success, and took %fms", timePassed_ms1);
 	}
 	date1 = [NSDate date];
-	validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [[BBSGroup alloc] unMarshal:[[privateKey group] marshal]]];
+	validation = [BBSsig verifySignature: signature ofDigest: digest withGroupKey: [memberKey2 group]];
 	timePassed_ms1 = [date1 timeIntervalSinceNow] * -1000.0;
 	NSLog(@"Signature verification (after revocation): %@, and took %fms", validation?@"success":@"                                                       failed", timePassed_ms1);
 	validation = [memberKey updateWithRevocation: revocation];

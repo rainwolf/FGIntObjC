@@ -21,9 +21,9 @@ This header may not be removed.
 #import <Foundation/Foundation.h>
 #import <Security/SecRandom.h>
 
-typedef unsigned int FGIntBase;
-typedef unsigned long long FGIntOverflow;
-typedef long long FGIntIndex;
+typedef uint32_t FGIntBase;
+typedef uint64_t FGIntOverflow;
+typedef int64_t FGIntIndex;
 typedef unsigned char tag;
 
 typedef enum {error, equal, smaller, larger} tCompare;
